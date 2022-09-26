@@ -43,7 +43,8 @@ Matrix Matrix::RotationX(double xAngle)
     mat.setCoefficient(2, 1, std::sin(xAngle));
     mat.setCoefficient(2, 2, std::cos(xAngle));
 
-    mat._matr
+//    mat._matr
+//    return mat;
     return mat;
 }
 
@@ -79,9 +80,9 @@ void Matrix::setRotation(double rX, double rY, double rZ)
     Matrix matRY = Matrix::RotationX(rY);
     Matrix matRZ = Matrix::RotationX(rZ);
 
-    _coefficients[0][0] = sX;
-    _coefficients[1][1] = sY;
-    _coefficients[2][2] = sZ;
+//    _coefficients[0][0] = sX;
+//    _coefficients[1][1] = sY;
+//    _coefficients[2][2] = sZ;
 
     _matrixType = Matrix::MATRICE_ROTATION;
 }
@@ -103,10 +104,10 @@ int Matrix::Columns() const
 
 Matrix Matrix::Inverse()
 {
-
+    return Matrix(3, 3);
 }
 
 Matrix Matrix::Tranpose()
 {
-
+    return Matrix(3, 3);
 }

@@ -214,7 +214,7 @@ Mesh::Mesh(const Icosphere& icosphere)
   int verticesCount = icosphere.VerticesCount();
   vertices.resize(verticesCount);
 
-  for (int i = 0; i < verticesCount i++)
+  for (int i = 0; i < verticesCount; i++)
       vertices[i] = icosphere.Vertex(i);
 
   // Normals
