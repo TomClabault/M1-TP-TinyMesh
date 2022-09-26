@@ -1,6 +1,7 @@
 #pragma once
 
 #include "box.h"
+#include "icosphere.h"
 #include "ray.h"
 #include "mathematics.h"
 
@@ -120,6 +121,7 @@ public:
 
   // Constructors from core classes
   explicit Mesh(const Box&);
+  explicit Mesh(const Icosphere&);
 
   void Load(const QString&);
   void SaveObj(const QString&, const QString&) const;

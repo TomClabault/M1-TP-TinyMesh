@@ -1,6 +1,8 @@
 #include "qte.h"
 #include "implicits.h"
 
+#include "icosphere.h"
+
 MainWindow::MainWindow()
 {
 	// Chargement de l'interface
@@ -28,7 +30,8 @@ void MainWindow::CreateActions()
 {
 	// Buttons
 	connect(uiw.boxMesh, SIGNAL(clicked()), this, SLOT(BoxMeshExample()));
-	connect(uiw.sphereImplicit, SIGNAL(clicked()), this, SLOT(SphereImplicitExample()));
+    connect(uiw.sphereImplicit, SIGNAL(clicked()), this, SLOT(SphereImplicitExample()));
+    connect(uiw.icosphereMesh, SIGNAL(clicked()), this, SLOT(IcosphereMeshExample()));
 	connect(uiw.resetcameraButton, SIGNAL(clicked()), this, SLOT(ResetCamera()));
 	connect(uiw.wireframe, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
 	connect(uiw.radioShadingButton_1, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
@@ -54,7 +57,7 @@ void MainWindow::BoxMeshExample()
 	std::vector<Color> cols;
 	cols.resize(boxMesh.Vertexes());
 	for (int i = 0; i < cols.size(); i++)
-		cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
 
 	meshColor = MeshColor(boxMesh, cols, boxMesh.VertexIndexes());
 	UpdateGeometry();
@@ -74,7 +77,19 @@ void MainWindow::SphereImplicitExample()
 
   meshColor = MeshColor(implicitMesh, cols, implicitMesh.VertexIndexes());
   UpdateGeometry();
+}
 
+void MainWindow::IcosphereMeshExample()
+{
+    Mesh icosphereMesh = Mesh(Icosphere());
+
+    std::vector<Color> colors;
+    colors.resize(icosphereMesh.Vertexes());
+    for (int i = 0; i < colors.size(); i++)
+        colors[i] = Color(1.0, 0.5, 0.5);
+
+    meshColor = MeshColor(icosphereMesh, colors, icosphereMesh.VertexIndexes());
+    UpdateGeometry();
 }
 
 void MainWindow::UpdateGeometry()

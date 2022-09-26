@@ -42,6 +42,7 @@ public:
     QHBoxLayout *hboxLayout;
     QGroupBox *Objects_groupBox;
     QPushButton *boxMesh;
+    QPushButton *icosphereMesh;
     QPushButton *resetcameraButton;
     QPushButton *sphereImplicit;
     QWidget *widget_GL;
@@ -101,6 +102,12 @@ public:
         boxMesh->setObjectName(QString::fromUtf8("boxMesh"));
         boxMesh->setGeometry(QRect(20, 20, 101, 23));
         boxMesh->setCheckable(false);
+
+        icosphereMesh = new QPushButton(Objects_groupBox);
+        icosphereMesh->setObjectName(QString::fromUtf8("icosphereMesh"));
+        icosphereMesh->setGeometry(QRect(140, 50, 101, 23));
+        icosphereMesh->setCheckable(false);
+
         resetcameraButton = new QPushButton(Objects_groupBox);
         resetcameraButton->setObjectName(QString::fromUtf8("resetcameraButton"));
         resetcameraButton->setGeometry(QRect(140, 20, 81, 23));
@@ -205,6 +212,7 @@ public:
 "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-style:italic; color:#aa00ff;\">Create Eurographics 1996 Bear</span></p></body></html>", nullptr));
 #endif // QT_CONFIG(tooltip)
         boxMesh->setText(QCoreApplication::translate("Assets", "Box Mesh", nullptr));
+        icosphereMesh->setText(QCoreApplication::translate("Assets", "Icosphere Mesh", nullptr));
 #if QT_CONFIG(tooltip)
         resetcameraButton->setToolTip(QCoreApplication::translate("Assets", "<html><head/><body><p><span style=\" color:#5500ff;\">Callback #03</span></p><p><span style=\" font-style:italic; color:#aa00ff;\">Create Eurographics 1996 Bird</span></p></body></html>", nullptr));
 #endif // QT_CONFIG(tooltip)

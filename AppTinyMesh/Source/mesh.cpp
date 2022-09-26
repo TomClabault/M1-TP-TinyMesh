@@ -204,6 +204,33 @@ Mesh::Mesh(const Box& box)
 }
 
 /*!
+\brief Creates an icosphere
+
+\param icosphere The icosphere.
+*/
+Mesh::Mesh(const Icosphere& icosphere)
+{
+  // Vertices
+  int verticesCount = icosphere.VerticesCount();
+  vertices.resize(verticesCount);
+
+  for (int i = 0; i < verticesCount i++)
+      vertices[i] = icosphere.Vertex(i);
+
+  // Normals
+  for(int i = 0; i < icosphere.NormalsCount(); i++)
+      normals.push_back(icosphere.Normal(i));
+
+  // Reserve space for the triangle array
+  int indicesCount = icosphere.IndicesCount();
+  varray.reserve(indicesCount);
+  narray.reserve(indicesCount);
+
+  for(int  i = 0; i < indicesCount; i += 3)
+      AddTriangle(icosphere.VertexIndex(i), icosphere.VertexIndex(i + 1), icosphere.VertexIndex(i + 2), icosphere.NormalIndex(i));
+}
+
+/*!
 \brief Scale the mesh.
 \param s Scaling factor.
 */
