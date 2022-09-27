@@ -1,10 +1,15 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include <iostream>
+
 class Matrix
 {
 public:
     Matrix() = delete;
+
+    Matrix(const Matrix& A);
+    Matrix(Matrix&& A);
 
     /*!
      * \brief Instantiates a matric of size m*x with
@@ -27,6 +32,8 @@ public:
      */
     Matrix(double** values, int m, int n);
 
+    ~Matrix();
+
     /*!
      * \brief Fills the coefficient of the matrix to
      * have this instance of Matrix behave like a scaling
@@ -41,15 +48,15 @@ public:
     /*!
      * \brief Fills the coefficient of the matrix to
      * have this instance of Matrix behave like a rotation
-     * matrix according to the given rotation angle parameters
+     * matrix according to the given rotation angle parameters.
+     * The rotations are applied in the following order:
+     * Z -> Y -> X
      *
-     * \param rX The rotation angle around the X axis
-     * \param rY The rotation angle around the Y axis
-     * \param rZ The rotation angle around the Z axis
+     * \param rX The rotation angle around the X axis in radians
+     * \param rY The rotation angle around the Y axis in radians
+     * \param rZ The rotation angle around the Z axis in radians
      */
     void setRotation(double rX, double rY, double rZ);
-
-    void setCoefficient(int y, int x, int coeff);
 
     int Rows() const;
     int Columns() const;
@@ -57,9 +64,64 @@ public:
     Matrix Inverse();
     Matrix Tranpose();
 
-    static Matrix RotationX(double xAngle);
-    static Matrix RotationY(double yAngle);
-    static Matrix RotationZ(double ZAngle);
+    double* operator()(int y) const;
+    double& operator()(int y, int x) const;
+
+    Matrix& operator=(const Matrix& A);
+
+    Matrix& operator+=(const Matrix& B);
+    Matrix& operator-=(const Matrix& B);
+    Matrix& operator*=(const Matrix& B);
+    Matrix& operator*=(double n);
+    Matrix& operator/=(const Matrix& B);
+    Matrix& operator/=(double n);
+
+    friend Matrix operator+(const Matrix& A, const Matrix& B);
+    friend Matrix operator-(const Matrix& A, const Matrix& B);
+    friend Matrix operator*(const Matrix& A, const Matrix& B);
+    friend Matrix operator*(const Matrix& A, double);
+    friend Matrix operator/(const Matrix& A, double);
+
+    static Matrix RotationX(double xAngle)
+    {
+        Matrix mat(3, 3);
+
+        mat(0, 0) = 1;
+        mat(1, 1) = std::cos(xAngle);
+        mat(1, 2) = -std::sin(xAngle);
+        mat(2, 1) = std::sin(xAngle);
+        mat(2, 2) = std::cos(xAngle);
+
+        return mat;
+    }
+
+    static Matrix RotationY(double yAngle)
+    {
+        Matrix mat(3, 3);
+
+        mat(1, 1) = 1;
+        mat(0, 0) = std::cos(yAngle);
+        mat(0, 2) = std::sin(yAngle);
+        mat(2, 0) = -std::sin(yAngle);
+        mat(2, 2) = std::cos(yAngle);
+
+        return mat;
+    }
+
+    static Matrix RotationZ(double ZAngle)
+    {
+        Matrix mat(3, 3);
+
+        mat(2, 2) = 1;
+        mat(0, 0) = std::cos(ZAngle);
+        mat(0, 1) = -std::sin(ZAngle);
+        mat(1, 0) = std::sin(ZAngle);
+        mat(1, 1) = std::cos(ZAngle);
+
+        return mat;
+    }
+
+    friend std::ostream& operator << (std::ostream& os, const Matrix& A);
 
 private:
     const int MATRICE_HOMOTHETIE = 1;
@@ -71,7 +133,32 @@ private:
 
     int _rows, _columns;
 
-    double** _coefficients;
+    double** _coefficients = nullptr;
+
+    void _freeMem()
+    {
+        for(int i = 0; i < this->_rows; i++)
+            delete this->_coefficients[i];
+
+        delete this->_coefficients;
+    }
+
+    void inline _reallocMem(int m, int n)
+    {
+        _freeMem();
+
+        _coefficients = new double*[m];
+        for(int i = 0; i < m; i++)
+        {
+            _coefficients[i] = new double[n];
+            for(int j = 0; j < n; j++)
+                _coefficients[i][j] = 0;
+        }
+
+        _rows = m;
+        _columns = n;
+        _matrixType = -1;
+    }
 };
 
 #endif // MATRIX_H
