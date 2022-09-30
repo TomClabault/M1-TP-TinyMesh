@@ -12,15 +12,15 @@ public:
     Icosphere();
     Icosphere(int subdivisions);
 
-    int VerticesCount() const;
+    unsigned int VerticesCount() const;
     Vector Vertex(int index) const;
     int VertexIndex(int index) const;
 
-    int NormalsCount() const;
+    unsigned int NormalsCount() const;
     Vector Normal(int index) const;
     int NormalIndex(int index) const;
 
-    int IndicesCount() const;
+    unsigned int IndicesCount() const;
 
 private:
     std::vector<Vector> vertices;

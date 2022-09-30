@@ -50,7 +50,7 @@ Icosphere::Icosphere(int subdivisions) : Icosphere()
     std::cout << "Not implemented";
 }
 
-int Icosphere::VerticesCount() const
+unsigned int Icosphere::VerticesCount() const
 {
     return vertices.size();
 }
@@ -65,7 +65,7 @@ int Icosphere::VertexIndex(int index) const
     return indices.at(index);
 }
 
-int Icosphere::NormalsCount() const
+unsigned int Icosphere::NormalsCount() const
 {
     return normals.size();
 }
@@ -75,7 +75,7 @@ Vector Icosphere::Normal(int index) const
     return normals.at(index);
 }
 
-int Icosphere::IndicesCount() const
+unsigned int Icosphere::IndicesCount() const
 {
     return indices.size();
 }

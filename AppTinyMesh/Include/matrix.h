@@ -34,46 +34,21 @@ public:
 
     ~Matrix();
 
-    /*!
-     * \brief Fills the coefficient of the matrix to
-     * have this instance of Matrix behave like a scaling
-     * matrix according to the given scaling parameters
-     *
-     * \param sX The X axis scaling
-     * \param sY The Y axis scaling
-     * \param sZ The Z axis scaling
-     */
-    void setScaling(double sX, double sY, double sZ);
-
-    /*!
-     * \brief Fills the coefficient of the matrix to
-     * have this instance of Matrix behave like a rotation
-     * matrix according to the given rotation angle parameters.
-     * The rotations are applied in the following order:
-     * Z -> Y -> X
-     *
-     * \param rX The rotation angle around the X axis in radians
-     * \param rY The rotation angle around the Y axis in radians
-     * \param rZ The rotation angle around the Z axis in radians
-     */
-    void setRotation(double rX, double rY, double rZ);
-
     int Rows() const;
     int Columns() const;
 
     Matrix Inverse();
-    Matrix Tranpose();
+    Matrix Transpose();
 
-    double* operator()(int y) const;
     double& operator()(int y, int x) const;
 
     Matrix& operator=(const Matrix& A);
+    Matrix& operator=(Matrix&& A);
 
     Matrix& operator+=(const Matrix& B);
     Matrix& operator-=(const Matrix& B);
     Matrix& operator*=(const Matrix& B);
     Matrix& operator*=(double n);
-    Matrix& operator/=(const Matrix& B);
     Matrix& operator/=(double n);
 
     friend Matrix operator+(const Matrix& A, const Matrix& B);
@@ -92,6 +67,8 @@ public:
         mat(2, 1) = std::sin(xAngle);
         mat(2, 2) = std::cos(xAngle);
 
+        mat._matrixType = MATRICE_ROTATION;
+
         return mat;
     }
 
@@ -104,6 +81,8 @@ public:
         mat(0, 2) = std::sin(yAngle);
         mat(2, 0) = -std::sin(yAngle);
         mat(2, 2) = std::cos(yAngle);
+
+        mat._matrixType = MATRICE_ROTATION;
 
         return mat;
     }
@@ -118,14 +97,63 @@ public:
         mat(1, 0) = std::sin(ZAngle);
         mat(1, 1) = std::cos(ZAngle);
 
+        mat._matrixType = MATRICE_ROTATION;
+
+        return mat;
+    }
+
+    /*!
+     * \brief Creates and returns a rotation matrix that applies
+     * 3 rotations depending on the given angle parameters. The
+     * rotation in the Z axis is first applied, then Y, then X.
+     *
+     * \param xAngle The angle for the rotation around the X axis.
+     * Angle in radians
+     * \param yAngle The angle for the rotation around the Y axis.
+     * Angle in radians
+     * \param zAngle The angle for the rotation around the Z axis.
+     * Angle in radians
+     *
+     * \return The rotation matrix that applies the rotations in
+     * the order specified in the brief of the function
+     */
+    static Matrix RotationZYX(double xAngle, double yAngle, double zAngle)
+    {
+        return RotationX(xAngle) * RotationY(yAngle) * RotationZ(zAngle);
+    }
+
+    /*!
+     * \brief Overload for RotationZYX(angle, angle, angle)
+     *
+     * \param angle The angle around which to apply the rotation
+     * for the Z, Y and X axis. Angle in radians.
+     *
+     * \return A rotation matrix that rotates around all the axis
+     * by the given angle. Rotation around Z first, then Y, then X
+     */
+    static Matrix RotationZYX(double angle)
+    {
+        return RotationZYX(angle, angle, angle);
+    }
+
+    static Matrix Homothetie(double xScale, double yScale, double zScale)
+    {
+        Matrix mat(3,3 );
+
+        mat(0, 0) = xScale;
+        mat(1, 1) = yScale;
+        mat(2, 2) = zScale;
+
         return mat;
     }
 
     friend std::ostream& operator << (std::ostream& os, const Matrix& A);
 
 private:
-    const int MATRICE_HOMOTHETIE = 1;
-    const int MATRICE_ROTATION = 2;
+    const static int MATRICE_HOMOTHETIE = 1;
+    const static int MATRICE_ROTATION = 2;
+
+    bool _isTransposed = false;
 
     int _matrixType;//This parameter is used when calculating the inverse / tranpose of
     //a matrix. It allows for a simple implementation (not a general one) of the
@@ -137,27 +165,15 @@ private:
 
     void _freeMem()
     {
+        //The memory has already been moved to another location
+        //We don't have to free anything
+        if(_coefficients == nullptr)
+            return;
+
         for(int i = 0; i < this->_rows; i++)
-            delete this->_coefficients[i];
+            delete[] _coefficients[i];
 
-        delete this->_coefficients;
-    }
-
-    void inline _reallocMem(int m, int n)
-    {
-        _freeMem();
-
-        _coefficients = new double*[m];
-        for(int i = 0; i < m; i++)
-        {
-            _coefficients[i] = new double[n];
-            for(int j = 0; j < n; j++)
-                _coefficients[i][j] = 0;
-        }
-
-        _rows = m;
-        _columns = n;
-        _matrixType = -1;
+        delete _coefficients;
     }
 };
 

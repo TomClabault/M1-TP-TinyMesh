@@ -51,28 +51,6 @@ Matrix::~Matrix()
     _freeMem();
 }
 
-void Matrix::setScaling(double sX, double sY, double sZ)
-{
-    _matrixType = Matrix::MATRICE_HOMOTHETIE;
-
-    if(_rows != 3 || _columns != 3)//Resizing the matrix
-        _reallocMem(3, 3);
-
-    _coefficients[0][0] = sX;
-    _coefficients[1][1] = sY;
-    _coefficients[2][2] = sZ;
-}
-
-void Matrix::setRotation(double rX, double rY, double rZ)
-{
-    _matrixType = Matrix::MATRICE_ROTATION;
-
-    if(_rows != 3 || _columns != 3)//Resizing the matrix
-        _reallocMem(3, 3);
-
-    (*this) = Matrix::RotationX(rX) * Matrix::RotationY(rY) * Matrix::RotationZ(rZ);
-}
-
 int Matrix::Rows() const
 {
     return _rows;
@@ -83,23 +61,31 @@ int Matrix::Columns() const
     return _columns;
 }
 
+Matrix Matrix::Transpose()
+{
+    if(_matrixType != MATRICE_HOMOTHETIE && _matrixType != MATRICE_ROTATION)
+        throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
+    else
+        _isTransposed = true;
+
+    return *this;
+}
+
 Matrix Matrix::Inverse()
 {
-    return Matrix(3, 3);
-}
+    if(_matrixType != MATRICE_HOMOTHETIE && _matrixType != MATRICE_ROTATION)
+        throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
+    else
 
-Matrix Matrix::Tranpose()
-{
-    return Matrix(3, 3);
-}
 
-double* Matrix::operator()(int y) const
-{
-    return this->_coefficients[y];
+    return *this;
 }
 
 double& Matrix::operator()(int y, int x) const
 {
+    if(_isTransposed)
+        std::swap(y, x);
+
     return this->_coefficients[y][x];
 }
 
@@ -111,6 +97,18 @@ Matrix& Matrix::operator=(const Matrix& A)
     for(int y = 0; y < this->_rows; y++)
         for(int x = 0; x < this->_rows; x++)
             (*this)(y, x) = A(y, x);
+
+    return (*this);
+}
+
+Matrix& Matrix::operator=(Matrix&& A)
+{
+    this->_coefficients = A._coefficients;
+    this->_rows = A._rows;
+    this->_columns = A._columns;
+    this->_matrixType = A._matrixType;
+
+    A._coefficients = nullptr;
 
     return (*this);
 }

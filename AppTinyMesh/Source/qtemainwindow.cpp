@@ -7,81 +7,8 @@
 
 MainWindow::MainWindow()
 {
-//    /*!
-//     * \brief Fills the coefficient of the matrix to
-//     * have this instance of Matrix behave like a rotation
-//     * matrix according to the given rotation angle parameters.
-//     * The rotations are applied in the following order:
-//     * Z -> Y -> X
-//     *
-//     * \param rX The rotation angle around the X axis in radians
-//     * \param rY The rotation angle around the Y axis in radians
-//     * \param rZ The rotation angle around the Z axis in radians
-//     */
-//    void setRotation(double rX, double rY, double rZ);
-
-//    int Rows() const;
-//    int Columns() const;
-
 //    Matrix Inverse();
 //    Matrix Tranpose();
-
-//    double* operator()(int y) const;
-//    double& operator()(int y, int x) const;
-
-//    Matrix& operator=(const Matrix& A);
-
-//    Matrix& operator+=(const Matrix& B);
-//    Matrix& operator-=(const Matrix& B);
-//    Matrix& operator*=(const Matrix& B);
-//    Matrix& operator*=(double n);
-//    Matrix& operator/=(const Matrix& B);
-//    Matrix& operator/=(double n);
-
-//    friend Matrix operator+(const Matrix& A, const Matrix& B);
-//    friend Matrix operator-(const Matrix& A, const Matrix& B);
-//    friend Matrix operator*(const Matrix& A, const Matrix& B);
-//    friend Matrix operator*(const Matrix& A, double);
-//    friend Matrix operator/(const Matrix& A, double);
-
-//    static Matrix RotationX(double xAngle)
-//    {
-//        Matrix mat(3, 3);
-
-//        mat(0, 0) = 1;
-//        mat(1, 1) = std::cos(xAngle);
-//        mat(1, 2) = -std::sin(xAngle);
-//        mat(2, 1) = std::sin(xAngle);
-//        mat(2, 2) = std::cos(xAngle);
-
-//        return mat;
-//    }
-
-//    static Matrix RotationY(double yAngle)
-//    {
-//        Matrix mat(3, 3);
-
-//        mat(1, 1) = 1;
-//        mat(0, 0) = std::cos(yAngle);
-//        mat(0, 2) = std::sin(yAngle);
-//        mat(2, 0) = -std::sin(yAngle);
-//        mat(2, 2) = std::cos(yAngle);
-
-//        return mat;
-//    }
-
-//    static Matrix RotationZ(double ZAngle)
-//    {
-//        Matrix mat(3, 3);
-
-//        mat(2, 2) = 1;
-//        mat(0, 0) = std::cos(ZAngle);
-//        mat(0, 1) = -std::sin(ZAngle);
-//        mat(1, 0) = std::sin(ZAngle);
-//        mat(1, 1) = std::cos(ZAngle);
-
-//        return mat;
-//    }
 
     double** arrayMat = new double*[5];
     for(int i = 0; i < 5; i++)
@@ -92,11 +19,10 @@ MainWindow::MainWindow()
             arrayMat[i][j] = i * 5 + j;
     }
 
+    Matrix Idi = Matrix::RotationZYX(1, 1, 1);
 
-    Matrix A(5, 5);
-    A.setRotation(1, 2, 3);
-
-    std::cout << A;
+    std::cout << Idi << std::endl;
+    std::cout << Idi.Transpose() << std::endl;
 
     std::exit(10);
 
@@ -110,7 +36,7 @@ MainWindow::MainWindow()
 	GLlayout->setContentsMargins(0, 0, 0, 0);
 	uiw.widget_GL->setLayout(GLlayout);
 
-	// Creation des connect
+    //Creation des connect
 	CreateActions();
 
 	meshWidget->SetCamera(Camera(Vector(10, 0, 0), Vector(0.0, 0.0, 0.0)));
