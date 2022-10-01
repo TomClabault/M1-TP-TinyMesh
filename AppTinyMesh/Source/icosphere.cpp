@@ -36,7 +36,7 @@ Icosphere::Icosphere()
         int index1 = Icosphere::baseIndices[i + 1];
         int index2 = Icosphere::baseIndices[i + 2];
 
-        Vector normal = (Icosphere::baseVertices[index1] - Icosphere::baseVertices[index0]) / (Icosphere::baseVertices[index2] - Icosphere::baseVertices[index0]);
+        Vector normal = (Icosphere::baseVertices[index2] - Icosphere::baseVertices[index0]) / (Icosphere::baseVertices[index1] - Icosphere::baseVertices[index0]);
 
         normals.push_back(normal);
         normalIndices.push_back(i / 3);

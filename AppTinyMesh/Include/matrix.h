@@ -3,6 +3,9 @@
 
 #include <iostream>
 
+#include "mathematics.h"
+
+
 class Matrix
 {
 public:
@@ -38,7 +41,10 @@ public:
     int Columns() const;
 
     Matrix& Inverse();
+    Matrix GetInverse() const;
+
     Matrix& Transpose();
+    Matrix GetTranspose() const;
 
     double& operator()(int y, int x) const;
 
@@ -53,6 +59,7 @@ public:
 
     friend Matrix operator+(const Matrix& A, const Matrix& B);
     friend Matrix operator-(const Matrix& A, const Matrix& B);
+    friend Vector operator*(const Vector& A, const Matrix& B);
     friend Matrix operator*(const Matrix& A, const Matrix& B);
     friend Matrix operator*(const Matrix& A, double);
     friend Matrix operator/(const Matrix& A, double);
@@ -149,6 +156,11 @@ public:
         mat._matrixType = HOMOTHETY_MATRIX;
 
         return mat;
+    }
+
+    static Matrix Homothety(Vector s)
+    {
+        return Homothety(s[0], s[1], s[2]);
     }
 
     friend std::ostream& operator << (std::ostream& os, const Matrix& A);

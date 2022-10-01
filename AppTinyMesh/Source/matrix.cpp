@@ -82,6 +82,19 @@ Matrix& Matrix::Transpose()
     return *this;
 }
 
+Matrix Matrix::GetTranspose() const
+{
+    if(_matrixType != HOMOTHETY_MATRIX && _matrixType != ROTATION_MATRIX)
+        throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
+
+    Matrix result = Matrix(*this);
+
+    result._isTransposed = result._isTransposed;//This will allow to just swap the
+    //indexes when accessing an element with the () operator
+
+    return result;
+}
+
 Matrix& Matrix::Inverse()
 {
     if(_matrixType == ROTATION_MATRIX)//The inverse of a rotation matrix is its transposition
@@ -94,6 +107,25 @@ Matrix& Matrix::Inverse()
         (*this)(2, 2) = 1 / (*this)(2, 2);
 
         return *this;
+    }
+    else
+        throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
+}
+
+Matrix Matrix::GetInverse() const
+{
+    if(_matrixType == ROTATION_MATRIX)//The inverse of a rotation matrix is its transposition
+        //because rotation matrices are orthogonal
+        return this->GetTranspose();
+    else if(_matrixType == HOMOTHETY_MATRIX)
+    {
+        Matrix result = Matrix(*this);
+
+        result(0, 0) = 1 / result(0, 0);
+        result(1, 1) = 1 / result(1, 1);
+        result(2, 2) = 1 / result(2, 2);
+
+        return result;
     }
     else
         throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
@@ -196,6 +228,13 @@ Matrix& Matrix::operator*=(const Matrix& B)
 Matrix& Matrix::operator*=(double n)
 {
     return (*this) = ((*this) * n);
+}
+
+Vector operator*(const Vector& vec, const Matrix& mat)
+{
+    return Vector(vec[0] * mat(0, 0) + vec[1] * mat(1, 0) + vec[2] * mat(2, 0),
+                  vec[0] * mat(0, 1) + vec[1] * mat(1, 1) + vec[2] * mat(2, 1),
+                  vec[0] * mat(0, 2) + vec[1] * mat(1, 2) + vec[2] * mat(2, 2));
 }
 
 Matrix operator*(const Matrix& A, double n)

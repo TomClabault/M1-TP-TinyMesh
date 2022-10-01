@@ -252,6 +252,28 @@ void Mesh::Scale(double s)
     }
 }
 
+void Mesh::Scale(const Matrix& homothetyMatrix)
+{
+    for(Vector& vertex : this->vertices)
+        vertex = vertex * homothetyMatrix;
+}
+
+void Mesh::Rotate(const Matrix& rotationMatrix)
+{
+    for(Vector& vertex : this->vertices)
+        vertex = vertex * rotationMatrix;
+
+    for(Vector& normal : this->normals)
+        normal = Normalized(normal * rotationMatrix.GetInverse().GetTranspose());
+}
+
+void Mesh::Translate(const Vector& translationVector)
+{
+    for(Vector& vertex : this->vertices)
+        vertex += translationVector;
+}
+
+
 
 
 #include <QtCore/QFile>

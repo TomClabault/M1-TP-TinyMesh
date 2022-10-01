@@ -4,6 +4,7 @@
 #include "icosphere.h"
 #include "ray.h"
 #include "mathematics.h"
+#include "matrix.h"
 
 // Triangle
 class Triangle
@@ -116,6 +117,9 @@ public:
   Box GetBox() const;
 
   void Scale(double);
+  void Scale(const Matrix& homothetyMatrix);
+  void Rotate(const Matrix& rotationMatrix);
+  void Translate(const Vector& translationVector);
 
   void SmoothNormals();
 
