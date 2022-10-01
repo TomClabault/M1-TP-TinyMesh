@@ -12,6 +12,12 @@ public:
     Icosphere();
     Icosphere(int subdivisions);
 
+    /*!
+     * \brief Subdivides the current icosphere one time (quadruples
+     * the number of triangles)
+     */
+    void subdivide();
+
     unsigned int VerticesCount() const;
     Vector Vertex(int index) const;
     int VertexIndex(int index) const;
