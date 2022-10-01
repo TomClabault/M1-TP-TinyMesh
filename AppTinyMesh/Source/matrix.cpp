@@ -3,21 +3,33 @@
 #include <cmath>
 #include <stdexcept>
 
-Matrix::Matrix(const Matrix& A) : Matrix(A._coefficients, A._rows, A._columns)
+Matrix::Matrix(const Matrix& A)
 {
+    _coefficients = new double*[A._rows];
+    for(int i = 0; i < A._rows; i++)
+    {
+        _coefficients[i] = new double[A._columns];
+        for(int j = 0; j < A._columns; j++)
+            _coefficients[i][j] = A(i, j);
+    }
+
+    _rows = A._rows;
+    _columns = A._columns;
+
     _matrixType = A._matrixType;
+    _isTransposed = A._isTransposed;
 }
 
 Matrix::Matrix(Matrix&& A)
 {
     _coefficients = A._coefficients;
-
     A._coefficients = nullptr;
 
     _rows = A._rows;
     _columns = A._columns;
 
     _matrixType = A._matrixType;
+    _isTransposed = A._isTransposed;
 }
 
 Matrix::Matrix(double** values, int m, int n)
@@ -26,8 +38,6 @@ Matrix::Matrix(double** values, int m, int n)
 
     _rows = m;
     _columns = n;
-
-    _matrixType = -1;
 }
 
 Matrix::Matrix(int m, int n)
@@ -61,24 +71,32 @@ int Matrix::Columns() const
     return _columns;
 }
 
-Matrix Matrix::Transpose()
+Matrix& Matrix::Transpose()
 {
-    if(_matrixType != MATRICE_HOMOTHETIE && _matrixType != MATRICE_ROTATION)
+    if(_matrixType != HOMOTHETY_MATRIX && _matrixType != ROTATION_MATRIX)
         throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
     else
-        _isTransposed = true;
+        this->_isTransposed = !this->_isTransposed;//This will allow to just swap the
+        //indexes when accessing an element with the () operator
 
     return *this;
 }
 
-Matrix Matrix::Inverse()
+Matrix& Matrix::Inverse()
 {
-    if(_matrixType != MATRICE_HOMOTHETIE && _matrixType != MATRICE_ROTATION)
-        throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
+    if(_matrixType == ROTATION_MATRIX)//The inverse of a rotation matrix is its transposition
+        //because rotation matrices are orthogonal
+        return this->Transpose();
+    else if(_matrixType == HOMOTHETY_MATRIX)
+    {
+        (*this)(0, 0) = 1 / (*this)(0, 0);
+        (*this)(1, 1) = 1 / (*this)(1, 1);
+        (*this)(2, 2) = 1 / (*this)(2, 2);
+
+        return *this;
+    }
     else
-
-
-    return *this;
+        throw std::invalid_argument("Inverse only implemented for rotation and homothety matrices.");
 }
 
 double& Matrix::operator()(int y, int x) const
@@ -161,6 +179,9 @@ Matrix operator*(const Matrix& A, const Matrix& B)
         for(int x = 0; x < B._columns; x++)
             for(int i = 0; i < A._columns; i++)
                 result(y, x) += A(y, i) * B(i, x);
+
+    if(A._matrixType == B._matrixType)
+        result._matrixType = A._matrixType;
 
     return result;
 }

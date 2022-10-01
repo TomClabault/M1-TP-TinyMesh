@@ -7,25 +7,6 @@
 
 MainWindow::MainWindow()
 {
-//    Matrix Inverse();
-//    Matrix Tranpose();
-
-    double** arrayMat = new double*[5];
-    for(int i = 0; i < 5; i++)
-    {
-        arrayMat[i] = new double[5];
-
-        for(int j = 0; j < 5; j++)
-            arrayMat[i][j] = i * 5 + j;
-    }
-
-    Matrix Idi = Matrix::RotationZYX(1, 1, 1);
-
-    std::cout << Idi << std::endl;
-    std::cout << Idi.Transpose() << std::endl;
-
-    std::exit(10);
-
     // Chargement de l'interface
 	uiw.setupUi(this);
 

@@ -37,8 +37,8 @@ public:
     int Rows() const;
     int Columns() const;
 
-    Matrix Inverse();
-    Matrix Transpose();
+    Matrix& Inverse();
+    Matrix& Transpose();
 
     double& operator()(int y, int x) const;
 
@@ -67,7 +67,7 @@ public:
         mat(2, 1) = std::sin(xAngle);
         mat(2, 2) = std::cos(xAngle);
 
-        mat._matrixType = MATRICE_ROTATION;
+        mat._matrixType = ROTATION_MATRIX;
 
         return mat;
     }
@@ -82,7 +82,7 @@ public:
         mat(2, 0) = -std::sin(yAngle);
         mat(2, 2) = std::cos(yAngle);
 
-        mat._matrixType = MATRICE_ROTATION;
+        mat._matrixType = ROTATION_MATRIX;
 
         return mat;
     }
@@ -97,7 +97,7 @@ public:
         mat(1, 0) = std::sin(ZAngle);
         mat(1, 1) = std::cos(ZAngle);
 
-        mat._matrixType = MATRICE_ROTATION;
+        mat._matrixType = ROTATION_MATRIX;
 
         return mat;
     }
@@ -119,7 +119,9 @@ public:
      */
     static Matrix RotationZYX(double xAngle, double yAngle, double zAngle)
     {
-        return RotationX(xAngle) * RotationY(yAngle) * RotationZ(zAngle);
+        Matrix mat = RotationX(xAngle) * RotationY(yAngle) * RotationZ(zAngle);
+
+        return mat;
     }
 
     /*!
@@ -136,7 +138,7 @@ public:
         return RotationZYX(angle, angle, angle);
     }
 
-    static Matrix Homothetie(double xScale, double yScale, double zScale)
+    static Matrix Homothety(double xScale, double yScale, double zScale)
     {
         Matrix mat(3,3 );
 
@@ -144,18 +146,20 @@ public:
         mat(1, 1) = yScale;
         mat(2, 2) = zScale;
 
+        mat._matrixType = HOMOTHETY_MATRIX;
+
         return mat;
     }
 
     friend std::ostream& operator << (std::ostream& os, const Matrix& A);
 
 private:
-    const static int MATRICE_HOMOTHETIE = 1;
-    const static int MATRICE_ROTATION = 2;
+    const static int HOMOTHETY_MATRIX = 1;
+    const static int ROTATION_MATRIX = 2;
 
     bool _isTransposed = false;
 
-    int _matrixType;//This parameter is used when calculating the inverse / tranpose of
+    int _matrixType = -1;//This parameter is used when calculating the inverse / tranpose of
     //a matrix. It allows for a simple implementation (not a general one) of the
     //inverse and tranpose methods.
 
