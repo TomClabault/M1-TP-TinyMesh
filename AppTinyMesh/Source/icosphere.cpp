@@ -116,23 +116,23 @@ void Icosphere::subdivide()
         int vertex23Index = currentVerticesCount - 1 + createdVerticesCount + 2;
         int vertex31Index = currentVerticesCount - 1 + createdVerticesCount + 3;
 
-        vertex12Index = midPointExists(vertex1Index, vertex2Index, vertex12Index);
-        vertex23Index = midPointExists(vertex2Index, vertex3Index, vertex23Index);
-        vertex31Index = midPointExists(vertex3Index, vertex1Index, vertex31Index);
+        //vertex12Index = midPointExists(vertex1Index, vertex2Index, vertex12Index);
+        //vertex23Index = midPointExists(vertex2Index, vertex3Index, vertex23Index);
+        //vertex31Index = midPointExists(vertex3Index, vertex1Index, vertex31Index);
 
         //Getting the middle points from the already-existing-vertices array or by computing
         //the middle point based on whether we had already computed this point before
-        Vector vertex12 = (vertex12Index == -1) ? (vertex1 + vertex2) / 2 : vertices[vertex12Index];
-        Vector vertex23 = (vertex23Index == -1) ? (vertex2 + vertex3) / 2 : vertices[vertex23Index];
-        Vector vertex31 = (vertex31Index == -1) ? (vertex3 + vertex1) / 2 : vertices[vertex31Index];
+        Vector vertex12 = (true) ? Normalized((vertex1 + vertex2) / 2) : vertices[vertex12Index];
+        Vector vertex23 = (true) ? Normalized((vertex2 + vertex3) / 2) : vertices[vertex23Index];
+        Vector vertex31 = (true) ? Normalized((vertex3 + vertex1) / 2) : vertices[vertex31Index];
 
-        if(vertex12Index == -1)//The middle point of vertex1 and vertex2 hadn't been computed before
+        ///if(vertex12Index == -1)//The middle point of vertex1 and vertex2 hadn't been computed before
             createdVerticesCount++;
 
-        if(vertex23Index == -1)
+        //if(vertex23Index == -1)
             createdVerticesCount++;
 
-        if(vertex31Index == -1)
+        //if(vertex31Index == -1)
             createdVerticesCount++;
 
         //Adding the newly created vertices
