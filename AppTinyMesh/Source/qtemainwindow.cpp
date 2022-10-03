@@ -83,7 +83,7 @@ void MainWindow::SphereImplicitExample()
 
 void MainWindow::IcosphereMeshExample()
 {
-    Mesh icosphereMesh = Mesh(Icosphere(4));
+    Mesh icosphereMesh = Mesh(Icosphere(6));
 
     std::vector<Color> colors;
     colors.resize(icosphereMesh.Vertexes());

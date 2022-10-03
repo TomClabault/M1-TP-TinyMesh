@@ -1,6 +1,9 @@
 #include "icosphere.h"
 #include <unordered_map>
 
+//Cache used to avoid the duplication of vertices when subdividing the icosphere
+std::unordered_map<int, int> midPointsCache;
+
 const float X=.525731112119133606f;
 const float Z=.850650808352039932f;
 const float N=0.f;
@@ -48,17 +51,17 @@ Icosphere::Icosphere()
 
 Icosphere::Icosphere(int subdivisions) : Icosphere()
 {
+    midPointsCache = std::unordered_map<int, int>();
+
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
 }
-
-std::unordered_map<int, int> midPointsCache;
 
 int getPointKey(const int pointAIndex, const int pointBIndex)
 {
     //The Cantor's pairing function allows us to generate a unique key for the hash map
     //based on the two indices of the vertices
-    return ((pointAIndex + pointBIndex) * (pointAIndex + pointBIndex + 1) / 2) + pointBIndex;
+    return ((pointAIndex + pointBIndex) * (pointAIndex + pointBIndex + 1) / 2) + std::min(pointAIndex, pointBIndex);
 }
 
 /*!
@@ -77,8 +80,6 @@ int getPointKey(const int pointAIndex, const int pointBIndex)
  */
 int midPointExists(const int pointAIndex, const int pointBIndex, const int midPointIndex)
 {
-    std::cout << midPointsCache.size() << std::endl;
-
     int midPointKey = getPointKey(pointAIndex, pointBIndex);
     auto midPoint = midPointsCache.find(midPointKey);
     if(midPoint != midPointsCache.end())//The middle point already exists
@@ -112,33 +113,87 @@ void Icosphere::subdivide()
         Vector vertex2 = vertices[vertex2Index];
         Vector vertex3 = vertices[vertex3Index];
 
-        int vertex12Index = currentVerticesCount - 1 + createdVerticesCount + 1;
-        int vertex23Index = currentVerticesCount - 1 + createdVerticesCount + 2;
-        int vertex31Index = currentVerticesCount - 1 + createdVerticesCount + 3;
+        int vertex12Index = currentVerticesCount + createdVerticesCount;
+        int vertex23Index = currentVerticesCount + createdVerticesCount;
+        int vertex31Index = currentVerticesCount + createdVerticesCount;
 
         //vertex12Index = midPointExists(vertex1Index, vertex2Index, vertex12Index);
         //vertex23Index = midPointExists(vertex2Index, vertex3Index, vertex23Index);
         //vertex31Index = midPointExists(vertex3Index, vertex1Index, vertex31Index);
+        int vertex12Key = getPointKey(vertex1Index, vertex2Index);
+        int vertex23Key = getPointKey(vertex2Index, vertex3Index);
+        int vertex31Key = getPointKey(vertex3Index, vertex1Index);
+
+        bool vertex12Exists = false;
+        bool vertex23Exists = false;
+        bool vertex31Exists = false;
+
+        auto vertex12Find = midPointsCache.find(vertex12Key);
+        if(vertex12Find != midPointsCache.end())
+        {
+            vertex12Index = vertex12Find->second;
+            vertex12Exists = true;
+        }
+        else
+        {
+            std::cout << vertex12Index << std::endl;
+            midPointsCache[vertex12Key] = vertex12Index;
+
+            vertex23Index++;
+            vertex31Index++;
+        }
+
+        auto vertex23Find = midPointsCache.find(vertex23Key);
+        if(vertex23Find != midPointsCache.end())
+        {
+            vertex23Index = vertex23Find->second;
+            vertex23Exists = true;
+        }
+        else
+        {
+            std::cout << vertex23Index << std::endl;
+            midPointsCache[vertex23Key] = vertex23Index;
+
+            vertex31Index++;
+        }
+
+        auto vertex31Find = midPointsCache.find(vertex31Key);
+        if(vertex31Find != midPointsCache.end())
+        {
+            vertex31Index = vertex31Find->second;
+            vertex31Exists = true;
+        }
+        else
+        {
+            std::cout << vertex31Index << std::endl;
+            midPointsCache[vertex31Key] = vertex31Index;
+        }
 
         //Getting the middle points from the already-existing-vertices array or by computing
         //the middle point based on whether we had already computed this point before
-        Vector vertex12 = (true) ? Normalized((vertex1 + vertex2) / 2) : vertices[vertex12Index];
-        Vector vertex23 = (true) ? Normalized((vertex2 + vertex3) / 2) : vertices[vertex23Index];
-        Vector vertex31 = (true) ? Normalized((vertex3 + vertex1) / 2) : vertices[vertex31Index];
+        Vector vertex12 = (!vertex12Exists) ? Normalized((vertex1 + vertex2) / 2) : vertices[vertex12Index];
+        Vector vertex23 = (!vertex23Exists) ? Normalized((vertex2 + vertex3) / 2) : vertices[vertex23Index];
+        Vector vertex31 = (!vertex31Exists) ? Normalized((vertex3 + vertex1) / 2) : vertices[vertex31Index];
 
-        ///if(vertex12Index == -1)//The middle point of vertex1 and vertex2 hadn't been computed before
+        if(!vertex12Exists)//The middle point of vertex1 and vertex2 hadn't been computed before
+        {
             createdVerticesCount++;
+            vertices.push_back(vertex12);
+        }
 
-        //if(vertex23Index == -1)
+        if(!vertex23Exists)
+        {
             createdVerticesCount++;
+            vertices.push_back(vertex23);
+        }
 
-        //if(vertex31Index == -1)
+        if(!vertex31Exists)
+        {
             createdVerticesCount++;
+            vertices.push_back(vertex31);
+        }
 
         //Adding the newly created vertices
-        vertices.push_back(vertex12);
-        vertices.push_back(vertex23);
-        vertices.push_back(vertex31);
 
 
         //Adding the new connections between the vertices to
