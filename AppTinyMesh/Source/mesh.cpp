@@ -204,30 +204,30 @@ Mesh::Mesh(const Box& box)
 }
 
 /*!
-\brief Creates an icosphere
+\brief Creates a mesh based on a "simple mesh"
 
-\param icosphere The icosphere.
+\param mesh The simple mesh
 */
-Mesh::Mesh(const Icosphere& icosphere)
+Mesh::Mesh(const SimpleMesh& mesh)
 {
   // Vertices
-  unsigned int verticesCount = icosphere.VerticesCount();
+  unsigned int verticesCount = mesh.VerticesCount();
   vertices.resize(verticesCount);
 
   for (unsigned int i = 0; i < verticesCount; i++)
-      vertices[i] = icosphere.Vertex(i);
+      vertices[i] = mesh.Vertex(i);
 
   // Normals
-  for(unsigned int i = 0; i < icosphere.NormalsCount(); i++)
-      normals.push_back(icosphere.Normal(i));
+  for(unsigned int i = 0; i < mesh.NormalsCount(); i++)
+      normals.push_back(mesh.Normal(i));
 
   // Reserve space for the triangle array
-  unsigned int indicesCount = icosphere.IndicesCount();
+  unsigned int indicesCount = mesh.IndicesCount();
   varray.reserve(indicesCount);
   narray.reserve(indicesCount);
 
   for(unsigned int  i = 0; i < indicesCount; i += 3)
-      AddTriangle(icosphere.VertexIndex(i), icosphere.VertexIndex(i + 1), icosphere.VertexIndex(i + 2), icosphere.NormalIndex(i));
+      AddTriangle(mesh.VertexIndex(i), mesh.VertexIndex(i + 1), mesh.VertexIndex(i + 2), mesh.NormalIndex(i));
 }
 
 /*!

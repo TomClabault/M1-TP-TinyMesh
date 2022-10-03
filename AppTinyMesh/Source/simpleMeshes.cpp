@@ -1,5 +1,45 @@
-#include "icosphere.h"
+#include "realtime.h"
+#include "simpleMeshes.h"
+
+#define _USE_MATH_DEFINES
+
+#include <cmath>
 #include <unordered_map>
+
+unsigned int SimpleMesh::VerticesCount() const
+{
+    return vertices.size();
+}
+
+Vector SimpleMesh::Vertex(int index) const
+{
+    return vertices.at(index);
+}
+
+int SimpleMesh::VertexIndex(int index) const
+{
+    return indices.at(index);
+}
+
+unsigned int SimpleMesh::NormalsCount() const
+{
+    return normals.size();
+}
+
+Vector SimpleMesh::Normal(int index) const
+{
+    return normals.at(index);
+}
+
+unsigned int SimpleMesh::IndicesCount() const
+{
+    return indices.size();
+}
+
+int SimpleMesh::NormalIndex(int index) const
+{
+    return normalIndices.at(index);
+}
 
 //Cache used to avoid the duplication of vertices when subdividing the icosphere
 std::unordered_map<int, int> midPointsCache;
@@ -53,8 +93,14 @@ Icosphere::Icosphere(int subdivisions) : Icosphere()
 {
     midPointsCache = std::unordered_map<int, int>();
 
+    RenderingProfiler profiler;
+
+    profiler.Init();
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
+    profiler.Update();
+
+    std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
 }
 
 int getPointKey(const int pointAIndex, const int pointBIndex)
@@ -136,7 +182,6 @@ void Icosphere::subdivide()
         }
         else
         {
-            std::cout << vertex12Index << std::endl;
             midPointsCache[vertex12Key] = vertex12Index;
 
             vertex23Index++;
@@ -151,7 +196,6 @@ void Icosphere::subdivide()
         }
         else
         {
-            std::cout << vertex23Index << std::endl;
             midPointsCache[vertex23Key] = vertex23Index;
 
             vertex31Index++;
@@ -164,10 +208,7 @@ void Icosphere::subdivide()
             vertex31Exists = true;
         }
         else
-        {
-            std::cout << vertex31Index << std::endl;
             midPointsCache[vertex31Key] = vertex31Index;
-        }
 
         //Getting the middle points from the already-existing-vertices array or by computing
         //the middle point based on whether we had already computed this point before
@@ -192,8 +233,6 @@ void Icosphere::subdivide()
             createdVerticesCount++;
             vertices.push_back(vertex31);
         }
-
-        //Adding the newly created vertices
 
 
         //Adding the new connections between the vertices to
@@ -231,37 +270,58 @@ void Icosphere::subdivide()
     normalIndices = newNormalsIndices;
 }
 
-unsigned int Icosphere::VerticesCount() const
+Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
 {
-    return vertices.size();
-}
+    double outerAngleSubdiv = (2 * M_PI) / ringCount;
+    double innerAngleSubdiv = (2 * M_PI) / ringsSubdivisions;
 
-Vector Icosphere::Vertex(int index) const
-{
-    return vertices.at(index);
-}
+    //Computing the vertices
+    for(int ring = 0; ring <= ringCount; ring++)
+    {
+        double outerAngle = ring * outerAngleSubdiv;
 
-int Icosphere::VertexIndex(int index) const
-{
-    return indices.at(index);
-}
+        for(int ringSubdiv = 0; ringSubdiv <= ringsSubdivisions; ringSubdiv++)
+        {
+            double innerAngle = ringSubdiv * innerAngleSubdiv;
 
-unsigned int Icosphere::NormalsCount() const
-{
-    return normals.size();
-}
+            double x = std::cos(outerAngle) * (outerRadius + std::cos(innerAngle) * innerRadius);
+            double y = std::sin(outerAngle) * (outerRadius + std::cos(innerAngle) * innerRadius);
+            double z = innerRadius * std::sin(innerAngle);
 
-Vector Icosphere::Normal(int index) const
-{
-    return normals.at(index);
-}
+            vertices.push_back(Vector(x, y, z));
+        }
+    }
 
-unsigned int Icosphere::IndicesCount() const
-{
-    return indices.size();
-}
+    //Computing the indices and the normals
+    int normalsCreated = 0;
+    for(int ring = 0; ring < ringCount; ring++)
+    {
+        for(int ringSubdiv = 0; ringSubdiv <= ringsSubdivisions; ringSubdiv++)
+        {
+            int vertex1Index = ringSubdiv * ringCount + ring;
+            int vertex2Index = ringSubdiv * ringCount + ring + 1;
+            int vertex3Index = (ringSubdiv + 1) * ringCount + ring;
+            int vertex4Index = (ringSubdiv + 1) * ringCount + ring + 1;
 
-int Icosphere::NormalIndex(int index) const
-{
-    return normalIndices.at(index);
+            indices.push_back(vertex1Index);
+            indices.push_back(vertex3Index);
+            indices.push_back(vertex4Index);
+
+            indices.push_back(vertex1Index);
+            indices.push_back(vertex4Index);
+            indices.push_back(vertex2Index);
+
+            normals.push_back((vertices[vertex3Index] - vertices[vertex1Index]) / (vertices[vertex4Index] - vertices[vertex1Index]));
+            normals.push_back((vertices[vertex4Index] - vertices[vertex1Index]) / (vertices[vertex2Index] - vertices[vertex1Index]));
+
+            normalIndices.push_back(normalsCreated);
+            normalIndices.push_back(normalsCreated);
+            normalIndices.push_back(normalsCreated);
+            normalIndices.push_back(normalsCreated + 1);
+            normalIndices.push_back(normalsCreated + 1);
+            normalIndices.push_back(normalsCreated + 1);
+
+            normalsCreated += 2;
+        }
+    }
 }

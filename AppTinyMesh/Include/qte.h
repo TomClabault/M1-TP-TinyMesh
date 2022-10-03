@@ -26,6 +26,7 @@ public slots:
   void BoxMeshExample();
   void SphereImplicitExample();
   void IcosphereMeshExample();
+  void TorusMeshExample();
   void ResetCamera();
   void UpdateMaterial();
 };

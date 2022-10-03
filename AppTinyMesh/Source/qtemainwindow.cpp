@@ -1,7 +1,7 @@
 #include "qte.h"
 #include "implicits.h"
 
-#include "icosphere.h"
+#include "simpleMeshes.h"
 
 #include "matrix.h"
 
@@ -83,7 +83,8 @@ void MainWindow::SphereImplicitExample()
 
 void MainWindow::IcosphereMeshExample()
 {
-    Mesh icosphereMesh = Mesh(Icosphere(6));
+    Mesh icosphereMesh = Mesh(Torus(1, 5, 15, 150));
+    //Mesh icosphereMesh = Mesh(Icosphere(6));
 
     std::vector<Color> colors;
     colors.resize(icosphereMesh.Vertexes());
@@ -92,6 +93,18 @@ void MainWindow::IcosphereMeshExample()
 
     meshColor = MeshColor(icosphereMesh, colors, icosphereMesh.VertexIndexes());
     UpdateGeometry();
+}
+
+void MainWindow::TorusMeshExample()
+{
+
+//    std::vector<Color> colors;
+//    colors.resize(torusMesh.Vertexes());
+//    for (int i = 0; i < colors.size(); i++)
+//        colors[i] = Color(1.0, 0.5, 0.5);
+
+//    meshColor = MeshColor(torusMesh, colors, torusMesh.VertexIndexes());
+//    UpdateGeometry();
 }
 
 void MainWindow::UpdateGeometry()
