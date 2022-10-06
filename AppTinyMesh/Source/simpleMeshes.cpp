@@ -276,11 +276,11 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
     double innerAngleSubdiv = (2 * M_PI) / ringsSubdivisions;
 
     //Computing the vertices
-    for(int ring = 0; ring <= ringCount; ring++)
+    for(int ring = 0; ring < ringCount; ring++)
     {
         double outerAngle = ring * outerAngleSubdiv;
 
-        for(int ringSubdiv = 0; ringSubdiv <= ringsSubdivisions; ringSubdiv++)
+        for(int ringSubdiv = 0; ringSubdiv < ringsSubdivisions; ringSubdiv++)
         {
             double innerAngle = ringSubdiv * innerAngleSubdiv;
 
@@ -296,12 +296,16 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
     int normalsCreated = 0;
     for(int ring = 0; ring < ringCount; ring++)
     {
-        for(int ringSubdiv = 0; ringSubdiv <= ringsSubdivisions; ringSubdiv++)
+        for(int ringSubdiv = 0; ringSubdiv < ringsSubdivisions; ringSubdiv++)
         {
-            int vertex1Index = ringSubdiv * ringCount + ring;
-            int vertex2Index = ringSubdiv * ringCount + ring + 1;
-            int vertex3Index = (ringSubdiv + 1) * ringCount + ring;
-            int vertex4Index = (ringSubdiv + 1) * ringCount + ring + 1;
+            int vertex1Index = ring * ringsSubdivisions + ringSubdiv;
+            int vertex2Index = ((ring + 1) % ringCount) * ringsSubdivisions + ringSubdiv;
+            int vertex3Index = ring * ringsSubdivisions + (ringSubdiv +  1) % ringsSubdivisions;
+            int vertex4Index = ((ring + 1) % ringCount) * ringsSubdivisions + (ringSubdiv + 1) % ringsSubdivisions;
+//            int vertex1Index = ringSubdiv * ringCount + ring;
+//            int vertex2Index = ringSubdiv * ringCount + ring + 1;
+//            int vertex3Index = (ringSubdiv + 1) * ringCount + ring;
+//            int vertex4Index = (ringSubdiv + 1) * ringCount + ring + 1;
 
             indices.push_back(vertex1Index);
             indices.push_back(vertex3Index);
@@ -311,8 +315,8 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
             indices.push_back(vertex4Index);
             indices.push_back(vertex2Index);
 
-            normals.push_back((vertices[vertex3Index] - vertices[vertex1Index]) / (vertices[vertex4Index] - vertices[vertex1Index]));
-            normals.push_back((vertices[vertex4Index] - vertices[vertex1Index]) / (vertices[vertex2Index] - vertices[vertex1Index]));
+            normals.push_back((vertices[vertex4Index] - vertices[vertex1Index]) / (vertices[vertex3Index] - vertices[vertex1Index]));
+            normals.push_back((vertices[vertex2Index] - vertices[vertex1Index]) / (vertices[vertex4Index] - vertices[vertex1Index]));
 
             normalIndices.push_back(normalsCreated);
             normalIndices.push_back(normalsCreated);
