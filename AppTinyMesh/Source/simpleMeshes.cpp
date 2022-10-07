@@ -65,10 +65,10 @@ const int Icosphere::baseIndices[60] =
   6,1,10,9,0,11,9,11,2,9,2,5,7,2,11
 };
 
-Icosphere::Icosphere()
+void Icosphere::initBaseIcosphere(double radius)
 {
     for(int i = 0; i < 12; i++)
-        vertices.push_back(Icosphere::baseVertices[i]);
+        vertices.push_back(Icosphere::baseVertices[i] * radius);
 
     for(int i = 0; i < 60; i++)
         indices.push_back(Icosphere::baseIndices[i]);
@@ -89,18 +89,32 @@ Icosphere::Icosphere()
     }
 }
 
-Icosphere::Icosphere(int subdivisions) : Icosphere()
+Icosphere::Icosphere(double radius, int subdivisions)
 {
     midPointsCache = std::unordered_map<int, int>();
 
-    RenderingProfiler profiler;
+    this->radius = radius;
 
+    initBaseIcosphere(radius);
+
+
+    RenderingProfiler profiler;
     profiler.Init();
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
     profiler.Update();
 
     std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
+}
+
+double Icosphere::Radius()
+{
+    return this->radius;
+}
+
+int Icosphere::Subdivisions()
+{
+    return this->subdivisions;
 }
 
 int getPointKey(const int pointAIndex, const int pointBIndex)
@@ -141,6 +155,8 @@ int midPointExists(const int pointAIndex, const int pointBIndex, const int midPo
 
 void Icosphere::subdivide()
 {
+    this->subdivisions++;
+
     std::vector<int> newIndices;
     std::vector<Vector> newNormals;
     std::vector<int> newNormalsIndices;
@@ -216,6 +232,14 @@ void Icosphere::subdivide()
         Vector vertex23 = (!vertex23Exists) ? Normalized((vertex2 + vertex3) / 2) : vertices[vertex23Index];
         Vector vertex31 = (!vertex31Exists) ? Normalized((vertex3 + vertex1) / 2) : vertices[vertex31Index];
 
+        vertex12 *= this->radius;
+        vertex23 *= this->radius;
+        vertex31 *= this->radius;
+
+        vertex12 = Normalized(vertex12);
+        vertex23 = Normalized(vertex23);
+        vertex31 = Normalized(vertex31);
+
         if(!vertex12Exists)//The middle point of vertex1 and vertex2 hadn't been computed before
         {
             createdVerticesCount++;
@@ -254,10 +278,10 @@ void Icosphere::subdivide()
         newIndices.push_back(vertex31Index);
 
         //Adding the new normals
-        newNormals.push_back((vertex31 - vertex1) / (vertex12 - vertex1));
-        newNormals.push_back((vertex12 - vertex2) / (vertex23 - vertex2));
-        newNormals.push_back((vertex23 - vertex3) / (vertex31 - vertex3));
-        newNormals.push_back((vertex31 - vertex12) / (vertex23 - vertex12));
+        newNormals.push_back(Normalized((vertex31 - vertex1) / (vertex12 - vertex1)));
+        newNormals.push_back(Normalized((vertex12 - vertex2) / (vertex23 - vertex2)));
+        newNormals.push_back(Normalized((vertex23 - vertex3) / (vertex31 - vertex3)));
+        newNormals.push_back(Normalized((vertex31 - vertex12) / (vertex23 - vertex12)));
 
         //Adding the normals indices
         for(int j = 0; j < 4; j++)

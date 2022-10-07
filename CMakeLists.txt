@@ -45,10 +45,8 @@ add_executable(${APP} WIN32
     ${INC_DIR}/color.h
     ${INC_DIR}/GL.h
     ${INC_DIR}/glew.h
-    ${INC_DIR}/simpleMeshes.h
     ${INC_DIR}/implicits.h
     ${INC_DIR}/mathematics.h
-    ${INC_DIR}/matrix.h
     ${INC_DIR}/mesh.h
     ${INC_DIR}/meshcolor.h
     ${INC_DIR}/qte.h

@@ -1,4 +1,5 @@
-#include "qte.h"
+#include "qtemainwindow.h"
+#include <QtWidgets/qapplication.h>
 
 int main(int argc, char *argv[])
 {

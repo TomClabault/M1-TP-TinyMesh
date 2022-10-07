@@ -29,8 +29,10 @@ protected:
 class Icosphere : public SimpleMesh
 {
 public:
-    Icosphere();
-    Icosphere(int subdivisions);
+    Icosphere(double radius, int subdivisions);
+
+    double Radius();
+    int Subdivisions();
 
     /*!
      * \brief Subdivides the current icosphere one time (quadruples
@@ -41,6 +43,13 @@ public:
 public:
     static const Vector baseVertices[12];
     static const int baseIndices[60];
+
+private:
+    void initBaseIcosphere(double radius);
+
+private:
+    double radius;
+    int subdivisions = 0;
 };
 
 class Torus : public SimpleMesh
