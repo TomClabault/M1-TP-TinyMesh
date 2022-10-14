@@ -84,7 +84,9 @@ void MainWindow::SphereImplicitExample()
 
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
-    Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
+    //Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
+    Mesh icosphereMesh = Mesh(Capsule(1, 2, 12, 30, 30));
+    icosphereMesh.Rotate(Matrix::RotationX(35 * M_PI / 180));
 
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());

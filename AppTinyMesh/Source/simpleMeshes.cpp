@@ -326,10 +326,6 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
             int vertex2Index = ((ring + 1) % ringCount) * ringsSubdivisions + ringSubdiv;
             int vertex3Index = ring * ringsSubdivisions + (ringSubdiv +  1) % ringsSubdivisions;
             int vertex4Index = ((ring + 1) % ringCount) * ringsSubdivisions + (ringSubdiv + 1) % ringsSubdivisions;
-//            int vertex1Index = ringSubdiv * ringCount + ring;
-//            int vertex2Index = ringSubdiv * ringCount + ring + 1;
-//            int vertex3Index = (ringSubdiv + 1) * ringCount + ring;
-//            int vertex4Index = (ringSubdiv + 1) * ringCount + ring + 1;
 
             indices.push_back(vertex1Index);
             indices.push_back(vertex3Index);
@@ -352,4 +348,209 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
             normalsCreated += 2;
         }
     }
+}
+
+void Capsule::computeSphereRing(double deltaY, int deltaIndex, int ringIndex, double ringIncrement, double ringSubdivIncrement, double localRadius)
+{
+    //TODO si on est au ring tout en bas, il ne suffit de placer que un seul point vu qu'ils sont tous confondus
+    double y = std::sin(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
+
+    for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
+    {
+        double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+        double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+
+        Vector vertex = Vector(x, y, z);
+        this->vertices.push_back(vertex);
+
+        if(ringIndex < sphereHeightSubdivisions - 1)
+        {
+            int index0 = deltaIndex + ringIndex * cylinderSubdivisions + ringSubdiv;
+            int index1 = deltaIndex + ringIndex * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+            int index2 = deltaIndex + (ringIndex + 1) * cylinderSubdivisions + ringSubdiv;
+            int index3 = deltaIndex + (ringIndex + 1) * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+
+            this->indices.push_back(index0);
+            this->indices.push_back(index1);
+            this->indices.push_back(index3);
+
+            this->indices.push_back(index0);
+            this->indices.push_back(index3);
+            this->indices.push_back(index2);
+
+            this->normalIndices.push_back(0);
+            this->normalIndices.push_back(0);
+            this->normalIndices.push_back(0);
+            this->normalIndices.push_back(0);
+            this->normalIndices.push_back(0);
+            this->normalIndices.push_back(0);
+            this->normals.push_back(Vector(0, 1, 0));
+            this->normals.push_back(Vector(0, 1, 0));
+            this->normals.push_back(Vector(0, 1, 0));
+            this->normals.push_back(Vector(0, 1, 0));
+            this->normals.push_back(Vector(0, 1, 0));
+            this->normals.push_back(Vector(0, 1, 0));
+        }
+    }
+}
+
+Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions)
+{
+    this->radius = radius;
+    this->cylinderHeight = cylinderHeight;
+    this->cylinderSubdivisions = cylinderSubdivisions;
+    this->sphereHeightSubdivisions = sphereHeightSubdivisions;
+
+    RenderingProfiler profiler;
+    profiler.Init();
+
+    std::cout << "Radius: " << radius << std::endl;
+    std::cout << "Cylinder subdiv: " << cylinderSubdivisions << std::endl;
+    std::cout << "Sphere height subdiv: " << sphereHeightSubdivisions << std::endl;
+
+    //Generating the first bottom sphere cap of the capsule
+    double ringIncrement = 1 / (sphereHeightSubdivisions - 1.0);
+    double ringSubdivIncrement = 1 / (double)cylinderSubdivisions;
+    double deltaY = -1.0;
+
+    for(int ringIndex = 0; ringIndex < sphereHeightSubdivisions; ringIndex++)
+    {
+        double localRadius = std::sin(M_PI / 2 * ringIndex * ringIncrement);
+
+        double y = 1 - std::cos(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
+
+        for(int ringSubdiv = 0; ringSubdiv < sphereHeightSubdivisions; ringSubdiv++)
+        {
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+
+            Vector vertex = Vector(x, y, z);
+            this->vertices.push_back(vertex);
+
+            if(ringIndex < sphereHeightSubdivisions - 1)
+            {
+                int index0 = ringIndex * cylinderSubdivisions + ringSubdiv;
+                int index1 = ringIndex * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+                int index2 = (ringIndex + 1) * cylinderSubdivisions + ringSubdiv;
+                int index3 = (ringIndex + 1) * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+
+                this->indices.push_back(index0);
+                this->indices.push_back(index1);
+                this->indices.push_back(index3);
+
+                this->indices.push_back(index0);
+                this->indices.push_back(index3);
+                this->indices.push_back(index2);
+
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+            }
+        }
+    }
+
+    //To account for all the indices we have alredy generated for the first cap sphere
+    int deltaIndex = sphereHeightSubdivisions * cylinderSubdivisions;
+    double cylinderHeightIncrement = 1 / (cylinderHeightSubdivions - 1.0);
+    //Generating the cylinder
+    for(int cylinderRingIndex = 0; cylinderRingIndex < cylinderHeightSubdivions; cylinderRingIndex++)
+    {
+        for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
+        {
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement);
+            double y = cylinderRingIndex * cylinderHeightIncrement * cylinderHeight;
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement);
+
+            this->vertices.push_back(Vector(x, y, z));
+
+            if(cylinderRingIndex < cylinderHeightSubdivions - 1)
+            {
+                int index0 = deltaIndex + cylinderRingIndex * cylinderSubdivisions + ringSubdiv;
+                int index1 = deltaIndex + cylinderRingIndex * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+                int index4 = deltaIndex + (cylinderRingIndex + 1) * cylinderSubdivisions + ringSubdiv;
+                int index5 = deltaIndex + (cylinderRingIndex + 1) * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+
+                this->indices.push_back(index0);
+                this->indices.push_back(index1);
+                this->indices.push_back(index5);
+
+                this->indices.push_back(index0);
+                this->indices.push_back(index5);
+                this->indices.push_back(index4);
+
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+            }
+        }
+    }
+
+    deltaY += cylinderHeight + 1.0;
+    deltaIndex += cylinderHeightSubdivions * cylinderSubdivisions;
+    for(int ringIndex = 0; ringIndex < sphereHeightSubdivisions; ringIndex++)
+    {
+        double localRadius = std::cos(M_PI / 2 * ringIndex * ringIncrement);
+
+        //TODO si on est au ring tout en bas, il ne suffit de placer que un seul point vu qu'ils sont tous confondus
+        double y = std::sin(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
+
+        for(int ringSubdiv = cylinderSubdivisions - 1; ringSubdiv >= 0; ringSubdiv--)
+        {
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+
+            Vector vertex = Vector(x, y, z);
+            this->vertices.push_back(vertex);
+
+            if(ringIndex < sphereHeightSubdivisions - 1)
+            {
+                int index0 = deltaIndex + ringIndex * cylinderSubdivisions + ringSubdiv;
+                int index1 = deltaIndex + ringIndex * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+                int index2 = deltaIndex + (ringIndex + 1) * cylinderSubdivisions + ringSubdiv;
+                int index3 = deltaIndex + (ringIndex + 1) * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
+
+                this->indices.push_back(index0);
+                this->indices.push_back(index1);
+                this->indices.push_back(index3);
+
+                this->indices.push_back(index0);
+                this->indices.push_back(index3);
+                this->indices.push_back(index2);
+
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normalIndices.push_back(0);
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+                this->normals.push_back(Vector(0, 1, 0));
+            }
+        }
+    }
+
+    profiler.Update();
+    std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
 }

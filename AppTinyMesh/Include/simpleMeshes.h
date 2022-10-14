@@ -72,4 +72,20 @@ public:
     Torus(double innerRadius, double outerRadius, int ringCount = 4, int ringsSubdivisions = 5);
 };
 
+class Capsule : public SimpleMesh
+{
+public:
+    Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions);
+
+private:
+    void computeSphereRing(double deltaY, int deltaIndex, int ringIndex, double ringIncrement, double ringSubdivIncrement, double localRadius);
+
+private:
+    double radius;
+    double cylinderHeight;
+
+    int cylinderSubdivisions;
+    int sphereHeightSubdivisions;
+};
+
 #endif // SIMPLE_MESHES_H
