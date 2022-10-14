@@ -95,13 +95,16 @@ Icosphere::Icosphere(double radius, int subdivisions)
 
     this->radius = radius;
 
-    initBaseIcosphere(radius);
-
+    initBaseIcosphere(1);
 
     RenderingProfiler profiler;
     profiler.Init();
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
+
+    for(Vector& vertex : this->vertices)
+        vertex *= radius;
+
     profiler.Update();
 
     std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
@@ -179,9 +182,6 @@ void Icosphere::subdivide()
         int vertex23Index = currentVerticesCount + createdVerticesCount;
         int vertex31Index = currentVerticesCount + createdVerticesCount;
 
-        //vertex12Index = midPointExists(vertex1Index, vertex2Index, vertex12Index);
-        //vertex23Index = midPointExists(vertex2Index, vertex3Index, vertex23Index);
-        //vertex31Index = midPointExists(vertex3Index, vertex1Index, vertex31Index);
         int vertex12Key = getPointKey(vertex1Index, vertex2Index);
         int vertex23Key = getPointKey(vertex2Index, vertex3Index);
         int vertex31Key = getPointKey(vertex3Index, vertex1Index);
@@ -231,10 +231,6 @@ void Icosphere::subdivide()
         Vector vertex12 = (!vertex12Exists) ? Normalized((vertex1 + vertex2) / 2) : vertices[vertex12Index];
         Vector vertex23 = (!vertex23Exists) ? Normalized((vertex2 + vertex3) / 2) : vertices[vertex23Index];
         Vector vertex31 = (!vertex31Exists) ? Normalized((vertex3 + vertex1) / 2) : vertices[vertex31Index];
-
-        vertex12 *= this->radius;
-        vertex23 *= this->radius;
-        vertex31 *= this->radius;
 
         vertex12 = Normalized(vertex12);
         vertex23 = Normalized(vertex23);
