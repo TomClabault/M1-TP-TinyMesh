@@ -120,40 +120,52 @@ int Icosphere::Subdivisions()
     return this->subdivisions;
 }
 
-int getPointKey(const int pointAIndex, const int pointBIndex)
+/*!
+ * \brief Computes the Cantor's pairing function output of the two given integer.
+ * Note that this implementation is meant to work interchangeably for A and B,
+ * i.e. cantor(A, B) = cantor(B, A)
+ *
+ * \param A Integer A
+ * \param B Integer B
+ *
+ * \return
+ */
+int cantor(const int A, const int B)
 {
     //The Cantor's pairing function allows us to generate a unique key for the hash map
     //based on the two indices of the vertices
-    return ((pointAIndex + pointBIndex) * (pointAIndex + pointBIndex + 1) / 2) + std::min(pointAIndex, pointBIndex);
+    return ((A + B) * (A + B + 1) / 2) + std::min(A, B);
 }
 
 /*!
- * \brief Checks wheter the point that is in between the two points
+ * \brief Checks wheter the vertex in between the two points (middle-vertex)
  * represented by the given indices has already been created or not.
  *
- * \param pointAIndex The index of the first point in the 'indices' array
- * \param pointBIndex The index of the second point in the 'indices' array
- * \param midPointIndex The index of the point that is in between the two other
- * points. The index will only be used if the middle point doesn't alredy exist
- * (i.e. if the middle point needs to be added to the cache). If the middle point
- * already exists, this parameter will be ignored
+ * \param pointAIndex The index (in the 'indices' array) of the first vertex
+ * \param pointBIndex The index (in the 'indices' array) of the second vertex
+ * \param[in, out] midPointIndex This parameter is used as an input to the function
+ * in case the "middle-vertex" is not found in the cache. In this case
+ * the given index will be used to add the middle-vertex index to the cache.
+ * If the middle-vertex already exists in the cache when this function is called,
+ * this parameter will be used as a container for the index of the already-exsiting
+ * middle-vertex
  *
- * \return If the middle point has already been created before, returns the
- * index of the point in the 'indices' array. Returns -1 otherwise.
+ * \return True if the middle-vertex alredy existed in the cache, false otherwise
  */
-int midPointExists(const int pointAIndex, const int pointBIndex, const int midPointIndex)
+bool checkVertexCacheAndUpdate(const int pointAIndex, const int pointBIndex, int& midPointIndex)
 {
-    int midPointKey = getPointKey(pointAIndex, pointBIndex);
+    int midPointKey = cantor(pointAIndex, pointBIndex);
+
     auto midPoint = midPointsCache.find(midPointKey);
     if(midPoint != midPointsCache.end())//The middle point already exists
-        return midPoint->second;
+    {
+        midPointIndex = midPoint->second;
 
-    //The middle point doesn't exist, we're adding it's index to the cache for
-    //further references
+        return true;
+    }
+
     midPointsCache[midPointKey] = midPointIndex;
-
-    //Returning -1 as we haven't found the middle point in the cache
-    return -1;
+    return false;
 }
 
 void Icosphere::subdivide()
@@ -182,77 +194,37 @@ void Icosphere::subdivide()
         int vertex23Index = currentVerticesCount + createdVerticesCount;
         int vertex31Index = currentVerticesCount + createdVerticesCount;
 
-        int vertex12Key = getPointKey(vertex1Index, vertex2Index);
-        int vertex23Key = getPointKey(vertex2Index, vertex3Index);
-        int vertex31Key = getPointKey(vertex3Index, vertex1Index);
-
-        bool vertex12Exists = false;
-        bool vertex23Exists = false;
-        bool vertex31Exists = false;
-
-        auto vertex12Find = midPointsCache.find(vertex12Key);
-        if(vertex12Find != midPointsCache.end())
+        bool vertex12Exists = checkVertexCacheAndUpdate(vertex1Index, vertex2Index, vertex12Index);
+        if(!vertex12Exists)
         {
-            vertex12Index = vertex12Find->second;
-            vertex12Exists = true;
-        }
-        else
-        {
-            midPointsCache[vertex12Key] = vertex12Index;
-
+            //We need to offset the indices of the next vertices that may be created
+            //since we just created one. If we don't offset the indices, they're all
+            //going to be the same
             vertex23Index++;
             vertex31Index++;
         }
-
-        auto vertex23Find = midPointsCache.find(vertex23Key);
-        if(vertex23Find != midPointsCache.end())
-        {
-            vertex23Index = vertex23Find->second;
-            vertex23Exists = true;
-        }
-        else
-        {
-            midPointsCache[vertex23Key] = vertex23Index;
-
+        bool vertex23Exists = checkVertexCacheAndUpdate(vertex2Index, vertex3Index, vertex23Index);
+        if(!vertex23Exists)
             vertex31Index++;
-        }
-
-        auto vertex31Find = midPointsCache.find(vertex31Key);
-        if(vertex31Find != midPointsCache.end())
-        {
-            vertex31Index = vertex31Find->second;
-            vertex31Exists = true;
-        }
-        else
-            midPointsCache[vertex31Key] = vertex31Index;
+        bool vertex31Exists = checkVertexCacheAndUpdate(vertex3Index, vertex1Index, vertex31Index);
 
         //Getting the middle points from the already-existing-vertices array or by computing
         //the middle point based on whether we had already computed this point before
-        Vector vertex12 = (!vertex12Exists) ? Normalized((vertex1 + vertex2) / 2) : vertices[vertex12Index];
-        Vector vertex23 = (!vertex23Exists) ? Normalized((vertex2 + vertex3) / 2) : vertices[vertex23Index];
-        Vector vertex31 = (!vertex31Exists) ? Normalized((vertex3 + vertex1) / 2) : vertices[vertex31Index];
+        Vector vertex12 = Normalized((!vertex12Exists) ? (vertex1 + vertex2) / 2 : vertices[vertex12Index]);
+        Vector vertex23 = Normalized((!vertex23Exists) ? (vertex2 + vertex3) / 2 : vertices[vertex23Index]);
+        Vector vertex31 = Normalized((!vertex31Exists) ? (vertex3 + vertex1) / 2 : vertices[vertex31Index]);
 
-        vertex12 = Normalized(vertex12);
-        vertex23 = Normalized(vertex23);
-        vertex31 = Normalized(vertex31);
+        //We created one new vertex per each middle-vertex that didn't exist before
+        createdVerticesCount += !vertex12Exists + !vertex23Exists + !vertex31Exists;
 
         if(!vertex12Exists)//The middle point of vertex1 and vertex2 hadn't been computed before
-        {
-            createdVerticesCount++;
             vertices.push_back(vertex12);
-        }
 
         if(!vertex23Exists)
-        {
-            createdVerticesCount++;
             vertices.push_back(vertex23);
-        }
 
         if(!vertex31Exists)
-        {
-            createdVerticesCount++;
             vertices.push_back(vertex31);
-        }
 
 
         //Adding the new connections between the vertices to
