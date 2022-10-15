@@ -2,7 +2,6 @@
 #include "simpleMeshes.h"
 #include "implicits.h"
 #include "ui_interface.h"
-#include "ui_icosphereToolbox.h"
 
 MainWindow::MainWindow() : QMainWindow(), uiw(new Ui::Assets)
 {
@@ -35,6 +34,8 @@ void MainWindow::CreateActions()
     connect(uiw->boxMesh, SIGNAL(clicked()), this, SLOT(BoxMeshExample()));
     connect(uiw->sphereImplicit, SIGNAL(clicked()), this, SLOT(SphereImplicitExample()));
     connect(uiw->icosphereButton, SIGNAL(clicked()), this, SLOT(DisplayIcosphere()));
+    connect(uiw->torusButton, SIGNAL(clicked()), this, SLOT(DisplayTorus()));
+    connect(uiw->capsuleButton, SIGNAL(clicked()), this, SLOT(DisplayCapsule()));
     connect(uiw->resetcameraButton, SIGNAL(clicked()), this, SLOT(ResetCamera()));
     connect(uiw->wireframe, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
     connect(uiw->radioShadingButton_1, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
@@ -55,6 +56,8 @@ void MainWindow::editingSceneRight(const Ray&)
 
 void MainWindow::BoxMeshExample()
 {
+    uiw->toolboxGroupBox->setVisible(false);
+
 	Mesh boxMesh = Mesh(Box(1.0));
 
 	std::vector<Color> cols;
@@ -68,18 +71,20 @@ void MainWindow::BoxMeshExample()
 
 void MainWindow::SphereImplicitExample()
 {
-  AnalyticScalarField implicit;
+    uiw->toolboxGroupBox->setVisible(false);
 
-  Mesh implicitMesh;
-  implicit.Polygonize(31, implicitMesh, Box(2.0));
+    AnalyticScalarField implicit;
 
-  std::vector<Color> cols;
-  cols.resize(implicitMesh.Vertexes());
-  for (size_t i = 0; i < cols.size(); i++)
-    cols[i] = Color(0.8, 0.8, 0.8);
+    Mesh implicitMesh;
+    implicit.Polygonize(31, implicitMesh, Box(2.0));
 
-  meshColor = MeshColor(implicitMesh, cols, implicitMesh.VertexIndexes());
-  UpdateGeometry();
+    std::vector<Color> cols;
+    cols.resize(implicitMesh.Vertexes());
+    for (size_t i = 0; i < cols.size(); i++)
+        cols[i] = Color(0.8, 0.8, 0.8);
+
+    meshColor = MeshColor(implicitMesh, cols, implicitMesh.VertexIndexes());
+    UpdateGeometry();
 }
 
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
@@ -94,24 +99,98 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
     meshColor = MeshColor(icosphereMesh, cols, icosphereMesh.VertexIndexes());
 }
 
+void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
+{
+    Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
+
+    std::vector<Color> cols;
+    cols.resize(torusMesh.Vertexes());
+    for (size_t i = 0; i < cols.size(); i++)
+        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+
+    meshColor = MeshColor(torusMesh, cols, torusMesh.VertexIndexes());
+}
+
+void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions)
+{
+    Mesh capsuleMesh = Mesh(Capsule(radius, cylinderHeight, cylinderHeightSubdivions, cylinderSubdivisions, sphereHeightSubdivisions));
+
+    std::vector<Color> cols;
+    cols.resize(capsuleMesh.Vertexes());
+    for (size_t i = 0; i < cols.size(); i++)
+        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+
+    meshColor = MeshColor(capsuleMesh, cols, capsuleMesh.VertexIndexes());
+}
+
 void MainWindow::SetupIcosphereToolbox()
 {
     uiw->toolboxGroupBox->setVisible(true);
 
     delete toolboxWidget;//Deleting the previous widget
     toolboxWidget = new QWidget;
-    icoToolbox.setupUi(toolboxWidget);
+    icosphereToolbox.setupUi(toolboxWidget);
+
+    QVBoxLayout vBoxLayout(uiw->toolboxGroupBox);
+    vBoxLayout.addWidget(toolboxWidget);
+
+    //Default settings for the icosphere at its creation
+    icosphereToolbox.icosphereRadiusInput->setText("1.0");
+    icosphereToolbox.icosphereSubdivisionInput->setText("1");
+
+    connect(icosphereToolbox.icosphereRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateIcosphere()));
+    connect(icosphereToolbox.icosphereSubdivisionInput, SIGNAL(returnPressed()), this, SLOT(UpdateIcosphere()));
+    connect(icosphereToolbox.applyIcosphereToolboxButton, SIGNAL(clicked()), this, SLOT(UpdateIcosphere()));
+}
+
+void MainWindow::SetupTorusToolbox()
+{
+    uiw->toolboxGroupBox->setVisible(true);
+
+    delete toolboxWidget;//Deleting the previous widget
+    toolboxWidget = new QWidget;
+    torusToolbox.setupUi(toolboxWidget);
 
     QVBoxLayout vboxLayout(uiw->toolboxGroupBox);
     vboxLayout.addWidget(toolboxWidget);
 
     //Default settings for the icosphere at its creation
-    icoToolbox.icosphereRadiusInput->setText("1.0");
-    icoToolbox.icosphereSubdivisionInput->setText("1");
+    torusToolbox.torusInRadiusInput->setText("0.375");
+    torusToolbox.torusOutRadiusInput->setText("1.5");
+    torusToolbox.torusRingCountInput->setText("20");
+    torusToolbox.torusRingSubdivInput->setText("20");
 
-    connect(icoToolbox.icosphereRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateIcosphere()));
-    connect(icoToolbox.icosphereSubdivisionInput, SIGNAL(returnPressed()), this, SLOT(UpdateIcosphere()));
-    connect(icoToolbox.applyIcosphereToolboxButton, SIGNAL(clicked()), this, SLOT(UpdateIcosphere()));
+    connect(torusToolbox.torusInRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateTorus()));
+    connect(torusToolbox.torusOutRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateTorus()));
+    connect(torusToolbox.torusRingCountInput, SIGNAL(returnPressed()), this, SLOT(UpdateTorus()));
+    connect(torusToolbox.torusRingSubdivInput, SIGNAL(returnPressed()), this, SLOT(UpdateTorus()));
+    connect(torusToolbox.applyTorusToolboxButton, SIGNAL(clicked()), this, SLOT(UpdateTorus()));
+}
+
+void MainWindow::SetupCapsuleToolbox()
+{
+    uiw->toolboxGroupBox->setVisible(true);
+
+    delete toolboxWidget;//Deleting the previous widget
+    toolboxWidget = new QWidget;
+    capsuleToolbox.setupUi(toolboxWidget);
+
+    QVBoxLayout vboxLayout(uiw->toolboxGroupBox);
+    vboxLayout.addWidget(toolboxWidget);
+
+    //Default settings for the icosphere at its creation
+    capsuleToolbox.capsuleRadiusInput->setText("1.0");
+    capsuleToolbox.capsuleCylinderHeightInput->setText("2.0");
+    capsuleToolbox.capsuleCylinderHeightSubdivInput->setText("5");
+    capsuleToolbox.capsuleCylinderSubdivInput->setText("10");
+    capsuleToolbox.capsuleCapsSubdivInput->setText("10");
+
+    connect(capsuleToolbox.capsuleRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateCapsule()));
+    connect(capsuleToolbox.capsuleCylinderHeightInput, SIGNAL(returnPressed()), this, SLOT(UpdateCapsule()));
+    connect(capsuleToolbox.capsuleCylinderHeightSubdivInput, SIGNAL(returnPressed()), this, SLOT(UpdateCapsule()));
+    connect(capsuleToolbox.capsuleCylinderSubdivInput, SIGNAL(returnPressed()), this, SLOT(UpdateCapsule()));
+    connect(capsuleToolbox.capsuleCapsSubdivInput, SIGNAL(returnPressed()), this, SLOT(UpdateCapsule()));
+    connect(capsuleToolbox.applyCapsuleToolboxButton, SIGNAL(clicked()), this, SLOT(UpdateCapsule()));
 }
 
 void MainWindow::DisplayIcosphere()
@@ -121,6 +200,24 @@ void MainWindow::DisplayIcosphere()
     UpdateGeometry();
 
     SetupIcosphereToolbox();
+}
+
+void MainWindow::DisplayTorus()
+{
+    CreateTorusMesh(0.375, 1.5, 20, 20);
+
+    UpdateGeometry();
+
+    SetupTorusToolbox();
+}
+
+void MainWindow::DisplayCapsule()
+{
+    CreateCapsuleMesh(1.0, 2.0, 5, 10, 10);
+
+    UpdateGeometry();
+
+    SetupCapsuleToolbox();
 }
 
 void MainWindow::UpdateGeometry()
@@ -149,14 +246,14 @@ void MainWindow::ResetCamera()
 	meshWidget->SetCamera(Camera(Vector(-10.0), Vector(0.0)));
 }
 
-double MainWindow::getIcosphereToolboxRadius()
+double getSafeDoubleFromInput(const QLineEdit* input)
 {
-    double radius;
+    double value;
 
-    QString icoToolboxRadiusText = icoToolbox.icosphereRadiusInput->text();
+    QString inputText = input->text();
     try
     {
-        radius = std::stod(icoToolboxRadiusText.toStdString());
+        value = std::stod(inputText.toStdString());
     }
     catch (std::invalid_argument e)
     {
@@ -167,28 +264,83 @@ double MainWindow::getIcosphereToolboxRadius()
         return -1;
     }
 
-    return radius;
+    return value;
+}
+
+int getSafeIntFromInput(const QLineEdit* input)
+{
+    int value;
+
+    QString inputText = input->text();
+    try
+    {
+        value = std::stoi(inputText.toStdString());
+    }
+    catch (std::invalid_argument e)
+    {
+        return -1;
+    }
+    catch (std::out_of_range e)
+    {
+        return -1;
+    }
+
+    return value;
+}
+
+double MainWindow::getIcosphereToolboxRadius()
+{
+    return getSafeDoubleFromInput(icosphereToolbox.icosphereRadiusInput);
 }
 
 int MainWindow::getIcosphereToolboxSubdiv()
 {
-    int subdivisions;
+    return getSafeIntFromInput(icosphereToolbox.icosphereSubdivisionInput);
+}
 
-    QString icoToolboxSubdivText = icoToolbox.icosphereSubdivisionInput->text();
-    try
-    {
-        subdivisions = std::stoi(icoToolboxSubdivText.toStdString());
-    }
-    catch (std::invalid_argument e)
-    {
-        return -1;
-    }
-    catch (std::out_of_range e)
-    {
-        return -1;
-    }
+double MainWindow::getTorusToolboxInRadius()
+{
+    return getSafeDoubleFromInput(torusToolbox.torusInRadiusInput);
+}
 
-    return subdivisions;
+double MainWindow::getTorusToolboxOutRadius()
+{
+    return getSafeDoubleFromInput(torusToolbox.torusOutRadiusInput);
+}
+
+int MainWindow::getTorusToolboxRingCount()
+{
+    return getSafeIntFromInput(torusToolbox.torusRingCountInput);
+}
+
+int MainWindow::getTorusToolboxRingSubdiv()
+{
+    return getSafeIntFromInput(torusToolbox.torusRingSubdivInput);
+}
+
+double MainWindow::getCapsuleToolboxRadius()
+{
+    return getSafeDoubleFromInput(capsuleToolbox.capsuleRadiusInput);
+}
+
+double MainWindow::getCapsuleToolboxCylinderHeight()
+{
+    return getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderHeightInput);
+}
+
+int MainWindow::getCapsuleToolboxCylinderHeightSubdiv()
+{
+    return getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderHeightSubdivInput);
+}
+
+int MainWindow::getCapsuleToolboxCylinderSubdiv()
+{
+    return getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderSubdivInput);
+}
+
+int MainWindow::getCapsuleToolboxCapsSubdiv()
+{
+    return getSafeDoubleFromInput(capsuleToolbox.capsuleCapsSubdivInput);
 }
 
 void MainWindow::UpdateIcosphere()
@@ -200,6 +352,39 @@ void MainWindow::UpdateIcosphere()
         return;//Incorrect parameters, not doing anything
 
     CreateIcosphereMesh(radius, subdivisions);
+
+    UpdateGeometry();
+}
+
+void MainWindow::UpdateTorus()
+{
+    double innerRadius = this->getTorusToolboxInRadius();
+    double outerRadius = this->getTorusToolboxOutRadius();
+    int ringCount = this->getTorusToolboxRingCount();
+    int ringsSubdivisions = this->getTorusToolboxRingSubdiv();
+
+    if(innerRadius == -1 || outerRadius == -1 || ringCount == -1 || ringsSubdivisions == -1)
+        return;//Incorrect parameters, not doing anything
+
+    CreateTorusMesh(innerRadius, outerRadius, ringCount, ringsSubdivisions);
+
+    UpdateGeometry();
+}
+
+void MainWindow::UpdateCapsule()
+{
+    double radius = this->getCapsuleToolboxRadius();
+    double cylinderHeight = this->getCapsuleToolboxCylinderHeight();
+    int cylinderHeightSubdivions = this->getCapsuleToolboxCylinderHeightSubdiv();
+    int cylinderSubdivisions = this->getCapsuleToolboxCylinderSubdiv();
+    int sphereHeightSubdivisions = this->getCapsuleToolboxCapsSubdiv();
+
+    if(radius == -1 || cylinderHeight == -1 ||
+       cylinderHeightSubdivions == -1 || cylinderSubdivisions == -1 ||
+       sphereHeightSubdivisions == -1)
+        return;//Incorrect parameters, not doing anything
+
+    CreateCapsuleMesh(radius, cylinderHeight, cylinderHeightSubdivions, cylinderSubdivisions, sphereHeightSubdivisions);
 
     UpdateGeometry();
 }

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>TorusToolbox</class>
+ <widget class="QWidget" name="TorusToolbox">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>358</width>
+    <height>152</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>326</width>
+     <height>118</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>16</number>
+    </property>
+    <item>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="torusInRadiusLabel">
+        <property name="text">
+         <string>Torus Inner Radius</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="torusInRadiusInput"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="torusOutRadiusLabel">
+        <property name="text">
+         <string>Torus Outer Radius</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="torusOutRadiusInput"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="torusRingCountLabel">
+        <property name="text">
+         <string>Torus Ring Count</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="torusRingSubdivLabel">
+        <property name="text">
+         <string>Torus Ring Subdivisions</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="torusRingCountInput"/>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="torusRingSubdivInput"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QPushButton" name="applyTorusToolboxButton">
+      <property name="text">
+       <string>Apply</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

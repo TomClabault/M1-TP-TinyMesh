@@ -5,9 +5,6 @@
     <ClCompile Include="Source\qtemainwindow.cpp">
       <Filter>Source\Window</Filter>
     </ClCompile>
-    <ClCompile Include="Source\moc_qte.cpp">
-      <Filter>Interface</Filter>
-    </ClCompile>
     <ClCompile Include="Source\evector.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
@@ -35,17 +32,17 @@
     <ClCompile Include="Source\triangle.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Source\realtime-moc.cpp">
-      <Filter>Interface</Filter>
-    </ClCompile>
     <ClCompile Include="Source\implicits.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\simpleMeshes.cpp">
+      <Filter>Source\Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\matrix.cpp">
       <Filter>Source\Core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="Include\qte.h">
-      <Filter>Include</Filter>
-    </CustomBuild>
     <CustomBuild Include="UI\interface.ui">
       <Filter>Interface</Filter>
     </CustomBuild>
@@ -102,6 +99,12 @@
       <Filter>Include</Filter>
     </ClInclude>
     <ClInclude Include="Include\implicits.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\simpleMeshes.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\matrix.h">
       <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>

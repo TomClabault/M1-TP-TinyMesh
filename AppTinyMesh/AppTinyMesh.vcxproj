@@ -52,7 +52,7 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>Include\;$(QTDIR64)\include\;..\Libs\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include\;$(QTDIR64)\include\;..\Libs\;..\..\build-QtCreatorProjectModified-Desktop_Qt_6_3_2_MSVC2019_64bit-Release\</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -75,7 +75,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>Include\;$(QTDIR64)\include\;Libs\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>Include\;$(QTDIR64)\include\;..\Libs\;..\..\build-QtCreatorProjectModified-Desktop_Qt_6_3_2_MSVC2019_64bit-Release</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <OmitFramePointers>true</OmitFramePointers>
       <WholeProgramOptimization>false</WholeProgramOptimization>
@@ -93,7 +93,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(QTDIR64)\lib\;../Libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glew32.lib;glu32.lib;opengl32.lib;Qt6Core.lib;Qt6OpenGL.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6OpenGLWidgets.lib;Qt6PrintSupport.lib</AdditionalDependencies>
+      <AdditionalDependencies>..\Libs\glew32.lib;glu32.lib;opengl32.lib;Qt6Core.lib;Qt6OpenGL.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6OpenGLWidgets.lib;Qt6PrintSupport.lib</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PreBuildEvent>
@@ -107,27 +107,15 @@
     <ClCompile Include="Source\evector.cpp" />
     <ClCompile Include="Source\implicits.cpp" />
     <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\matrix.cpp" />
     <ClCompile Include="Source\mesh-widget.cpp" />
     <ClCompile Include="Source\mesh.cpp" />
     <ClCompile Include="Source\meshcolor.cpp" />
-    <ClCompile Include="Source\moc_qte.cpp" />
-    <ClCompile Include="Source\realtime-moc.cpp" />
     <ClCompile Include="Source\qtemainwindow.cpp" />
     <ClCompile Include="Source\ray.cpp" />
     <ClCompile Include="Source\shader-api.cpp" />
+    <ClCompile Include="Source\simpleMeshes.cpp" />
     <ClCompile Include="Source\triangle.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="Include\qte.h">
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR64)\bin\moc.exe Include\%(Filename)%(Extension) -o Source\moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Moc'ing  Include\%(Filename)%(Extension)  into  Source\moc_%(Filename).cpp</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Source\moc_%(Filename).cpp</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(QTDIR64)\bin\moc.exe</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR64)\bin\moc.exe Include\%(Filename)%(Extension) -o Source\moc_%(Filename).cpp</Command>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Moc'ing  Include\%(Filename)%(Extension)  into  Source\moc_%(Filename).cpp</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Source\moc_%(Filename).cpp</Outputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(QTDIR64)\bin\moc.exe</AdditionalInputs>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="UI\interface.ui">
@@ -161,10 +149,12 @@
     <ClInclude Include="Include\color.h" />
     <ClInclude Include="Include\implicits.h" />
     <ClInclude Include="Include\mathematics.h" />
+    <ClInclude Include="Include\matrix.h" />
     <ClInclude Include="Include\mesh.h" />
     <ClInclude Include="Include\meshcolor.h" />
     <ClInclude Include="Include\ray.h" />
     <ClInclude Include="Include\shader-api.h" />
+    <ClInclude Include="Include\simpleMeshes.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\mesh.glsl" />

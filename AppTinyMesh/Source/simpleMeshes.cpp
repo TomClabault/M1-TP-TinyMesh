@@ -170,8 +170,6 @@ bool checkVertexCacheAndUpdate(const int pointAIndex, const int pointBIndex, int
 
 void Icosphere::subdivide()
 {
-    this->subdivisions++;
-
     std::vector<int> newIndices;
     std::vector<Vector> newNormals;
     std::vector<int> newNormalsIndices;
@@ -260,6 +258,8 @@ void Icosphere::subdivide()
     indices = newIndices;
     normals = newNormals;
     normalIndices = newNormalsIndices;
+
+    this->subdivisions++;
 }
 
 Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
@@ -372,10 +372,6 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     RenderingProfiler profiler;
     profiler.Init();
 
-    std::cout << "Radius: " << radius << std::endl;
-    std::cout << "Cylinder subdiv: " << cylinderSubdivisions << std::endl;
-    std::cout << "Sphere height subdiv: " << sphereHeightSubdivisions << std::endl;
-
     //Generating the first bottom sphere cap of the capsule
     double ringIncrement = 1 / (sphereHeightSubdivisions - 1.0);
     double ringSubdivIncrement = 1 / (double)cylinderSubdivisions;
@@ -429,14 +425,15 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     //To account for all the indices we have alredy generated for the first cap sphere
     int deltaIndex = sphereHeightSubdivisions * cylinderSubdivisions;
     double cylinderHeightIncrement = 1 / (cylinderHeightSubdivions - 1.0);
+
     //Generating the cylinder
     for(int cylinderRingIndex = 0; cylinderRingIndex < cylinderHeightSubdivions; cylinderRingIndex++)
     {
         for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
-            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement);
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * radius;
             double y = cylinderRingIndex * cylinderHeightIncrement * cylinderHeight;
-            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement);
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * radius;
 
             this->vertices.push_back(Vector(x, y, z));
 

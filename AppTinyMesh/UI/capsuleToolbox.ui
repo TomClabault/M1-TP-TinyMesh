@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CapsuleToolbox</class>
+ <widget class="QWidget" name="CapsuleToolbox">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>404</width>
+    <height>185</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QWidget" name="layoutWidget">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>371</width>
+     <height>154</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="spacing">
+     <number>16</number>
+    </property>
+    <item>
+     <layout class="QFormLayout" name="formLayout">
+      <item row="0" column="0">
+       <widget class="QLabel" name="capsuleRadiusLabel">
+        <property name="text">
+         <string>Capsule Radius</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLineEdit" name="capsuleRadiusInput"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="capsuleCylinderHeightLabel">
+        <property name="text">
+         <string>Capsule Cylinder Height</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLineEdit" name="capsuleCylinderHeightInput"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="capsuleCylinderHeightSubdivLabel">
+        <property name="text">
+         <string>Capsule Cylinder Height Subdivisions</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QLineEdit" name="capsuleCylinderHeightSubdivInput"/>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="capsuleCylinderSubdivLabel">
+        <property name="text">
+         <string>Capsule Cylinder Subdivisions</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0">
+       <widget class="QLabel" name="capsuleCapsSubdivLabel">
+        <property name="text">
+         <string>Capsule Caps Subdivisions</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLineEdit" name="capsuleCylinderSubdivInput"/>
+      </item>
+      <item row="4" column="1">
+       <widget class="QLineEdit" name="capsuleCapsSubdivInput"/>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <widget class="QPushButton" name="applyCapsuleToolboxButton">
+      <property name="text">
+       <string>Apply</string>
+      </property>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
