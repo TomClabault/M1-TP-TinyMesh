@@ -372,18 +372,18 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     RenderingProfiler profiler;
     profiler.Init();
 
-    //Generating the first bottom sphere cap of the capsule
     double ringIncrement = 1 / (sphereHeightSubdivisions - 1.0);
     double ringSubdivIncrement = 1 / (double)cylinderSubdivisions;
     double deltaY = -1.0;
 
+    //Generating the first bottom sphere cap of the capsule
     for(int ringIndex = 0; ringIndex < sphereHeightSubdivisions; ringIndex++)
     {
         double localRadius = std::sin(M_PI / 2 * ringIndex * ringIncrement);
 
         double y = 1 - std::cos(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
 
-        for(int ringSubdiv = 0; ringSubdiv < sphereHeightSubdivisions; ringSubdiv++)
+        for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
             double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
             double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
@@ -477,7 +477,7 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
         //TODO si on est au ring tout en bas, il ne suffit de placer que un seul point vu qu'ils sont tous confondus
         double y = std::sin(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
 
-        for(int ringSubdiv = cylinderSubdivisions - 1; ringSubdiv >= 0; ringSubdiv--)
+        for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
             double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
             double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
