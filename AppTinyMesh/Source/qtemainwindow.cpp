@@ -101,7 +101,8 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 
 void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
 {
-    Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
+    //Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
+    Mesh torusMesh = Mesh(Cylinder(1, 2, 1, 10));
 
     std::vector<Color> cols;
     cols.resize(torusMesh.Vertexes());

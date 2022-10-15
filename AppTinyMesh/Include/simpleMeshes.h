@@ -88,4 +88,10 @@ private:
     int sphereHeightSubdivisions;
 };
 
+class Cylinder : public SimpleMesh
+{
+public:
+    Cylinder(double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
+};
+
 #endif // SIMPLE_MESHES_H
