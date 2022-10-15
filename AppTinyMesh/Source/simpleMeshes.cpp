@@ -405,19 +405,6 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
                 this->indices.push_back(index0);
                 this->indices.push_back(index3);
                 this->indices.push_back(index2);
-
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
             }
         }
     }
@@ -451,19 +438,6 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
                 this->indices.push_back(index0);
                 this->indices.push_back(index5);
                 this->indices.push_back(index4);
-
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
             }
         }
     }
@@ -499,21 +473,27 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
                 this->indices.push_back(index0);
                 this->indices.push_back(index3);
                 this->indices.push_back(index2);
-
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normalIndices.push_back(0);
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
-                this->normals.push_back(Vector(0, 1, 0));
             }
         }
+    }
+
+    int normalsCreated = 0;
+
+    //Computing the normals
+    for(int index = 0; index < this->indices.size(); index += 3)
+    {
+        int index0 = this->indices[index + 0];
+        int index1 = this->indices[index + 1];
+        int index2 = this->indices[index + 2];
+
+        Vector normal = (this->vertices[index2] - this->vertices[index0]) / (this->vertices[index1] - this->vertices[index0]);
+        this->normals.push_back(normal);
+
+        this->normalIndices.push_back(normalsCreated);
+        this->normalIndices.push_back(normalsCreated);
+        this->normalIndices.push_back(normalsCreated);
+
+        normalsCreated++;
     }
 
     profiler.Update();
