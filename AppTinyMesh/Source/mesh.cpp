@@ -273,6 +273,25 @@ void Mesh::Translate(const Vector& translationVector)
         vertex += translationVector;
 }
 
+void Mesh::Merge(const Mesh& secondMesh)
+{
+    int currentVerticesCount = this->Vertexes();
+    int currentNormalsCount = this->normals.size();
+
+    for(Vector vertex : secondMesh.vertices)
+        this->vertices.push_back(vertex);
+
+    for(Vector normal : secondMesh.normals)
+        this->normals.push_back(normal);
+
+    for(int vertexIndex : secondMesh.VertexIndexes())
+        this->varray.push_back(vertexIndex + currentVerticesCount);
+
+    for(int normalIndex : secondMesh.NormalIndexes())
+        this->narray.push_back(normalIndex + currentNormalsCount);
+}
+
+
 
 
 

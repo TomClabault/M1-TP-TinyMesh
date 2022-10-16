@@ -116,10 +116,35 @@ public:
 
   Box GetBox() const;
 
-  void Scale(double);
+  /*!
+   * \brief Scales the mesh along the X, Y and Z axis by the given factor
+   * \param factor The scaling factor
+   */
+  void Scale(double factor);
+
+  /*!
+   * \brief Scales the mesh using the given homothety matrix
+   * \param homothetyMatrix The homothety matrix
+   */
   void Scale(const Matrix& homothetyMatrix);
+
+  /*!
+   * \brief Rotates the mesh using the given rotation matrix
+   * \param rotationMatrix The rotation matrix
+   */
   void Rotate(const Matrix& rotationMatrix);
+
+  /*!
+   * \brief Translates the mesh using the given translation vector
+   * \param translationVector The translation vector
+   */
   void Translate(const Vector& translationVector);
+
+  /*!
+   * \brief Merges another mesh into the current one
+   * \param secondMesh The mesh to merge into the current one
+   */
+  void Merge(const Mesh& secondMesh);
 
   void SmoothNormals();
 

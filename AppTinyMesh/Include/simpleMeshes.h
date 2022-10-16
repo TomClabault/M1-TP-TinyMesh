@@ -73,14 +73,14 @@ class Icosphere : public SimpleMesh
 {
 public:
     /*!
-     * \brief Icosphere
-     * \param radius
-     * \param subdivisions
+     * \brief Creates an icosphere of radius
+     * \p radius and that has been subdivided
+     * \p subdivisions times
+     * \param radius The radius of the icopshere
+     * \param subdivisions The number of subdivisions
+     * of the icosphere
      */
     Icosphere(double radius, int subdivisions);
-
-    double Radius();
-    int Subdivisions();
 
     /*!
      * \brief Subdivides the current icosphere one time (quadruples
@@ -93,6 +93,13 @@ public:
     static const int baseIndices[60];
 
 private:
+    /*!
+     * \brief Creates an icosphere of radius \p
+     * radius without any subdivisions steps
+     * (only the base vertices are present)
+     * \param radius The radius of the icosphere
+     * to create
+     */
     void initBaseIcosphere(double radius);
 
 private:
@@ -123,6 +130,27 @@ public:
 class Capsule : public SimpleMesh
 {
 public:
+    /*!
+     * \brief Create a capsule composed of one cylinder
+     * and two caps at its ends.
+     *
+     * \param radius The radius of the capsule
+     * \param cylinderHeight The height of the cylinder
+     * of the capsule
+     * \param cylinderHeightSubdivions The number of
+     * subdivisions in height of the cylinder. This parameter
+     * has no visual impact but can be useful for later
+     * operations applied to the capsule
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder and the caps at the ends of the cylinder.
+     * The higher this parameter, the smoother the capsule.
+     * The lower, the rougher. With a value of 4 for example,
+     * the capsule will start to look like an elongated cube.
+     * \param sphereHeightSubdivisions The number of subdivisions
+     * in height of the caps at the ends of the cylinder.
+     * The higher this parameter, the smoother the caps
+     * (height-wise only).
+     */
     Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions);
 
 private:
@@ -136,6 +164,20 @@ private:
 class Cylinder : public SimpleMesh
 {
 public:
+    /*!
+     * \brief Creates a cylinder with the given parameters
+     *
+     * \param radius The radius of the cylinder
+     * \param height The height of the cylinder
+     * \param heightSubdivisions The number of subdivisions
+     * in height of the cylinder. This parameter has no
+     * visual impact but can be useful for later operations
+     * applied to the cylinder.
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder. The higher this parameter, the
+     * smoother the cylinder. With a value of 4 for example,
+     * the cylinder will look much like an elongated cube.
+     */
     Cylinder(double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
 };
 

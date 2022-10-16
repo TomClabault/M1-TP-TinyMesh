@@ -110,16 +110,6 @@ Icosphere::Icosphere(double radius, int subdivisions)
     std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
 }
 
-double Icosphere::Radius()
-{
-    return this->radius;
-}
-
-int Icosphere::Subdivisions()
-{
-    return this->subdivisions;
-}
-
 /*!
  * \brief Computes the Cantor's pairing function output of the two given integer.
  * Note that this implementation is meant to work interchangeably for A and B,
