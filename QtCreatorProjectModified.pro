@@ -46,6 +46,7 @@ FORMS += \
     AppTinyMesh/UI/icosphereToolbox.ui \
     AppTinyMesh/UI/torusToolbox.ui \
     AppTinyMesh/UI/capsuleToolbox.ui \
+    AppTinyMesh/UI/cylinderToolbox.ui \
     AppTinyMesh/UI/interface.ui
 
 win32 {

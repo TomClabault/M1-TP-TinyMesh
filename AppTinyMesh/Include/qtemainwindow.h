@@ -7,6 +7,7 @@
 #include "ui_icosphereToolbox.h"
 #include "ui_torusToolbox.h"
 #include "ui_capsuleToolbox.h"
+#include "ui_cylinderToolbox.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class Assets; }
@@ -20,6 +21,7 @@ private:
     Ui::IcosphereToolbox icosphereToolbox;    //!< Icosphere toolbox widget
     Ui::TorusToolbox torusToolbox;    //!< Torus toolbox widget
     Ui::CapsuleToolbox capsuleToolbox;    //!< Capsule toolbox widget
+    Ui::CylinderToolbox cylinderToolbox;    //!< Capsule toolbox widget
 
     QWidget* toolboxWidget = nullptr;   //!< Widget that allows the modification of
     //!< the object in the current meshWidget
@@ -36,24 +38,12 @@ public:
     void CreateIcosphereMesh(double radius, int subdivisions);
     void CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions);
     void CreateCapsuleMesh(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions);
+    void CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
 
     void SetupIcosphereToolbox();
     void SetupTorusToolbox();
     void SetupCapsuleToolbox();
-
-    double getIcosphereToolboxRadius();
-    int getIcosphereToolboxSubdiv();
-
-    double getTorusToolboxInRadius();
-    double getTorusToolboxOutRadius();
-    int getTorusToolboxRingCount();
-    int getTorusToolboxRingSubdiv();
-
-    double getCapsuleToolboxRadius();
-    double getCapsuleToolboxCylinderHeight();
-    int getCapsuleToolboxCylinderHeightSubdiv();
-    int getCapsuleToolboxCylinderSubdiv();
-    int getCapsuleToolboxCapsSubdiv();
+    void SetupCylinderToolbox();
 
 public slots:
     void editingSceneLeft(const Ray&);
@@ -64,6 +54,7 @@ public slots:
     void DisplayIcosphere();
     void DisplayTorus();
     void DisplayCapsule();
+    void DisplayCylinder();
 
     void ResetCamera();
     void UpdateMaterial();
@@ -71,6 +62,7 @@ public slots:
     void UpdateIcosphere();
     void UpdateTorus();
     void UpdateCapsule();
+    void UpdateCylinder();
 };
 
 #endif

@@ -303,8 +303,8 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
             indices.push_back(vertex4Index);
             indices.push_back(vertex2Index);
 
-            normals.push_back((vertices[vertex4Index] - vertices[vertex1Index]) / (vertices[vertex3Index] - vertices[vertex1Index]));
-            normals.push_back((vertices[vertex2Index] - vertices[vertex1Index]) / (vertices[vertex4Index] - vertices[vertex1Index]));
+            normals.push_back(Normalized((vertices[vertex4Index] - vertices[vertex1Index]) / (vertices[vertex3Index] - vertices[vertex1Index])));
+            normals.push_back(Normalized((vertices[vertex2Index] - vertices[vertex1Index]) / (vertices[vertex4Index] - vertices[vertex1Index])));
 
             normalIndices.push_back(normalsCreated);
             normalIndices.push_back(normalsCreated);
@@ -314,50 +314,6 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
             normalIndices.push_back(normalsCreated + 1);
 
             normalsCreated += 2;
-        }
-    }
-}
-
-void Capsule::computeSphereRing(double deltaY, int deltaIndex, int ringIndex, double ringIncrement, double ringSubdivIncrement, double localRadius)
-{
-    //TODO si on est au ring tout en bas, il ne suffit de placer que un seul point vu qu'ils sont tous confondus
-    double y = std::sin(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
-
-    for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
-    {
-        double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
-        double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
-
-        Vector vertex = Vector(x, y, z);
-        this->vertices.push_back(vertex);
-
-        if(ringIndex < sphereHeightSubdivisions - 1)
-        {
-            int index0 = deltaIndex + ringIndex * cylinderSubdivisions + ringSubdiv;
-            int index1 = deltaIndex + ringIndex * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
-            int index2 = deltaIndex + (ringIndex + 1) * cylinderSubdivisions + ringSubdiv;
-            int index3 = deltaIndex + (ringIndex + 1) * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
-
-            this->indices.push_back(index0);
-            this->indices.push_back(index1);
-            this->indices.push_back(index3);
-
-            this->indices.push_back(index0);
-            this->indices.push_back(index3);
-            this->indices.push_back(index2);
-
-            this->normalIndices.push_back(0);
-            this->normalIndices.push_back(0);
-            this->normalIndices.push_back(0);
-            this->normalIndices.push_back(0);
-            this->normalIndices.push_back(0);
-            this->normalIndices.push_back(0);
-            this->normals.push_back(Vector(0, 1, 0));
-            this->normals.push_back(Vector(0, 1, 0));
-            this->normals.push_back(Vector(0, 1, 0));
-            this->normals.push_back(Vector(0, 1, 0));
-            this->normals.push_back(Vector(0, 1, 0));
-            this->normals.push_back(Vector(0, 1, 0));
         }
     }
 }
@@ -486,7 +442,7 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
         int index1 = this->indices[index + 1];
         int index2 = this->indices[index + 2];
 
-        Vector normal = (this->vertices[index2] - this->vertices[index0]) / (this->vertices[index1] - this->vertices[index0]);
+        Vector normal = Normalized((this->vertices[index2] - this->vertices[index0]) / (this->vertices[index1] - this->vertices[index0]));
         this->normals.push_back(normal);
 
         this->normalIndices.push_back(normalsCreated);
@@ -511,20 +467,13 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
     double ringIncrement = 1.0 / cylinderSubdivisions;
     for(int cylinderSubdiv = 0; cylinderSubdiv < cylinderSubdivisions; cylinderSubdiv++)
     {
-        double x = std::cos(2 * M_PI * ringIncrement * cylinderSubdiv);
+        double x = std::cos(2 * M_PI * ringIncrement * cylinderSubdiv) * radius;
         double y = 0;
-        double z = std::sin(2 * M_PI * ringIncrement * cylinderSubdiv);
+        double z = std::sin(2 * M_PI * ringIncrement * cylinderSubdiv) * radius;
 
         this->vertices.push_back(Vector(x, y, z));
     }
 
-    //Copying the vertices we currently have. This will
-    //effectively copy the bottom ring of the cylinder
-    //at its top because we're adding the height of the
-    //cylinder to the new vertices
-    int nbVertices = this->vertices.size();
-    for(int i = 0; i < nbVertices; i++)
-        this->vertices.push_back(Vector(this->vertices[i]) + Vector(0, height, 0));
 
     //Generating the cylinder
     double heightIncrement = (double)height / (heightSubdivisions + 1.0);
@@ -533,13 +482,20 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
     {
         for(int cylinderRing = 0; cylinderRing < cylinderSubdivisions; cylinderRing++)
         {
-            double x = std::cos(2 * M_PI * ringIncrement * cylinderRing);
+            double x = std::cos(2 * M_PI * ringIncrement * cylinderRing) * radius;
             double y = heightIncrement * (ringIndex + 1);
-            double z = std::sin(2 * M_PI * ringIncrement * cylinderRing);
+            double z = std::sin(2 * M_PI * ringIncrement * cylinderRing) * radius;
 
             this->vertices.push_back(Vector(x, y, z));
         }
     }
+
+    //Copying the bottom circle of the cylinder
+    //to have the top circle. Adding in the height
+    //of the cylinder to effectively have the
+    //"top circle"
+    for(int i = 0; i <= cylinderSubdivisions; i++)
+        this->vertices.push_back(Vector(this->vertices[i]) + Vector(0, height, 0));
 
     //Generating the indices and the normals of both
     //the bottom and top circle of the cylinder
@@ -558,12 +514,10 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
         this->normalIndices.push_back(normalsCreated);
         this->normalIndices.push_back(normalsCreated);
         this->normalIndices.push_back(normalsCreated);
-
-        normal = (this->vertices[index1] - this->vertices[index0]) / (this->vertices[index2] - this->vertices[index0]);
-        this->normals.push_back(normal);
-        this->normals.push_back(normal);
-        this->normals.push_back(normal);
         normalsCreated++;
+
+        normal = Normalized((this->vertices[index1] - this->vertices[index0]) / (this->vertices[index2] - this->vertices[index0]));
+        this->normals.push_back(normal);
 
 
 
@@ -573,15 +527,14 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
         this->indices.push_back(index0);//Vertex at the center of the top ring of the cylinder
         this->indices.push_back(index1);
         this->indices.push_back(index2);
-        this->normalIndices.push_back(normalsCreated);
-        this->normalIndices.push_back(normalsCreated);
-        this->normalIndices.push_back(normalsCreated);
 
-        normal = (this->vertices[index1] - this->vertices[index0]) / (this->vertices[index2] - this->vertices[index0]);
-        this->normals.push_back(normal);
-        this->normals.push_back(normal);
-        this->normals.push_back(normal);
+        this->normalIndices.push_back(normalsCreated);
+        this->normalIndices.push_back(normalsCreated);
+        this->normalIndices.push_back(normalsCreated);
         normalsCreated++;
+
+        normal = Normalized((this->vertices[index2] - this->vertices[index0]) / (this->vertices[index1] - this->vertices[index0]));
+        this->normals.push_back(normal);
     }
 
     //Generating the indices and the normals of
@@ -591,16 +544,21 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
     {
         for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
-            int index0 = 1 + ringSubdiv;
-            int index1 = (index0 + 1) % cylinderSubdivisions + 1;
-            int index2 = index0 + 1 + cylinderSubdivisions * (i + 1);
-            int index3 = (index2 + 1) % cylinderSubdivisions + 1;
+            int index0 = ringSubdiv + 1 + i * cylinderSubdivisions;
+            int index1 = index0 + 1;
+            if (ringSubdiv == cylinderSubdivisions - 1)
+                index1 -= cylinderSubdivisions;
+
+            int index2 = index0 + cylinderSubdivisions + (i == heightSubdivisions ? 1 : 0);
+            int index3 = index2 + 1;
+            if (ringSubdiv == cylinderSubdivisions - 1)
+                index3 -= cylinderSubdivisions;
 
             this->indices.push_back(index0);
             this->indices.push_back(index1);
             this->indices.push_back(index3);
 
-            Vector normal = (this->vertices[index1] - this->vertices[index0]) / (this->vertices[index3] - this->vertices[index0]);
+            Vector normal = Normalized((this->vertices[index3] - this->vertices[index0]) / (this->vertices[index1] - this->vertices[index0]));
             this->normals.push_back(normal);
 
             this->normalIndices.push_back(normalsCreated);
@@ -612,8 +570,8 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
             this->indices.push_back(index3);
             this->indices.push_back(index2);
 
-            normal = (this->vertices[index3] - this->vertices[index0]) / (this->vertices[index2] - this->vertices[index0]);
-            this->normalIndices.push_back(normalsCreated);
+            normal = Normalized((this->vertices[index2] - this->vertices[index0]) / (this->vertices[index3] - this->vertices[index0]));
+            this->normals.push_back(normal);
 
             this->normalIndices.push_back(normalsCreated);
             this->normalIndices.push_back(normalsCreated);

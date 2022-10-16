@@ -9,14 +9,57 @@
 class SimpleMesh
 {
 public:
+    /*!
+     * \brief Returns the number of vertices of the mesh
+     * \return The number of vertices of the mesh
+     */
     unsigned int VerticesCount() const;
+
+    /*!
+     * \brief Returns the vertex at index \p
+     * index of the mesh
+     * \return The vertex at index \p index
+     * of the mesh
+     */
     Vector Vertex(int index) const;
+
+    /*!
+     * \brief Returns the vertex index found at the position
+     * \p index of the indices array of the mesh
+     * \param index The index
+     * \return The vertex index found at the
+     * position \p index of the indices
+     * array of the mesh
+     */
     int VertexIndex(int index) const;
 
+    /*!
+     * \brief Returns the number of normals of the mesh
+     * \return The number of normals of the mesh
+     */
     unsigned int NormalsCount() const;
+
+    /*!
+     * \brief Returns the normal at the index \p index of the mesh
+     * \param index The index
+     * \return The normal at the index \p index of the mesh
+     */
     Vector Normal(int index) const;
+
+    /*!
+     * \brief Returns the normal index found at the position
+     * \p index of the normal indices array of the mesh
+     * \param index The index
+     * \return The normal index found at the
+     * position \p index of the normal indices
+     * array of the mesh
+     */
     int NormalIndex(int index) const;
 
+    /*!
+     * \brief Returns the number of indicies
+     * \return The number of indicies
+     */
     unsigned int IndicesCount() const;
 
 protected:
@@ -29,6 +72,11 @@ protected:
 class Icosphere : public SimpleMesh
 {
 public:
+    /*!
+     * \brief Icosphere
+     * \param radius
+     * \param subdivisions
+     */
     Icosphere(double radius, int subdivisions);
 
     double Radius();
@@ -76,9 +124,6 @@ class Capsule : public SimpleMesh
 {
 public:
     Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions);
-
-private:
-    void computeSphereRing(double deltaY, int deltaIndex, int ringIndex, double ringIncrement, double ringSubdivIncrement, double localRadius);
 
 private:
     double radius;

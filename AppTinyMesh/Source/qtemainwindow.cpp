@@ -36,6 +36,7 @@ void MainWindow::CreateActions()
     connect(uiw->icosphereButton, SIGNAL(clicked()), this, SLOT(DisplayIcosphere()));
     connect(uiw->torusButton, SIGNAL(clicked()), this, SLOT(DisplayTorus()));
     connect(uiw->capsuleButton, SIGNAL(clicked()), this, SLOT(DisplayCapsule()));
+    connect(uiw->cylinderButton, SIGNAL(clicked()), this, SLOT(DisplayCylinder()));
     connect(uiw->resetcameraButton, SIGNAL(clicked()), this, SLOT(ResetCamera()));
     connect(uiw->wireframe, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
     connect(uiw->radioShadingButton_1, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
@@ -101,8 +102,7 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 
 void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
 {
-    //Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
-    Mesh torusMesh = Mesh(Cylinder(1, 2, 1, 10));
+    Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
 
     std::vector<Color> cols;
     cols.resize(torusMesh.Vertexes());
@@ -122,6 +122,18 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
         cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
 
     meshColor = MeshColor(capsuleMesh, cols, capsuleMesh.VertexIndexes());
+}
+
+void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
+{
+    Mesh cylinderMesh = Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
+
+    std::vector<Color> cols;
+    cols.resize(cylinderMesh.Vertexes());
+    for (size_t i = 0; i < cols.size(); i++)
+        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+
+    meshColor = MeshColor(cylinderMesh, cols, cylinderMesh.VertexIndexes());
 }
 
 void MainWindow::SetupIcosphereToolbox()
@@ -194,6 +206,30 @@ void MainWindow::SetupCapsuleToolbox()
     connect(capsuleToolbox.applyCapsuleToolboxButton, SIGNAL(clicked()), this, SLOT(UpdateCapsule()));
 }
 
+void MainWindow::SetupCylinderToolbox()
+{
+    uiw->toolboxGroupBox->setVisible(true);
+
+    delete toolboxWidget;//Deleting the previous widget
+    toolboxWidget = new QWidget;
+    cylinderToolbox.setupUi(toolboxWidget);
+
+    QVBoxLayout vboxLayout(uiw->toolboxGroupBox);
+    vboxLayout.addWidget(toolboxWidget);
+
+    //Default settings for the icosphere at its creation
+    cylinderToolbox.cylinderRadiusInput->setText("1.0");
+    cylinderToolbox.cylinderHeightInput->setText("2.0");
+    cylinderToolbox.cylinderHeightSubdivInput->setText("5");
+    cylinderToolbox.cylinderSubdivInput->setText("10");
+
+    connect(cylinderToolbox.cylinderRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateCylinder()));
+    connect(cylinderToolbox.cylinderHeightInput, SIGNAL(returnPressed()), this, SLOT(UpdateCylinder()));
+    connect(cylinderToolbox.cylinderHeightSubdivInput, SIGNAL(returnPressed()), this, SLOT(UpdateCylinder()));
+    connect(cylinderToolbox.cylinderSubdivInput, SIGNAL(returnPressed()), this, SLOT(UpdateCylinder()));
+    connect(cylinderToolbox.applyCylinderToolboxButton, SIGNAL(clicked()), this, SLOT(UpdateCylinder()));
+}
+
 void MainWindow::DisplayIcosphere()
 {
     CreateIcosphereMesh(1.0, 1);
@@ -219,6 +255,15 @@ void MainWindow::DisplayCapsule()
     UpdateGeometry();
 
     SetupCapsuleToolbox();
+}
+
+void MainWindow::DisplayCylinder()
+{
+    CreateCylinderMesh(1.0, 2.0, 5, 10);
+
+    UpdateGeometry();
+
+    SetupCylinderToolbox();
 }
 
 void MainWindow::UpdateGeometry()
@@ -289,65 +334,10 @@ int getSafeIntFromInput(const QLineEdit* input)
     return value;
 }
 
-double MainWindow::getIcosphereToolboxRadius()
-{
-    return getSafeDoubleFromInput(icosphereToolbox.icosphereRadiusInput);
-}
-
-int MainWindow::getIcosphereToolboxSubdiv()
-{
-    return getSafeIntFromInput(icosphereToolbox.icosphereSubdivisionInput);
-}
-
-double MainWindow::getTorusToolboxInRadius()
-{
-    return getSafeDoubleFromInput(torusToolbox.torusInRadiusInput);
-}
-
-double MainWindow::getTorusToolboxOutRadius()
-{
-    return getSafeDoubleFromInput(torusToolbox.torusOutRadiusInput);
-}
-
-int MainWindow::getTorusToolboxRingCount()
-{
-    return getSafeIntFromInput(torusToolbox.torusRingCountInput);
-}
-
-int MainWindow::getTorusToolboxRingSubdiv()
-{
-    return getSafeIntFromInput(torusToolbox.torusRingSubdivInput);
-}
-
-double MainWindow::getCapsuleToolboxRadius()
-{
-    return getSafeDoubleFromInput(capsuleToolbox.capsuleRadiusInput);
-}
-
-double MainWindow::getCapsuleToolboxCylinderHeight()
-{
-    return getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderHeightInput);
-}
-
-int MainWindow::getCapsuleToolboxCylinderHeightSubdiv()
-{
-    return getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderHeightSubdivInput);
-}
-
-int MainWindow::getCapsuleToolboxCylinderSubdiv()
-{
-    return getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderSubdivInput);
-}
-
-int MainWindow::getCapsuleToolboxCapsSubdiv()
-{
-    return getSafeDoubleFromInput(capsuleToolbox.capsuleCapsSubdivInput);
-}
-
 void MainWindow::UpdateIcosphere()
 {
-    double radius = this->getIcosphereToolboxRadius();
-    int subdivisions = this->getIcosphereToolboxSubdiv();
+    double radius = getSafeDoubleFromInput(icosphereToolbox.icosphereRadiusInput);
+    int subdivisions = getSafeIntFromInput(icosphereToolbox.icosphereSubdivisionInput);
 
     if(radius == -1 || subdivisions == -1)
         return;//Incorrect parameters, not doing anything
@@ -359,10 +349,10 @@ void MainWindow::UpdateIcosphere()
 
 void MainWindow::UpdateTorus()
 {
-    double innerRadius = this->getTorusToolboxInRadius();
-    double outerRadius = this->getTorusToolboxOutRadius();
-    int ringCount = this->getTorusToolboxRingCount();
-    int ringsSubdivisions = this->getTorusToolboxRingSubdiv();
+    double innerRadius = getSafeDoubleFromInput(torusToolbox.torusInRadiusInput);
+    double outerRadius = getSafeDoubleFromInput(torusToolbox.torusOutRadiusInput);
+    int ringCount = getSafeIntFromInput(torusToolbox.torusRingCountInput);
+    int ringsSubdivisions = getSafeIntFromInput(torusToolbox.torusRingSubdivInput);
 
     if(innerRadius == -1 || outerRadius == -1 || ringCount == -1 || ringsSubdivisions == -1)
         return;//Incorrect parameters, not doing anything
@@ -374,18 +364,34 @@ void MainWindow::UpdateTorus()
 
 void MainWindow::UpdateCapsule()
 {
-    double radius = this->getCapsuleToolboxRadius();
-    double cylinderHeight = this->getCapsuleToolboxCylinderHeight();
-    int cylinderHeightSubdivions = this->getCapsuleToolboxCylinderHeightSubdiv();
-    int cylinderSubdivisions = this->getCapsuleToolboxCylinderSubdiv();
-    int sphereHeightSubdivisions = this->getCapsuleToolboxCapsSubdiv();
+    double radius = getSafeDoubleFromInput(capsuleToolbox.capsuleRadiusInput);
+    double cylinderHeight = getSafeDoubleFromInput(capsuleToolbox.capsuleCylinderHeightInput);
+    int cylinderHeightSubdivions = getSafeIntFromInput(capsuleToolbox.capsuleCylinderHeightSubdivInput);
+    int cylinderSubdivisions = getSafeIntFromInput(capsuleToolbox.capsuleCylinderSubdivInput);
+    int capsSubdivisions = getSafeIntFromInput(capsuleToolbox.capsuleCapsSubdivInput);
 
     if(radius == -1 || cylinderHeight == -1 ||
        cylinderHeightSubdivions == -1 || cylinderSubdivisions == -1 ||
-       sphereHeightSubdivisions == -1)
+       capsSubdivisions == -1)
         return;//Incorrect parameters, not doing anything
 
-    CreateCapsuleMesh(radius, cylinderHeight, cylinderHeightSubdivions, cylinderSubdivisions, sphereHeightSubdivisions);
+    CreateCapsuleMesh(radius, cylinderHeight, cylinderHeightSubdivions, cylinderSubdivisions, capsSubdivisions);
+
+    UpdateGeometry();
+}
+
+void MainWindow::UpdateCylinder()
+{
+    double radius = getSafeDoubleFromInput(cylinderToolbox.cylinderRadiusInput);
+    double height = getSafeDoubleFromInput(cylinderToolbox.cylinderHeightInput);
+    int heightSubdivions = getSafeDoubleFromInput(cylinderToolbox.cylinderHeightSubdivInput);
+    int subdivisions = getSafeDoubleFromInput(cylinderToolbox.cylinderSubdivInput);
+
+    if(radius == -1 || height == -1 ||
+       heightSubdivions == -1 || subdivisions == -1)
+        return;//Incorrect parameters, not doing anything
+
+    CreateCylinderMesh(radius, height, heightSubdivions, subdivisions);
 
     UpdateGeometry();
 }
