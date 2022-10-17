@@ -24,6 +24,7 @@ SOURCES += \
     AppTinyMesh/Source/ray.cpp \
     AppTinyMesh/Source/simpleMeshes.cpp \
     AppTinyMesh/Source/shader-api.cpp \
+    AppTinyMesh/Source/sphere.cpp \
     AppTinyMesh/Source/triangle.cpp \
 
 HEADERS += \
@@ -39,8 +40,7 @@ HEADERS += \
     AppTinyMesh/Include/realtime.h \
     AppTinyMesh/Include/simpleMeshes.h \
     AppTinyMesh/Include/shader-api.h \
-    ui_interface.h \
-    ui_icosphereToolbox.h \
+    AppTinyMesh/Include/sphere.h \
 
 FORMS += \
     AppTinyMesh/UI/icosphereToolbox.ui \

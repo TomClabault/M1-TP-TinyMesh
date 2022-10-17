@@ -5,6 +5,7 @@
 #include "ray.h"
 #include "mathematics.h"
 #include "matrix.h"
+#include "sphere.h"
 
 // Triangle
 class Triangle
@@ -145,6 +146,17 @@ public:
    * \param secondMesh The mesh to merge into the current one
    */
   void Merge(const Mesh& secondMesh);
+
+  /*!
+   * \brief Deforms the mesh based on the proximity
+   * of the vertices of the mesh to the given sphere.
+   * The closer a vertex of the mesh to the center of
+   * the sphere, the stronger the deformation.
+   *
+   * \param sphere The sphere that is going to be used
+   * to deform the mesh
+   */
+  void SphereWarp(Sphere sphere);
 
   void SmoothNormals();
 
