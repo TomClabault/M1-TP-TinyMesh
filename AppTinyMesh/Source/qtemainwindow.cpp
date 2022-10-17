@@ -94,6 +94,18 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
 
+    double warpRadius = 1;
+    Vector warpCenter = Vector(1.15, 0, 0);
+    Mesh icosphereMeshWarp = Mesh(Icosphere(warpRadius, 4));
+    icosphereMeshWarp.Translate(warpCenter);
+    Sphere sphere = Sphere(warpRadius, warpCenter);
+    icosphereMesh.SphereWarp(sphere);
+
+    if(merging)
+        icosphereMesh.Merge(icosphereMeshWarp);
+
+    merging = !merging;
+
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());
     for (size_t i = 0; i < cols.size(); i++)
@@ -117,18 +129,6 @@ void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int rin
 void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions)
 {
     Mesh capsuleMesh = Mesh(Capsule(radius, cylinderHeight, cylinderHeightSubdivions, cylinderSubdivisions, sphereHeightSubdivisions));
-
-    double warpRadius = 3;
-    Vector warpCenter = Vector(2, 0, 0);
-    Mesh icosphereMeshWarp = Mesh(Icosphere(warpRadius, 4));
-    icosphereMeshWarp.Translate(warpCenter);
-    Sphere sphere = Sphere(warpRadius, warpCenter);
-    capsuleMesh.SphereWarp(sphere);
-
-    if(merging)
-        capsuleMesh.Merge(icosphereMeshWarp);
-
-    merging = !merging;
 
     std::vector<Color> cols;
     cols.resize(capsuleMesh.Vertexes());
