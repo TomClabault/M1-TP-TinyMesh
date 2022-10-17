@@ -294,23 +294,21 @@ void Mesh::Merge(const Mesh& secondMesh)
 void Mesh::SphereWarp(Sphere sphere)
 {
     Vector sphereCenter = sphere.Center();
-    double sphereRadiusSquared = sphere.Radius() * sphere.Radius();
-    double sphereRadius = std::sqrt(sphereRadiusSquared);
+    double sphereRadius = sphere.Radius();
 
     for(Vector& vertex : this->vertices)
     {
         Vector directionToCenter = sphereCenter - vertex;
-        double distanceToCenterSquared = SquaredNorm(directionToCenter);
-        double distanceToCenter = std::sqrt(distanceToCenterSquared);
+        double distanceToCenter = Distance(sphereCenter, vertex);
 
-        if(distanceToCenterSquared < sphereRadiusSquared)
+        if(distanceToCenter < sphereRadius)
         {
-            double distancetoCenterSquared0To1 = distanceToCenterSquared / (sphereRadiusSquared);
+            double distanceToCenterNormalized = distanceToCenter / sphereRadius;
 
-            double intensity = (1 - distancetoCenterSquared0To1 / sphereRadius);
-            intensity *= intensity * intensity;
+            double& x = distanceToCenterNormalized;
+            double intensity = x < 0.5 ? (4 * x * x * x) : (1 - std::pow(-2 * x + 2, 3) / 2);
 
-            vertex += directionToCenter * intensity;
+            vertex += directionToCenter * (1 - intensity);
         }
     }
 }

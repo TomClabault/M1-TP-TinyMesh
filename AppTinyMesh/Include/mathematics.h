@@ -137,6 +137,9 @@ public:
   friend double Norm(const Vector&);
   friend double SquaredNorm(const Vector&);
 
+  friend double SquaredDistance(const Vector& a, const Vector& b);
+  friend double Distance(const Vector& a, const Vector& b);
+
   friend void Normalize(Vector&);
   friend Vector Normalized(const Vector&);
 
@@ -388,6 +391,39 @@ inline double Norm(const Vector& u)
 inline double SquaredNorm(const Vector& u)
 {
   return (u.c[0] * u.c[0] + u.c[1] * u.c[1] + u.c[2] * u.c[2]);
+}
+
+/*!
+ * \brief Computes the squared distance between two points
+ *
+ * \param a The first point
+ * \param b The second point
+ *
+ * \return The squared distance between the two given points
+ */
+inline double SquaredDistance(const Vector& a, const Vector& b)
+{
+    double aX = a.c[0], aY = a.c[1], aZ = a.c[2];
+    double bX = b.c[0], bY = b.c[1], bZ = b.c[2];
+
+    double xDiff = aX - bX;
+    double yDiff = aY - bY;
+    double zDiff = aZ - bZ;
+
+    return xDiff*xDiff + yDiff*yDiff + zDiff*zDiff;
+}
+
+/*!
+ * \brief Computes the distance between two points
+ *
+ * \param a The first point
+ * \param b The second point
+ *
+ * \return The distance between the two given points
+ */
+inline double Distance(const Vector& a, const Vector& b)
+{
+    return std::sqrt(SquaredDistance(a, b));
 }
 
 /*!
