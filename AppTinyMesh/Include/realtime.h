@@ -34,6 +34,11 @@ public:
         start = std::chrono::high_resolution_clock::now();
     }
 
+    inline void InitCPUOnly()
+    {
+        start = std::chrono::high_resolution_clock::now();
+    }
+
     /*!
   \brief Starts profiling the GPU if enabled.
   */

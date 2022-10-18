@@ -62,6 +62,12 @@ public:
      */
     unsigned int IndicesCount() const;
 
+    /*!
+     * \brief Returns the number of bytes occupied by the instance in memory
+     * \return The number of bytes occupied by the instance in memory
+     */
+    unsigned long long int getMemorySize() const;
+
 protected:
     std::vector<Vector> vertices;
     std::vector<Vector> normals;

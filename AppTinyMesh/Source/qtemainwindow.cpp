@@ -94,18 +94,6 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
 
-    double warpRadius = 1;
-    Vector warpCenter = Vector(1.15, 0, 0);
-    Mesh icosphereMeshWarp = Mesh(Icosphere(warpRadius, 4));
-    icosphereMeshWarp.Translate(warpCenter);
-    Sphere sphere = Sphere(warpRadius, warpCenter);
-    icosphereMesh.SphereWarp(sphere);
-
-    if(merging)
-        icosphereMesh.Merge(icosphereMeshWarp);
-
-    merging = !merging;
-
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());
     for (size_t i = 0; i < cols.size(); i++)
@@ -114,9 +102,52 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
     meshColor = MeshColor(icosphereMesh, cols, icosphereMesh.VertexIndexes());
 }
 
+/**
+ *  Code pour la génération de l'union de primitives avec transformations / déformations utilisée dans le rapport
+    Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
+
+    Mesh icosphereMesh(Icosphere(1, 4));
+    icosphereMesh.SphereWarp(Sphere(2, Vector(0, 0, 1)));
+    icosphereMesh.SphereWarp(Sphere(3, Vector(0, 0, -2)));
+    torusMesh.Merge(icosphereMesh);
+
+    Mesh capsuleMesh = Mesh(Capsule(1, 2, 5, 10, 10));
+    capsuleMesh.Rotate(Matrix::RotationX(45));
+    capsuleMesh.Translate(Vector(0, 2, 2));
+    torusMesh.Merge(capsuleMesh);
+
+    Mesh capsuleMesh2 = Mesh(Capsule(1, 2, 5, 10, 10));
+    capsuleMesh2.Rotate(Matrix::RotationX(-45));
+    capsuleMesh2.Translate(Vector(0, -3, 0.25));
+    torusMesh.Merge(capsuleMesh2);
+
+    Mesh cylinderMesh = Mesh(Cylinder(1, 2, 4, 15));
+    cylinderMesh.Translate(Vector(-3, -1, 1));
+    torusMesh.Merge(cylinderMesh);
+*/
+
 void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
 {
     Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
+
+    Mesh icosphereMesh(Icosphere(1, 4));
+    icosphereMesh.SphereWarp(Sphere(2, Vector(0, 0, 1)));
+    icosphereMesh.SphereWarp(Sphere(3, Vector(0, 0, -2)));
+    torusMesh.Merge(icosphereMesh);
+
+    Mesh capsuleMesh = Mesh(Capsule(1, 2, 5, 10, 10));
+    capsuleMesh.Rotate(Matrix::RotationX(45));
+    capsuleMesh.Translate(Vector(0, 2, 2));
+    torusMesh.Merge(capsuleMesh);
+
+    Mesh capsuleMesh2 = Mesh(Capsule(1, 2, 5, 10, 10));
+    capsuleMesh2.Rotate(Matrix::RotationX(-45));
+    capsuleMesh2.Translate(Vector(0, -3, 0.25));
+    torusMesh.Merge(capsuleMesh2);
+
+    Mesh cylinderMesh = Mesh(Cylinder(1, 2, 4, 15));
+    cylinderMesh.Translate(Vector(-3, -1, 1));
+    torusMesh.Merge(cylinderMesh);
 
     std::vector<Color> cols;
     cols.resize(torusMesh.Vertexes());

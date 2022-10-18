@@ -41,6 +41,18 @@ int SimpleMesh::NormalIndex(int index) const
     return normalIndices.at(index);
 }
 
+unsigned long long int SimpleMesh::getMemorySize() const
+{
+    unsigned long long int bytes = 0;
+
+    bytes += this->indices.capacity() * sizeof(int);
+    bytes += this->normalIndices.capacity() * sizeof(int);
+    bytes += this->normals.capacity() * sizeof(double) * 3;//3 double for a Vector
+    bytes += this->vertices.capacity() * sizeof(double) * 3;//3 double for a Vector
+
+    return bytes;
+}
+
 //Cache used to avoid the duplication of vertices when subdividing the icosphere
 std::unordered_map<int, int> midPointsCache;
 
@@ -97,17 +109,11 @@ Icosphere::Icosphere(double radius, int subdivisions)
 
     initBaseIcosphere(1);
 
-    RenderingProfiler profiler;
-    profiler.Init();
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
 
     for(Vector& vertex : this->vertices)
         vertex *= radius;
-
-    profiler.Update();
-
-    std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
 }
 
 /*!
@@ -315,9 +321,6 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     this->cylinderSubdivisions = cylinderSubdivisions;
     this->sphereHeightSubdivisions = sphereHeightSubdivisions;
 
-    RenderingProfiler profiler;
-    profiler.Init();
-
     double ringIncrement = 1 / (sphereHeightSubdivisions - 1.0);
     double ringSubdivIncrement = 1 / (double)cylinderSubdivisions;
     double deltaY = -1.0;
@@ -441,15 +444,10 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
 
         normalsCreated++;
     }
-
-    profiler.Update();
-    std::cout << profiler.msPerFrame << "ms[" << profiler.framePerSecond << "FPS]" << std::endl;
 }
 
 Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    //TODO optimization: on peut calculer les points sur un seul ring et les dupliquer jusqu'à avoir la bonne hauteur du cylindre
-
     //First point at the middle of the bottom circle of the cylinder
     this->vertices.push_back(Vector(0, 0, 0));
 
@@ -467,7 +465,6 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
 
     //Generating the cylinder
     double heightIncrement = (double)height / (heightSubdivisions + 1.0);
-    std::cout << heightIncrement << std::endl;
     for(int ringIndex = 0; ringIndex < heightSubdivisions; ringIndex++)
     {
         for(int cylinderRing = 0; cylinderRing < cylinderSubdivisions; cylinderRing++)
@@ -485,10 +482,12 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
     //of the cylinder to effectively have the
     //"top circle"
     for(int i = 0; i <= cylinderSubdivisions; i++)
-        this->vertices.push_back(Vector(this->vertices[i]) + Vector(0, height, 0));
+        this->vertices.push_back(Vector(this->vertices[i] + Vector(0, height, 0)));
+
 
     //Generating the indices and the normals of both
     //the bottom and top circle of the cylinder
+    int verticesCount = this->vertices.size();
     int normalsCreated = 0;
     for(int i = 0; i < cylinderSubdivisions; i++)
     {
@@ -510,10 +509,12 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
         this->normals.push_back(normal);
 
 
+        index0 = verticesCount - cylinderSubdivisions - 1;
+        index1 = verticesCount - cylinderSubdivisions - 1 + i + 1;
+        index2 = index1 + 1;
+        if(index2 == verticesCount)
+            index2 = index0 + 1;
 
-        index0 = 1 + cylinderSubdivisions;
-        index1 = i + 1 + cylinderSubdivisions + 1;
-        index2 = (i + 1) % cylinderSubdivisions + 1 + cylinderSubdivisions + 1;
         this->indices.push_back(index0);//Vertex at the center of the top ring of the cylinder
         this->indices.push_back(index1);
         this->indices.push_back(index2);
