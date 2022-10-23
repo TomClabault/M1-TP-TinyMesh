@@ -96,6 +96,43 @@ bool Triangle::Intersect(const Ray& ray, double& t, double& u, double& v) const
   return true;
 }
 
+bool Triangle::IntersectFromPoints(Vector a, Vector b, Vector c, const Ray& ray, double& t, double& u, double& v)
+{
+    Vector e[2];
+
+    // Find edge vectors
+    e[0] = b - a;
+    e[1] = c - a;
+
+    Vector pvec = ray.Direction() / e[1];
+
+    // Determinant, if determinant is near zero, ray lies in plane of triangle
+    double det = e[0] * pvec;
+
+    if ((det > -Triangle::epsilon) && (det < Triangle::epsilon))
+        return false;
+    det = 1.0 / det;
+
+    // calculate distance from first vertex to ray origin
+    Vector tvec = ray.Origin() - a;
+
+    // calculate U parameter and test bounds
+    u = (tvec * pvec) * det;
+    if ((u < 0.0) || (u > 1.0))
+        return false;
+
+    // calculate V parameter and test bounds
+    Vector qvec = tvec / e[0];
+
+    v = (ray.Direction() * qvec) * det;
+    if ((v < 0.0) || (u + v) > 1.0)
+        return false;
+
+    // Ray intersects triangle
+    t = (e[1] * qvec) * det;
+    return true;
+}
+
 /*!
 \brief Translates a triangle by a given vector.
 

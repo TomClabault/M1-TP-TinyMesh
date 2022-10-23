@@ -1,6 +1,7 @@
 #pragma once
 
 #include "box.h"
+#include "color.h"
 #include "simpleMeshes.h"
 #include "ray.h"
 #include "mathematics.h"
@@ -27,6 +28,11 @@ public:
 
   // Intersection
   bool Intersect(const Ray&, double&, double&, double&) const;
+
+  /*!
+  * \brief This function allows the computation of the intersection between a ray and a triangle without having to instantiate a triangle
+  */
+  static bool IntersectFromPoints(Vector a, Vector b, Vector c, const Ray&, double&, double&, double&);
 
   void Translate(const Vector&);
 
@@ -157,6 +163,40 @@ public:
    * to deform the mesh
    */
   void SphereWarp(Sphere sphere);
+
+  /*!
+   * \brief Constructs a vector of color for each
+   * vertex of the mesh based on the accessibility
+   * of each vertices.
+   *
+   * \param radius The radius within which to check
+   * for intersections with the mesh
+   * \param samples How many samples are going to be
+   * used to compute the accessibility of each vertex
+   * \param accessibilityColors The vector of size
+   * this->Vertexes().size() that will receive the color
+   * of each vertex (in the same order as the vertices
+   * of the this->Vertexes() vector) based on their
+   * accessibility. This vector should already be resized
+   * to this->Vertexes()
+   * \param occlusionStrength A multiplier on the strength
+   * of the occlusion. The higher this parameter, the
+   * darker the occlusion
+   */
+  void accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength = 1);
+
+  /*!
+   * \brief Computes the intersection between a ray
+   * and this mesh
+   *
+   * \param ray The ray
+   * \param [out] outT The distance t from the origin of the
+   * ray where the intersection has been found asssuming
+   * the ray's equation is: orig + dir*t
+   *
+   * \return True if an intersection was found, false otherwise
+   */
+  bool intersect(const Ray& ray, double& outT);
 
   void SmoothNormals();
 

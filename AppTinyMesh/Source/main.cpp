@@ -1,8 +1,6 @@
 #include "qtemainwindow.h"
 #include <QtWidgets/qapplication.h>
 
-#include "benchmarks.h"
-
 int main(int argc, char *argv[])
 {
 //    int iterations = 1000;
@@ -16,6 +14,12 @@ int main(int argc, char *argv[])
 //    benchmarks.BenchmarkCylinder(500, 750);
 
 //    return 0;
+#ifdef VISUAL_STUDIO_EDITOR
+	//Opening a console so that we can get cout output
+	AllocConsole();
+	freopen("CONOUT$", "w", stdout);
+	freopen("CONOUT$", "w", stderr);
+#endif
 
 	QApplication app(argc, argv);
 

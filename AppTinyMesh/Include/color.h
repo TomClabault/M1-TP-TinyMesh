@@ -3,8 +3,7 @@
 #ifndef __Color__
 #define __Color__
 
-// Mathematics fundamentals
-#include "mathematics.h"
+#include <ostream>
 
 class Color
 {
@@ -29,6 +28,8 @@ public:
   friend Color operator*(const Color&, double);
   friend Color operator*(double, const Color&);
   friend Color operator/(const Color&, double);
+
+  friend std::ostream& operator << (std::ostream& os, const Color& color);
 
   static Color Lerp(double, const Color&, const Color&);
 

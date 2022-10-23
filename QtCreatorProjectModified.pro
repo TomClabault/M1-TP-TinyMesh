@@ -13,6 +13,7 @@ VPATH += AppTinyMesh
 SOURCES += \
     AppTinyMesh/Source/benchmarks.cpp \
     AppTinyMesh/Source/box.cpp \
+    AppTinyMesh/Source/color.cpp \
     AppTinyMesh/Source/evector.cpp \
     AppTinyMesh/Source/implicits.cpp \
     AppTinyMesh/Source/main.cpp \

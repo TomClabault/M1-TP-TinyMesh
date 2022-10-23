@@ -5,32 +5,32 @@
 
 MainWindow::MainWindow() : QMainWindow(), uiw(new Ui::Assets)
 {
-	// Chargement de l'interface
+    // Chargement de l'interface
     uiw->setupUi(this);
 
-	// Chargement du GLWidget
-	meshWidget = new MeshWidget;
-	QGridLayout* GLlayout = new QGridLayout;
-	GLlayout->addWidget(meshWidget, 0, 0);
-	GLlayout->setContentsMargins(0, 0, 0, 0);
+    // Chargement du GLWidget
+    meshWidget = new MeshWidget;
+    QGridLayout* GLlayout = new QGridLayout;
+    GLlayout->addWidget(meshWidget, 0, 0);
+    GLlayout->setContentsMargins(0, 0, 0, 0);
     uiw->widget_GL->setLayout(GLlayout);
 
     uiw->toolboxGroupBox->setVisible(false);
 
-	// Creation des connect
-	CreateActions();
+    // Creation des connect
+    CreateActions();
 
-	meshWidget->SetCamera(Camera(Vector(10, 0, 0), Vector(0.0, 0.0, 0.0)));
+    meshWidget->SetCamera(Camera(Vector(10, 0, 0), Vector(0.0, 0.0, 0.0)));
 }
 
 MainWindow::~MainWindow()
 {
-	delete meshWidget;
+    delete meshWidget;
 }
 
 void MainWindow::CreateActions()
 {
-	// Buttons
+    // Buttons
     connect(uiw->boxMesh, SIGNAL(clicked()), this, SLOT(BoxMeshExample()));
     connect(uiw->sphereImplicit, SIGNAL(clicked()), this, SLOT(SphereImplicitExample()));
     connect(uiw->icosphereButton, SIGNAL(clicked()), this, SLOT(DisplayIcosphere()));
@@ -42,9 +42,9 @@ void MainWindow::CreateActions()
     connect(uiw->radioShadingButton_1, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
     connect(uiw->radioShadingButton_2, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
 
-	// Widget edition
-	connect(meshWidget, SIGNAL(_signalEditSceneLeft(const Ray&)), this, SLOT(editingSceneLeft(const Ray&)));
-	connect(meshWidget, SIGNAL(_signalEditSceneRight(const Ray&)), this, SLOT(editingSceneRight(const Ray&)));
+    // Widget edition
+    connect(meshWidget, SIGNAL(_signalEditSceneLeft(const Ray&)), this, SLOT(editingSceneLeft(const Ray&)));
+    connect(meshWidget, SIGNAL(_signalEditSceneRight(const Ray&)), this, SLOT(editingSceneRight(const Ray&)));
 }
 
 void MainWindow::editingSceneLeft(const Ray&)
@@ -59,15 +59,17 @@ void MainWindow::BoxMeshExample()
 {
     uiw->toolboxGroupBox->setVisible(false);
 
-	Mesh boxMesh = Mesh(Box(1.0));
+    Mesh boxMesh = Mesh(Box(1.0));
 
-	std::vector<Color> cols;
-	cols.resize(boxMesh.Vertexes());
-    for (size_t i = 0; i < cols.size(); i++)
-		cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+    std::vector<Color> cols;
+    cols.resize(boxMesh.Vertexes());
+    boxMesh.accessibility(cols, 2, 15);
 
-	meshColor = MeshColor(boxMesh, cols, boxMesh.VertexIndexes());
-	UpdateGeometry();
+    //for (size_t i = 0; i < cols.size(); i++)
+        //cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+
+    meshColor = MeshColor(boxMesh, cols, boxMesh.VertexIndexes());
+    UpdateGeometry();
 }
 
 void MainWindow::SphereImplicitExample()
@@ -81,8 +83,10 @@ void MainWindow::SphereImplicitExample()
 
     std::vector<Color> cols;
     cols.resize(implicitMesh.Vertexes());
-    for (size_t i = 0; i < cols.size(); i++)
-        cols[i] = Color(0.8, 0.8, 0.8);
+    implicitMesh.accessibility(cols, 1, 15);
+
+//    for (size_t i = 0; i < cols.size(); i++)
+//        cols[i] = Color(0.8, 0.8, 0.8);
 
     meshColor = MeshColor(implicitMesh, cols, implicitMesh.VertexIndexes());
     UpdateGeometry();
@@ -130,29 +134,37 @@ void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int rin
 {
     Mesh torusMesh = Mesh(Torus(innerRadius, outerRadius, ringCount, ringsSubdivisions));
 
-    Mesh icosphereMesh(Icosphere(1, 4));
-    icosphereMesh.SphereWarp(Sphere(2, Vector(0, 0, 1)));
-    icosphereMesh.SphereWarp(Sphere(3, Vector(0, 0, -2)));
-    torusMesh.Merge(icosphereMesh);
-
-    Mesh capsuleMesh = Mesh(Capsule(1, 2, 5, 10, 10));
-    capsuleMesh.Rotate(Matrix::RotationX(45));
-    capsuleMesh.Translate(Vector(0, 2, 2));
-    torusMesh.Merge(capsuleMesh);
-
-    Mesh capsuleMesh2 = Mesh(Capsule(1, 2, 5, 10, 10));
-    capsuleMesh2.Rotate(Matrix::RotationX(-45));
-    capsuleMesh2.Translate(Vector(0, -3, 0.25));
-    torusMesh.Merge(capsuleMesh2);
-
-    Mesh cylinderMesh = Mesh(Cylinder(1, 2, 4, 15));
-    cylinderMesh.Translate(Vector(-3, -1, 1));
-    torusMesh.Merge(cylinderMesh);
-
     std::vector<Color> cols;
     cols.resize(torusMesh.Vertexes());
-    for (size_t i = 0; i < cols.size(); i++)
-        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+
+    std::srand(2);
+    torusMesh.accessibility(cols, 1, 10, 1);
+
+    //TODO remove
+    /*bool found = false;
+    int seed = 0;
+
+    while (!found)
+    {
+        std::srand(seed);
+        torusMesh.accessibility(cols, 1, 1, 50);
+        for (Color color : cols)
+        {
+            if ((color[0] != 1.0 || color[1] != 1.0 || color[2] != 1.0) && !(color[0] == 1.0 && color[1] == 0.0 && color[2] == 0.0))
+            {
+                found = true;
+
+                std::cout << "Seed: " << seed << std::endl;
+
+                std::cout << "Colors: [" << color[0] << ", " << color[1] << ", " << color[2] << "]" << std::endl;
+
+                break;
+            }
+        }
+
+        seed++;
+    }*/
+    
 
     meshColor = MeshColor(torusMesh, cols, torusMesh.VertexIndexes());
 }
@@ -163,6 +175,7 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 
     std::vector<Color> cols;
     cols.resize(capsuleMesh.Vertexes());
+    capsuleMesh.accessibility(cols, 1, 15);
     for (size_t i = 0; i < cols.size(); i++)
         cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
 
@@ -171,14 +184,23 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    Mesh cylinderMesh = Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
+    Mesh humanMesh;
+    humanMesh.Load("Skull.obj");
 
     std::vector<Color> cols;
-    cols.resize(cylinderMesh.Vertexes());
-    for (size_t i = 0; i < cols.size(); i++)
-        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+    cols.resize(humanMesh.Vertexes());
 
-    meshColor = MeshColor(cylinderMesh, cols, cylinderMesh.VertexIndexes());
+    humanMesh.accessibility(cols, 1, 10);
+
+    //Mesh cylinderMesh = Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
+
+    //std::vector<Color> cols;
+    //cols.resize(cylinderMesh.Vertexes());
+    //for (size_t i = 0; i < cols.size(); i++)
+//        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+
+    //meshColor = MeshColor(cylinderMesh, cols, cylinderMesh.VertexIndexes());
+    meshColor = MeshColor(humanMesh, cols, humanMesh.VertexIndexes());
 }
 
 void MainWindow::SetupIcosphereToolbox()
@@ -313,13 +335,13 @@ void MainWindow::DisplayCylinder()
 
 void MainWindow::UpdateGeometry()
 {
-	meshWidget->ClearAll();
-	meshWidget->AddMesh("BoxMesh", meshColor);
+    meshWidget->ClearAll();
+    meshWidget->AddMesh("BoxMesh", meshColor);
 
     uiw->lineEdit->setText(QString::number(meshColor.Vertexes()));
     uiw->lineEdit_2->setText(QString::number(meshColor.Triangles()));
 
-	UpdateMaterial();
+    UpdateMaterial();
 }
 
 void MainWindow::UpdateMaterial()
@@ -327,14 +349,14 @@ void MainWindow::UpdateMaterial()
     meshWidget->UseWireframeGlobal(uiw->wireframe->isChecked());
 
     if (uiw->radioShadingButton_1->isChecked())
-		meshWidget->SetMaterialGlobal(MeshMaterial::Normal);
-	else
-		meshWidget->SetMaterialGlobal(MeshMaterial::Color);
+        meshWidget->SetMaterialGlobal(MeshMaterial::Normal);
+    else
+        meshWidget->SetMaterialGlobal(MeshMaterial::Color);
 }
 
 void MainWindow::ResetCamera()
 {
-	meshWidget->SetCamera(Camera(Vector(-10.0), Vector(0.0)));
+    meshWidget->SetCamera(Camera(Vector(-10.0), Vector(0.0)));
 }
 
 double getSafeDoubleFromInput(const QLineEdit* input)
@@ -416,8 +438,8 @@ void MainWindow::UpdateCapsule()
     int capsSubdivisions = getSafeIntFromInput(capsuleToolbox.capsuleCapsSubdivInput);
 
     if(radius == -1 || cylinderHeight == -1 ||
-       cylinderHeightSubdivions == -1 || cylinderSubdivisions == -1 ||
-       capsSubdivisions == -1)
+            cylinderHeightSubdivions == -1 || cylinderSubdivisions == -1 ||
+            capsSubdivisions == -1)
         return;//Incorrect parameters, not doing anything
 
     CreateCapsuleMesh(radius, cylinderHeight, cylinderHeightSubdivions, cylinderSubdivisions, capsSubdivisions);
@@ -433,7 +455,7 @@ void MainWindow::UpdateCylinder()
     int subdivisions = getSafeDoubleFromInput(cylinderToolbox.cylinderSubdivInput);
 
     if(radius == -1 || height == -1 ||
-       heightSubdivions == -1 || subdivisions == -1)
+            heightSubdivions == -1 || subdivisions == -1)
         return;//Incorrect parameters, not doing anything
 
     CreateCylinderMesh(radius, height, heightSubdivions, subdivisions);

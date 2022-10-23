@@ -1,5 +1,8 @@
 #include "mesh.h"
 
+//For M_PI
+#include "qmath.h"
+
 /*!
 \class Mesh mesh.h
 
@@ -313,7 +316,118 @@ void Mesh::SphereWarp(Sphere sphere)
     }
 }
 
+//TODO remove
+#define DEBUG_INDEX_COUNT 4 
 
+void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
+{
+    //TODO remove
+    /*int debugIndexes[DEBUG_INDEX_COUNT] = { (11 + 20 * 3 - 4) * 3 + 75,
+                             30 + 120 * 5,
+                             30 + 120 * 10,
+                             30 + 120 * 15 };*/
+
+    double colorIncrement = 1.0 / samples;
+    const double epsilon = 1.0e-3;
+
+    //TODO remove
+    /*Vector* randomSamples = (Vector*)malloc(sizeof(Vector) * samples);
+    for (int i = 0; i < samples; i++)
+        randomSamples[i] = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));*/
+
+    //TODO ne pas recalculer 50 fois le même vertex. En bouclant sur les indices des vertex comme ça, on va recalculer l'accessibilité même pour des vertex partagés par plusieurs triangles
+    for(int vertexIndex = 0; vertexIndex < this->varray.size(); vertexIndex++)
+    {
+        double obstructedValue = 0;
+
+        Vector vertex = this->vertices.at(this->varray.at(vertexIndex));
+        Vector normal = this->normals.at(this->narray.at(vertexIndex));
+
+        //TODO remove
+        /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
+        {
+            if (vertexIndex == debugIndexes[debugIndex])
+            {
+                for (int k = 0; k < 5; k++)
+                {
+                    this->Merge(Mesh(Box(normal * k/3 + vertex, 0.025)));
+                    for (int k2 = 0; k2 < 8; k2++)
+                        accessibilityColors.push_back(Color(0, 0, 255));
+                }
+            }
+        }*/
+
+        for(int sample = 0; sample < samples; sample++)
+        {
+            //TODO remove
+            //Vector randomVec = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));Vector randomRayDirection = Normalized(Normalized(randomVec) + normal);
+
+            Vector randomVec = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));
+            //Vector randomVec = randomSamples[sample];
+            Vector randomRayDirection = Normalized(randomVec + normal);
+
+            //TODO remove
+            /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
+            {
+                if (vertexIndex == debugIndexes[debugIndex])
+                {
+                    this->Merge(Mesh(Box((vertex + randomRayDirection) * radius, 0.05)));
+                    for (int k = 0; k < 8; k++)
+                        accessibilityColors.push_back(Color(0, 255, 0));
+                }
+            }*/
+
+            //We're slightly shifting the origin of the ray in the
+            //direction of the normal otherwise we will intersect ourselves
+            Ray ray(vertex + normal * epsilon, randomRayDirection);
+
+            double intersectionDistance;
+            bool intersectionFound = this->intersect(ray, intersectionDistance);
+
+            //In front of the ray and within the given occlusion radius
+            if(intersectionFound && intersectionDistance > epsilon && intersectionDistance <= radius)
+                obstructedValue += colorIncrement;
+        }
+
+        //Color occlusion in yellow
+        //accessibilityColors.at(this->varray.at(vertexIndex)) = Color((int)(255 * obstructedValue), (int)(255 * obstructedValue), 0);
+
+        accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
+    }
+
+    //TODO remove
+    /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
+        accessibilityColors.at(varray.at(debugIndexes[debugIndex])) = Color(255, 0, 0);*/
+}
+
+bool Mesh::intersect(const Ray& ray, double& outT)
+{
+    bool found = false;
+    double closestT = 10e64;//Used to keep track of the closest
+
+    //Looping through indices 3 by 3 to get the triangles
+    for(int i = 0; i < this->varray.size(); i += 3)
+    {
+        int index1 = this->varray.at(i + 0);
+        int index2 = this->varray.at(i + 1);
+        int index3 = this->varray.at(i + 2);
+
+        double t, u, v;
+
+        if(Triangle::IntersectFromPoints(this->vertices.at(index1), this->vertices.at(index2), this->vertices.at(index3), ray, t, u, v))
+        {
+            if(t > 0 && t < closestT)//Intersection in front of the ray
+            {
+                closestT = t;
+                outT = t;
+
+                found = true;
+            }
+        }
+    }
+
+    return found;
+}
 
 
 
