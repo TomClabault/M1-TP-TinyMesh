@@ -19,6 +19,7 @@ SOURCES += \
     AppTinyMesh/Source/implicits.cpp \
     AppTinyMesh/Source/main.cpp \
     AppTinyMesh/Source/camera.cpp \
+    AppTinyMesh/Source/mathematics.cpp \
     AppTinyMesh/Source/matrix.cpp \
     AppTinyMesh/Source/mesh.cpp \
     AppTinyMesh/Source/meshcolor.cpp \

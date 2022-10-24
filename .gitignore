@@ -6,3 +6,4 @@ AppTinyMesh/Source/moc_qte.cpp
 AppTinyMesh/Include/ui-interface.h
 /AppTinyMesh/Include/ui_interface.h
 QtCreatorProjectModified.pro.user
+*.synctex.gz

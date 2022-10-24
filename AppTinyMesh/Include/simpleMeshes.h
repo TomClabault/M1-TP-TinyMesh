@@ -4,6 +4,7 @@
 #include <vector>
 #include <iostream>
 
+#include "analyticShapes.h"
 #include "mathematics.h"
 #include "ray.h"
 
@@ -74,8 +75,6 @@ protected:
     std::vector<Vector> normals;
     std::vector<int> indices;
     std::vector<int> normalIndices;
-
-    AnalyticMesh analyticMesh;
 };
 
 class Icosphere : public SimpleMesh
@@ -115,7 +114,7 @@ private:
     double radius;
     int subdivisions = 0;
 
-    AnalyticMesh<AnalyticSphere> analyticShape;
+    AnalyticShape<AnalyticSphere> analyticShape;
 };
 
 class Torus : public SimpleMesh

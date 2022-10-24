@@ -5,3 +5,12 @@ class AnalyticShape
 {
     bool intersect(const Ray& ray, double& t, double& u, double &v);
 };
+
+class AnalyticSphere
+{
+    bool intersect(const Ray& ray, double& t, double& u, double &v)
+    {
+        //TODO
+        return true;
+    }
+};

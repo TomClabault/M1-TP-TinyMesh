@@ -3,6 +3,8 @@
 //For M_PI
 #include "qmath.h"
 
+#include <chrono>
+
 /*!
 \class Mesh mesh.h
 
@@ -316,24 +318,10 @@ void Mesh::SphereWarp(Sphere sphere)
     }
 }
 
-//TODO remove
-#define DEBUG_INDEX_COUNT 4 
-
 void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
 {
-    //TODO remove
-    /*int debugIndexes[DEBUG_INDEX_COUNT] = { (11 + 20 * 3 - 4) * 3 + 75,
-                             30 + 120 * 5,
-                             30 + 120 * 10,
-                             30 + 120 * 15 };*/
-
     double colorIncrement = 1.0 / samples;
     const double epsilon = 1.0e-3;
-
-    //TODO remove
-    /*Vector* randomSamples = (Vector*)malloc(sizeof(Vector) * samples);
-    for (int i = 0; i < samples; i++)
-        randomSamples[i] = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));*/
 
     //TODO ne pas recalculer 50 fois le même vertex. En bouclant sur les indices des vertex comme ça, on va recalculer l'accessibilité même pour des vertex partagés par plusieurs triangles
     for(size_t vertexIndex = 0; vertexIndex < this->varray.size(); vertexIndex++)
@@ -343,36 +331,16 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
         Vector vertex = this->vertices.at(this->varray.at(vertexIndex));
         Vector normal = this->normals.at(this->narray.at(vertexIndex));
 
-        //TODO remove
-        /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
-        {
-            if (vertexIndex == debugIndexes[debugIndex])
-            {
-                for (int k = 0; k < 5; k++)
-                {
-                    this->Merge(Mesh(Box(normal * k/3 + vertex, 0.025)));
-                    for (int k2 = 0; k2 < 8; k2++)
-                        accessibilityColors.push_back(Color(0, 0, 255));
-                }
-            }
-        }*/
-
         for(int sample = 0; sample < samples; sample++)
         {
-            Vector randomVec = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));
+            unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
+
+            //Using xorshift96 to generate random numbers is faster than std::rand by 2 orders of magnitude
+            Vector randomVec = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+                                                 (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+                                                 (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
             if(randomVec * normal < 0)//If the random point we draw is below the surface
                 randomVec = -1 * randomVec;//Flipping the random point for it to be above the surface
-
-            //TODO remove
-            /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
-            {
-                if (vertexIndex == debugIndexes[debugIndex])
-                {
-                    this->Merge(Mesh(Box((vertex + randomRayDirection) * radius, 0.05)));
-                    for (int k = 0; k < 8; k++)
-                        accessibilityColors.push_back(Color(0, 255, 0));
-                }
-            }*/
 
             //We're slightly shifting the origin of the ray in the
             //direction of the normal otherwise we will intersect ourselves
@@ -386,18 +354,8 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 obstructedValue += colorIncrement;
         }
 
-        //Color occlusion in yellow
-        //accessibilityColors.at(this->varray.at(vertexIndex)) = Color((int)(255 * obstructedValue), (int)(255 * obstructedValue), 0);
-
         accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
-
-        //Red occlusion
-        //accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1.0, 1 - obstructedValue * occlusionStrength, 1 - obstructedValue * occlusionStrength);
     }
-
-    //TODO remove
-    /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
-        accessibilityColors.at(varray.at(debugIndexes[debugIndex])) = Color(255, 0, 0);*/
 }
 
 bool Mesh::intersect(const Ray& ray, double& outT)

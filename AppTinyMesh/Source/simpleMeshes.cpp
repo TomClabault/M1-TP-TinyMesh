@@ -6,11 +6,6 @@
 #include <cmath>
 #include <unordered_map>
 
-template<> bool AnalyticMesh<Mesh>::intersect(const Ray& ray, double& t, double& u, double &v)
-{
-
-}
-
 unsigned int SimpleMesh::VerticesCount() const
 {
     return vertices.size();
