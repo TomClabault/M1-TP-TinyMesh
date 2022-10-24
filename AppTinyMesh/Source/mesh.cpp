@@ -359,12 +359,9 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
         for(int sample = 0; sample < samples; sample++)
         {
-            //TODO remove
-            //Vector randomVec = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));Vector randomRayDirection = Normalized(Normalized(randomVec) + normal);
-
             Vector randomVec = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));
-            //Vector randomVec = randomSamples[sample];
-            Vector randomRayDirection = Normalized(randomVec + normal);
+            if(randomVec * normal < 0)//If the random point we draw is below the surface
+                randomVec = -1 * randomVec;//Flipping the random point for it to be above the surface
 
             //TODO remove
             /*for (int debugIndex = 0; debugIndex < DEBUG_INDEX_COUNT; debugIndex++)
@@ -379,7 +376,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
             //We're slightly shifting the origin of the ray in the
             //direction of the normal otherwise we will intersect ourselves
-            Ray ray(vertex + normal * epsilon, randomRayDirection);
+            Ray ray(vertex + normal * epsilon, randomVec);
 
             double intersectionDistance;
             bool intersectionFound = this->intersect(ray, intersectionDistance);

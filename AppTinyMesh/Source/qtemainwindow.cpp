@@ -122,7 +122,7 @@ void MainWindow::GetAOParameters(double& AORadius, int& AOSamples, double& AOStr
     }
 }
 
-void MainWindow::HandleAO(Mesh mesh, std::vector<Color>& meshColors)
+void MainWindow::HandleAO(Mesh& mesh, std::vector<Color>& meshColors)
 {
     double AORadius;
     int AOSamples;
@@ -145,9 +145,6 @@ void MainWindow::BoxMeshExample()
     std::vector<Color> cols;
     cols.resize(boxMesh.Vertexes());
     HandleAO(boxMesh, cols);
-
-    //for (size_t i = 0; i < cols.size(); i++)
-        //cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
 
     meshColor = MeshColor(boxMesh, cols, boxMesh.VertexIndexes());
     UpdateGeometry();
@@ -214,32 +211,6 @@ void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int rin
     std::vector<Color> cols;
     cols.resize(torusMesh.Vertexes());
     HandleAO(torusMesh, cols);
-
-    //TODO remove
-    /*bool found = false;
-    int seed = 0;
-
-    while (!found)
-    {
-        std::srand(seed);
-        torusMesh.accessibility(cols, 1, 1, 50);
-        for (Color color : cols)
-        {
-            if ((color[0] != 1.0 || color[1] != 1.0 || color[2] != 1.0) && !(color[0] == 1.0 && color[1] == 0.0 && color[2] == 0.0))
-            {
-                found = true;
-
-                std::cout << "Seed: " << seed << std::endl;
-
-                std::cout << "Colors: [" << color[0] << ", " << color[1] << ", " << color[2] << "]" << std::endl;
-
-                break;
-            }
-        }
-
-        seed++;
-    }*/
-    
 
     meshColor = MeshColor(torusMesh, cols, torusMesh.VertexIndexes());
 }
@@ -445,7 +416,7 @@ void MainWindow::UpdateAO()
 {
     if(!uiw->AOCheckbox->isChecked())
     {
-        std::vector cols = meshColor.GetColors();
+        std::vector<Color> cols = meshColor.GetColors();
 
         //Repainting the mesh in white
         for(Color& color : cols)
@@ -466,7 +437,6 @@ void MainWindow::UpdateAO()
             meshColor.computeAccessibility(AORadius, AOSamples, AOStrength);
     }
 
-    //UpdateMaterial();
     UpdateGeometry();
 }
 

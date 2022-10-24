@@ -73,7 +73,7 @@ public:
      * computation of the ambient occlusion
      * (or the set operation to all white)
      */
-    void HandleAO(Mesh mesh, std::vector<Color>& meshColors);
+    void HandleAO(Mesh& mesh, std::vector<Color>& meshColors);
 
     void CreateIcosphereMesh(double radius, int subdivisions);
     void CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions);
