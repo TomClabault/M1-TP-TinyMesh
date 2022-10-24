@@ -257,8 +257,7 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    Mesh cylinderMesh;//Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
-    cylinderMesh.Load("LotusFlowerDecimate.obj");
+    Mesh cylinderMesh = Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
 
     std::vector<Color> cols;
     cols.resize(cylinderMesh.Vertexes());
