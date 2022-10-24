@@ -67,44 +67,26 @@ void MainWindow::editingSceneRight(const Ray&)
 
 double getSafeDoubleFromInput(const QLineEdit* input)
 {
-    double value;
+    bool ok;
 
-    QString inputText = input->text();
-    try
-    {
-        value = std::stod(inputText.toStdString());
-    }
-    catch (std::invalid_argument e)
-    {
-        return -1;
-    }
-    catch (std::out_of_range e)
-    {
-        return -1;
-    }
+    double value = input->text().toDouble(&ok);
 
-    return value;
+    if(!ok)
+        return -1;
+    else
+        return value;
 }
 
 int getSafeIntFromInput(const QLineEdit* input)
 {
-    int value;
+    bool ok;
 
-    QString inputText = input->text();
-    try
-    {
-        value = std::stoi(inputText.toStdString());
-    }
-    catch (std::invalid_argument e)
-    {
-        return -1;
-    }
-    catch (std::out_of_range e)
-    {
-        return -1;
-    }
+    int value = input->text().toInt(&ok);
 
-    return value;
+    if(!ok)
+        return -1;
+    else
+        return value;
 }
 
 void MainWindow::GetAOParameters(double& AORadius, int& AOSamples, double& AOStrength)
@@ -130,10 +112,14 @@ void MainWindow::HandleAO(Mesh& mesh, std::vector<Color>& meshColors)
     GetAOParameters(AORadius, AOSamples, AOStrength);
 
     if(uiw->AOCheckbox->isChecked())
+    {
         mesh.accessibility(meshColors, 1, 15);
+    }
     else
+    {
         for(Color& color : meshColors)
             color = Color(1.0);
+    }
 }
 
 void MainWindow::BoxMeshExample()
@@ -237,7 +223,7 @@ void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubd
     meshColor = MeshColor(cylinderMesh, cols, cylinderMesh.VertexIndexes());
 }
 
-void MainWindow::LoadObjMesh(QString objFilePath, double occlusionRadius, int occlusionSamples, double occlusionStrength)
+void MainWindow::LoadObjMesh(QString objFilePath)
 {
     Mesh objMesh;
     objMesh.Load(objFilePath);
@@ -354,29 +340,23 @@ void MainWindow::DisplayIcosphere()
 
 void MainWindow::DisplayTorus()
 {
-    CreateTorusMesh(0.375, 1.5, 20, 20);
-
-    UpdateGeometry();
-
     SetupTorusToolbox();
+
+    UpdateTorus();
 }
 
 void MainWindow::DisplayCapsule()
 {
-    CreateCapsuleMesh(1.0, 2.0, 5, 10, 10);
-
-    UpdateGeometry();
-
     SetupCapsuleToolbox();
+
+    UpdateCapsule();
 }
 
 void MainWindow::DisplayCylinder()
 {
-    CreateCylinderMesh(1.0, 2.0, 5, 10);
-
-    UpdateGeometry();
-
     SetupCylinderToolbox();
+
+    UpdateCylinder();
 }
 
 void MainWindow::DisplayObjMesh()
@@ -384,9 +364,9 @@ void MainWindow::DisplayObjMesh()
     std::string signalSender = this->sender()->objectName().toStdString();
 
     if(signalSender == "lotusFlowerButton")
-        LoadObjMesh("LotusFlowerDecimate.obj", 1, 10, 1);
+        LoadObjMesh("LotusFlowerDecimate.obj");
     else if(signalSender == "lowpolyTreeButton")
-        LoadObjMesh("Lowpoly_tree.obj", 1, 10, 1);
+        LoadObjMesh("Lowpoly_tree.obj");
 
     UpdateGeometry();
 }

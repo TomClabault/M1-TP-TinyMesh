@@ -80,7 +80,7 @@ public:
     void CreateCapsuleMesh(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions);
     void CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
 
-    void LoadObjMesh(QString objFilePath, double occlusionRadius, int occlusionSamples, double occlusionStrength);
+    void LoadObjMesh(QString objFilePath);
 
     void SetupIcosphereToolbox();
     void SetupTorusToolbox();

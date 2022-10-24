@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "mathematics.h"
+#include "ray.h"
 
 class SimpleMesh
 {
@@ -66,13 +67,15 @@ public:
      * \brief Returns the number of bytes occupied by the instance in memory
      * \return The number of bytes occupied by the instance in memory
      */
-    unsigned long long int getMemorySize() const;
+    unsigned long long int MemorySize() const;
 
 protected:
     std::vector<Vector> vertices;
     std::vector<Vector> normals;
     std::vector<int> indices;
     std::vector<int> normalIndices;
+
+    AnalyticMesh analyticMesh;
 };
 
 class Icosphere : public SimpleMesh
@@ -111,6 +114,8 @@ private:
 private:
     double radius;
     int subdivisions = 0;
+
+    AnalyticMesh<AnalyticSphere> analyticShape;
 };
 
 class Torus : public SimpleMesh

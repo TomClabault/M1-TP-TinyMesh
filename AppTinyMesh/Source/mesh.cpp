@@ -75,7 +75,7 @@ void Mesh::SmoothNormals()
   narray = varray;
 
   // Accumulate normals
-  for (int i = 0; i < varray.size(); i += 3)
+  for (size_t i = 0; i < varray.size(); i += 3)
   {
     Vector tn = Triangle(vertices[varray.at(i)], vertices[varray.at(i + 1)], vertices[varray.at(i + 2)]).AreaNormal();
     normals[narray[i + 0]] += tn;
@@ -84,7 +84,7 @@ void Mesh::SmoothNormals()
   }
 
   // Normalize 
-  for (int i = 0; i < normals.size(); i++)
+  for (size_t i = 0; i < normals.size(); i++)
   {
     Normalize(normals[i]);
   }
@@ -240,7 +240,7 @@ Mesh::Mesh(const SimpleMesh& mesh)
 void Mesh::Scale(double s)
 {
     // Vertexes
-    for (int i = 0; i < vertices.size(); i++)
+    for (size_t i = 0; i < vertices.size(); i++)
     {
         vertices[i] *= s;
     }
@@ -248,7 +248,7 @@ void Mesh::Scale(double s)
     if (s < 0.0)
     {
         // Normals
-        for (int i = 0; i < normals.size(); i++)
+        for (size_t i = 0; i < normals.size(); i++)
         {
             normals[i] = -normals[i];
         }
@@ -336,7 +336,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
         randomSamples[i] = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1, (std::rand() / (double)RAND_MAX) * 2 - 1));*/
 
     //TODO ne pas recalculer 50 fois le même vertex. En bouclant sur les indices des vertex comme ça, on va recalculer l'accessibilité même pour des vertex partagés par plusieurs triangles
-    for(int vertexIndex = 0; vertexIndex < this->varray.size(); vertexIndex++)
+    for(size_t vertexIndex = 0; vertexIndex < this->varray.size(); vertexIndex++)
     {
         double obstructedValue = 0;
 
@@ -406,7 +406,7 @@ bool Mesh::intersect(const Ray& ray, double& outT)
     double closestT = 10e64;//Used to keep track of the closest
 
     //Looping through indices 3 by 3 to get the triangles
-    for(int i = 0; i < this->varray.size(); i += 3)
+    for(size_t i = 0; i < this->varray.size(); i += 3)
     {
         int index1 = this->varray.at(i + 0);
         int index2 = this->varray.at(i + 1);
@@ -529,11 +529,11 @@ void Mesh::SaveObj(const QString& url, const QString& meshName) const
     return;
   QTextStream out(&data);
   out << "g " << meshName << Qt::endl;
-  for (int i = 0; i < vertices.size(); i++)
+  for (size_t i = 0; i < vertices.size(); i++)
     out << "v " << vertices.at(i)[0] << " " << vertices.at(i)[1] << " " << vertices.at(i)[2] << QString('\n');
-  for (int i = 0; i < normals.size(); i++)
+  for (size_t i = 0; i < normals.size(); i++)
     out << "vn " << normals.at(i)[0] << " " << normals.at(i)[1] << " " << normals.at(i)[2] << QString('\n');
-  for (int i = 0; i < varray.size(); i += 3)
+  for (size_t i = 0; i < varray.size(); i += 3)
   {
     out << "f " << varray.at(i) + 1 << "//" << narray.at(i) + 1 << " "
       << varray.at(i + 1) + 1 << "//" << narray.at(i + 1) + 1 << " "

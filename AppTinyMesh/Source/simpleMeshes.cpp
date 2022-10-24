@@ -6,6 +6,11 @@
 #include <cmath>
 #include <unordered_map>
 
+template<> bool AnalyticMesh<Mesh>::intersect(const Ray& ray, double& t, double& u, double &v)
+{
+
+}
+
 unsigned int SimpleMesh::VerticesCount() const
 {
     return vertices.size();
@@ -41,7 +46,7 @@ int SimpleMesh::NormalIndex(int index) const
     return normalIndices.at(index);
 }
 
-unsigned long long int SimpleMesh::getMemorySize() const
+unsigned long long int SimpleMesh::MemorySize() const
 {
     unsigned long long int bytes = 0;
 
@@ -429,7 +434,7 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     int normalsCreated = 0;
 
     //Computing the normals
-    for(int index = 0; index < this->indices.size(); index += 3)
+    for(size_t index = 0; index < this->indices.size(); index += 3)
     {
         int index0 = this->indices[index + 0];
         int index1 = this->indices[index + 1];

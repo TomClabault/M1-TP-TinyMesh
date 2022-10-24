@@ -97,7 +97,7 @@ Box::Box(const std::vector<Vector>& v)
   {
     a[j] = v.at(0)[j];
     b[j] = v.at(0)[j];
-    for (int i = 1; i < v.size(); i++)
+    for (size_t i = 1; i < v.size(); i++)
     {
       if (v.at(i)[j] < a[j])
       {
