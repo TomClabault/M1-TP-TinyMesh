@@ -467,8 +467,8 @@ void MainWindow::UpdateAO()
             meshColor.computeAccessibility(AORadius, AOSamples, AOStrength);
     }
 
-    UpdateMaterial();
-    //updateGeometry();
+    //UpdateMaterial();
+    UpdateGeometry();
 }
 
 void MainWindow::ResetCamera()
