@@ -31,16 +31,26 @@ MainWindow::~MainWindow()
 void MainWindow::CreateActions()
 {
     // Buttons
+    connect(uiw->resetcameraButton, SIGNAL(clicked()), this, SLOT(ResetCamera()));
+
     connect(uiw->boxMesh, SIGNAL(clicked()), this, SLOT(BoxMeshExample()));
     connect(uiw->sphereImplicit, SIGNAL(clicked()), this, SLOT(SphereImplicitExample()));
     connect(uiw->icosphereButton, SIGNAL(clicked()), this, SLOT(DisplayIcosphere()));
     connect(uiw->torusButton, SIGNAL(clicked()), this, SLOT(DisplayTorus()));
     connect(uiw->capsuleButton, SIGNAL(clicked()), this, SLOT(DisplayCapsule()));
     connect(uiw->cylinderButton, SIGNAL(clicked()), this, SLOT(DisplayCylinder()));
-    connect(uiw->resetcameraButton, SIGNAL(clicked()), this, SLOT(ResetCamera()));
+
+    connect(uiw->lotusFlowerButton, SIGNAL(clicked()), this, SLOT(DisplayObjMesh()));
+    connect(uiw->lowpolyTreeButton, SIGNAL(clicked()), this, SLOT(DisplayObjMesh()));
+
     connect(uiw->wireframe, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
     connect(uiw->radioShadingButton_1, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
     connect(uiw->radioShadingButton_2, SIGNAL(clicked()), this, SLOT(UpdateMaterial()));
+
+    connect(uiw->AOCheckbox, SIGNAL(clicked()), this, SLOT(UpdateAO()));
+    connect(uiw->AORadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateAO()));
+    connect(uiw->AOSamplesInput, SIGNAL(returnPressed()), this, SLOT(UpdateAO()));
+    connect(uiw->AOStrengthInput, SIGNAL(returnPressed()), this, SLOT(UpdateAO()));
 
     // Widget edition
     connect(meshWidget, SIGNAL(_signalEditSceneLeft(const Ray&)), this, SLOT(editingSceneLeft(const Ray&)));
@@ -55,6 +65,77 @@ void MainWindow::editingSceneRight(const Ray&)
 {
 }
 
+double getSafeDoubleFromInput(const QLineEdit* input)
+{
+    double value;
+
+    QString inputText = input->text();
+    try
+    {
+        value = std::stod(inputText.toStdString());
+    }
+    catch (std::invalid_argument e)
+    {
+        return -1;
+    }
+    catch (std::out_of_range e)
+    {
+        return -1;
+    }
+
+    return value;
+}
+
+int getSafeIntFromInput(const QLineEdit* input)
+{
+    int value;
+
+    QString inputText = input->text();
+    try
+    {
+        value = std::stoi(inputText.toStdString());
+    }
+    catch (std::invalid_argument e)
+    {
+        return -1;
+    }
+    catch (std::out_of_range e)
+    {
+        return -1;
+    }
+
+    return value;
+}
+
+void MainWindow::GetAOParameters(double& AORadius, int& AOSamples, double& AOStrength)
+{
+    AORadius = getSafeDoubleFromInput(uiw->AORadiusInput);
+    AOSamples = getSafeIntFromInput(uiw->AOSamplesInput);
+    AOStrength = getSafeDoubleFromInput(uiw->AOStrengthInput);
+
+    if(AORadius == -1 || AOSamples == -1 || AOStrength == -1)//There were invalid values in the inputs
+    {
+        //Going with default values
+        AORadius = 1;
+        AOSamples = 10;
+        AOSamples = 1;
+    }
+}
+
+void MainWindow::HandleAO(Mesh mesh, std::vector<Color>& meshColors)
+{
+    double AORadius;
+    int AOSamples;
+    double AOStrength;
+    GetAOParameters(AORadius, AOSamples, AOStrength);
+
+    if(uiw->AOCheckbox->isChecked())
+        mesh.accessibility(meshColors, 1, 15);
+    else
+        for(Color& color : meshColors)
+            color = Color(1.0);
+}
+
 void MainWindow::BoxMeshExample()
 {
     uiw->toolboxGroupBox->setVisible(false);
@@ -63,7 +144,7 @@ void MainWindow::BoxMeshExample()
 
     std::vector<Color> cols;
     cols.resize(boxMesh.Vertexes());
-    boxMesh.accessibility(cols, 2, 15);
+    HandleAO(boxMesh, cols);
 
     //for (size_t i = 0; i < cols.size(); i++)
         //cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
@@ -83,10 +164,7 @@ void MainWindow::SphereImplicitExample()
 
     std::vector<Color> cols;
     cols.resize(implicitMesh.Vertexes());
-    implicitMesh.accessibility(cols, 1, 15);
-
-//    for (size_t i = 0; i < cols.size(); i++)
-//        cols[i] = Color(0.8, 0.8, 0.8);
+    HandleAO(implicitMesh, cols);
 
     meshColor = MeshColor(implicitMesh, cols, implicitMesh.VertexIndexes());
     UpdateGeometry();
@@ -100,8 +178,7 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());
-    for (size_t i = 0; i < cols.size(); i++)
-        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+    HandleAO(icosphereMesh, cols);
 
     meshColor = MeshColor(icosphereMesh, cols, icosphereMesh.VertexIndexes());
 }
@@ -136,9 +213,7 @@ void MainWindow::CreateTorusMesh(double innerRadius, double outerRadius, int rin
 
     std::vector<Color> cols;
     cols.resize(torusMesh.Vertexes());
-
-    std::srand(2);
-    torusMesh.accessibility(cols, 1, 10, 1);
+    HandleAO(torusMesh, cols);
 
     //TODO remove
     /*bool found = false;
@@ -175,32 +250,33 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 
     std::vector<Color> cols;
     cols.resize(capsuleMesh.Vertexes());
-    capsuleMesh.accessibility(cols, 1, 15);
-    for (size_t i = 0; i < cols.size(); i++)
-        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+    HandleAO(capsuleMesh, cols);
 
     meshColor = MeshColor(capsuleMesh, cols, capsuleMesh.VertexIndexes());
 }
 
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    Mesh humanMesh;
-    humanMesh.Load("Skull.obj");
+    Mesh cylinderMesh;//Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
+    cylinderMesh.Load("LotusFlowerDecimate.obj");
 
     std::vector<Color> cols;
-    cols.resize(humanMesh.Vertexes());
+    cols.resize(cylinderMesh.Vertexes());
+    HandleAO(cylinderMesh, cols);
 
-    humanMesh.accessibility(cols, 1, 10);
+    meshColor = MeshColor(cylinderMesh, cols, cylinderMesh.VertexIndexes());
+}
 
-    //Mesh cylinderMesh = Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
+void MainWindow::LoadObjMesh(QString objFilePath, double occlusionRadius, int occlusionSamples, double occlusionStrength)
+{
+    Mesh objMesh;
+    objMesh.Load(objFilePath);
 
-    //std::vector<Color> cols;
-    //cols.resize(cylinderMesh.Vertexes());
-    //for (size_t i = 0; i < cols.size(); i++)
-//        cols[i] = Color(double(i) / 6.0, fmod(double(i) * 39.478378, 1.0), 0.0);
+    std::vector<Color> cols;
+    cols.resize(objMesh.Vertexes());
+    HandleAO(objMesh, cols);
 
-    //meshColor = MeshColor(cylinderMesh, cols, cylinderMesh.VertexIndexes());
-    meshColor = MeshColor(humanMesh, cols, humanMesh.VertexIndexes());
+    meshColor = MeshColor(objMesh, cols, objMesh.VertexIndexes());
 }
 
 void MainWindow::SetupIcosphereToolbox()
@@ -333,6 +409,18 @@ void MainWindow::DisplayCylinder()
     SetupCylinderToolbox();
 }
 
+void MainWindow::DisplayObjMesh()
+{
+    std::string signalSender = this->sender()->objectName().toStdString();
+
+    if(signalSender == "lotusFlowerButton")
+        LoadObjMesh("LotusFlowerDecimate.obj", 1, 10, 1);
+    else if(signalSender == "lowpolyTreeButton")
+        LoadObjMesh("Lowpoly_tree.obj", 1, 10, 1);
+
+    UpdateGeometry();
+}
+
 void MainWindow::UpdateGeometry()
 {
     meshWidget->ClearAll();
@@ -354,51 +442,38 @@ void MainWindow::UpdateMaterial()
         meshWidget->SetMaterialGlobal(MeshMaterial::Color);
 }
 
+void MainWindow::UpdateAO()
+{
+    if(!uiw->AOCheckbox->isChecked())
+    {
+        std::vector cols = meshColor.GetColors();
+
+        //Repainting the mesh in white
+        for(Color& color : cols)
+            color = Color(1.0);
+    }
+    else
+    {
+        std::vector<Color> cols;
+        cols.resize(meshColor.Vertexes());
+
+        double AORadius;
+        int AOSamples;
+        double AOStrength;
+
+        GetAOParameters(AORadius, AOSamples, AOStrength);
+
+        if(AORadius != -1 && AOSamples != -1 && AOStrength != -1)
+            meshColor.computeAccessibility(AORadius, AOSamples, AOStrength);
+    }
+
+    UpdateMaterial();
+    //updateGeometry();
+}
+
 void MainWindow::ResetCamera()
 {
     meshWidget->SetCamera(Camera(Vector(-10.0), Vector(0.0)));
-}
-
-double getSafeDoubleFromInput(const QLineEdit* input)
-{
-    double value;
-
-    QString inputText = input->text();
-    try
-    {
-        value = std::stod(inputText.toStdString());
-    }
-    catch (std::invalid_argument e)
-    {
-        return -1;
-    }
-    catch (std::out_of_range e)
-    {
-        return -1;
-    }
-
-    return value;
-}
-
-int getSafeIntFromInput(const QLineEdit* input)
-{
-    int value;
-
-    QString inputText = input->text();
-    try
-    {
-        value = std::stoi(inputText.toStdString());
-    }
-    catch (std::invalid_argument e)
-    {
-        return -1;
-    }
-    catch (std::out_of_range e)
-    {
-        return -1;
-    }
-
-    return value;
 }
 
 void MainWindow::UpdateIcosphere()

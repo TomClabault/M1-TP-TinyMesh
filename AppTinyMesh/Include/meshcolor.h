@@ -16,6 +16,8 @@ public:
   explicit MeshColor(const Mesh&, const std::vector<Color>&, const std::vector<int>&);
   ~MeshColor();
 
+  void computeAccessibility(double radius, int samples, double occlusionStrength);
+
   Color GetColor(int) const;
   std::vector<Color> GetColors() const;
   std::vector<int> ColorIndexes() const;

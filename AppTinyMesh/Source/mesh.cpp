@@ -393,6 +393,9 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
         //accessibilityColors.at(this->varray.at(vertexIndex)) = Color((int)(255 * obstructedValue), (int)(255 * obstructedValue), 0);
 
         accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
+
+        //Red occlusion
+        //accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1.0, 1 - obstructedValue * occlusionStrength, 1 - obstructedValue * occlusionStrength);
     }
 
     //TODO remove
@@ -454,31 +457,64 @@ void Mesh::Load(const QString& filename)
   QTextStream in(&data);
 
   // Set of regular expressions : Vertex, Normal, Triangle
-  QRegularExpression rexv("v\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
-  QRegularExpression rexn("vn\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
-  QRegularExpression rext("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
+  QRegularExpression rexV("v\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
+  QRegularExpression rexN("vn\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
+  //f 1/1/4 3/7/4 5/8/4 6/6/4
+  QRegularExpression rexF4("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
+  //f 6/6/5 5/8/5 4/9/5
+  QRegularExpression rexF3("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
+
   while (!in.atEnd())
   {
     QString line = in.readLine();
-    QRegularExpressionMatch match = rexv.match(line);
-    QRegularExpressionMatch matchN = rexn.match(line);
-    QRegularExpressionMatch matchT = rext.match(line);
-    if (match.hasMatch())//rexv.indexIn(line, 0) > -1)
+    QRegularExpressionMatch matchV = rexV.match(line);
+    QRegularExpressionMatch matchN = rexN.match(line);
+    QRegularExpressionMatch matchF4 = rexF4.match(line);
+    QRegularExpressionMatch matchF3 = rexF3.match(line);
+    if (matchV.hasMatch())//rexv.indexIn(line, 0) > -1)
     {
-      Vector q = Vector(match.captured(1).toDouble(), match.captured(2).toDouble(), match.captured(3).toDouble()); vertices.push_back(q);
+      Vector q = Vector(matchV.captured(1).toDouble(), matchV.captured(2).toDouble(), matchV.captured(3).toDouble());
+
+      vertices.push_back(q);
     }
     else if (matchN.hasMatch())//rexn.indexIn(line, 0) > -1)
     {
-      Vector q = Vector(matchN.captured(1).toDouble(), matchN.captured(2).toDouble(), matchN.captured(3).toDouble());  normals.push_back(q);
+      Vector q = Vector(matchN.captured(1).toDouble(), matchN.captured(2).toDouble(), matchN.captured(3).toDouble());
+
+      normals.push_back(q);
     }
-    else if (matchT.hasMatch())//rext.indexIn(line, 0) > -1)
+    else if (matchF4.hasMatch())
     {
-      varray.push_back(matchT.captured(1).toInt() - 1);
-      varray.push_back(matchT.captured(3).toInt() - 1);
-      varray.push_back(matchT.captured(5).toInt() - 1);
-      narray.push_back(matchT.captured(2).toInt() - 1);
-      narray.push_back(matchT.captured(4).toInt() - 1);
-      narray.push_back(matchT.captured(6).toInt() - 1);
+        //f 3/3/2 2/2/2 4/4/2 5/5/2
+        //C B D E
+        //--> BEC, BDE --> 2, 4, 1 // 2, 3, 4
+
+        //Quad face, 2 triangles
+        varray.push_back(matchF4.captured(1).toInt() - 1);
+        varray.push_back(matchF4.captured(3).toInt() - 1);
+        varray.push_back(matchF4.captured(5).toInt() - 1);
+
+        varray.push_back(matchF4.captured(1).toInt() - 1);
+        varray.push_back(matchF4.captured(5).toInt() - 1);
+        varray.push_back(matchF4.captured(7).toInt() - 1);
+
+
+        narray.push_back(matchF4.captured(2).toInt() - 1);
+        narray.push_back(matchF4.captured(4).toInt() - 1);
+        narray.push_back(matchF4.captured(6).toInt() - 1);
+
+        narray.push_back(matchF4.captured(2).toInt() - 1);
+        narray.push_back(matchF4.captured(6).toInt() - 1);
+        narray.push_back(matchF4.captured(8).toInt() - 1);
+    }
+    else if (matchF3.hasMatch())//rexF3.indexIn(line, 0) > -1)
+    {
+      varray.push_back(matchF3.captured(1).toInt() - 1);
+      varray.push_back(matchF3.captured(3).toInt() - 1);
+      varray.push_back(matchF3.captured(5).toInt() - 1);
+      narray.push_back(matchF3.captured(2).toInt() - 1);
+      narray.push_back(matchF3.captured(4).toInt() - 1);
+      narray.push_back(matchF3.captured(6).toInt() - 1);
     }
   }
   data.close();

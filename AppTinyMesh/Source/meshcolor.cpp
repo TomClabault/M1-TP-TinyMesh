@@ -33,3 +33,8 @@ MeshColor::MeshColor(const Mesh& m) : Mesh(m)
 MeshColor::~MeshColor()
 {
 }
+
+void MeshColor::computeAccessibility(double radius, int samples, double occlusionStrength)
+{
+    Mesh::accessibility(this->colors, radius, samples, occlusionStrength);
+}
