@@ -8,5 +8,7 @@ set output 'courbeTorus2.png'
 set title 'Temps de génération / Nombre subdivisions' # titre
 set xlabel 'Nombre de ring subdivisions'      # nom de l'axe des abscisses
 set ylabel 'Temps de génération (ms)'         # nom de l'axe des ordonnées
+set y2label 'Nombre de triangles'
+set y2tics nomirror
 
-plot 'benchmarkTorus2.dat' with lines title "Torus"
+plot 'benchmarkDurationTorus2.dat' axis x1y1 with lines title "Temps de génération", 'benchmarkTriangleTorus2.dat' axis x1y2 with lines title "Nb triangles"

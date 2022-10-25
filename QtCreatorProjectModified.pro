@@ -11,7 +11,7 @@ INCLUDEPATH += $$(OUT_PWD)
 VPATH += AppTinyMesh
 
 SOURCES += \
-    AppTinyMesh/Source/analyticShapes.cpp \
+    AppTinyMesh/Source/analyticApproximations.cpp \
     AppTinyMesh/Source/benchmarks.cpp \
     AppTinyMesh/Source/box.cpp \
     AppTinyMesh/Source/color.cpp \
@@ -32,7 +32,7 @@ SOURCES += \
     AppTinyMesh/Source/triangle.cpp \
 
 HEADERS += \
-    AppTinyMesh/Include/analyticShapes.h \
+    AppTinyMesh/Include/analyticApproximations.h \
     AppTinyMesh/Include/benchmarks.h \
     AppTinyMesh/Include/box.h \
     AppTinyMesh/Include/camera.h \

@@ -153,11 +153,12 @@ void MainWindow::SphereImplicitExample()
     UpdateGeometry();
 }
 
-bool merging = true;
-
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
+    //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
+    //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
+    //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 2 * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());

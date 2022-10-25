@@ -1,27 +1,38 @@
-#include "realtime.h"
 #include "benchmarks.h"
+#include "simpleMeshes.h"
 
+#include <chrono>
 #include <iostream>
 #include <fstream>
 
 void Benchmarks::BenchmarkIcosphere(int iterations, int maxSubdivisions)
 {
-    RenderingProfiler profiler;
-    profiler.Update();
+    std::ofstream outputDurationFile;
+    std::ofstream outputTriangleFile;
+
+    outputDurationFile.open("benchmarkDurationIcosphere.dat");
+    outputTriangleFile.open("benchmarkTriangleIcosphere.dat");
 
     for(int subdiv = 0; subdiv < maxSubdivisions; subdiv++)
     {
-        double totalForSubdiv = 0;
+        long long int bestTimeForSubdiv = std::numeric_limits<long long int>::max();
+        Icosphere icosphereCreated(1, 0);
+
         for(int i = 0; i < iterations; i++)
         {
-            profiler.InitCPUOnly();
-            Icosphere(1, subdiv);
-            profiler.Update();
+            auto start = std::chrono::high_resolution_clock::now();
+            icosphereCreated = Icosphere(1, subdiv);
+            auto stop = std::chrono::high_resolution_clock::now();
 
-            totalForSubdiv += profiler.msPerFrame;
+            long long int duration = std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count();
+            if(duration < bestTimeForSubdiv)
+                bestTimeForSubdiv = duration;
         }
 
-        std::cout << "Icosphere[" << subdiv << "] --- " << totalForSubdiv / (double)iterations << "ms [" << profiler.framePerSecond << "FPS]" << std::endl;
+        std::cout << "Icosphere[" << subdiv << "] --- " << bestTimeForSubdiv << "ms [" << 1.0 / bestTimeForSubdiv << "FPS]" << std::endl;
+
+        outputDurationFile << subdiv << " " << bestTimeForSubdiv << std::endl;
+        outputTriangleFile << subdiv << " " << icosphereCreated.IndicesCount() / 3.0 / 1000.0 << std::endl;
     }
 
     std::cout << std::endl;
@@ -29,103 +40,138 @@ void Benchmarks::BenchmarkIcosphere(int iterations, int maxSubdivisions)
 
 void Benchmarks::BenchmarkTorus(int iterations, int maxSubdivisions, int ringCount, int ringSubdiv, bool ringCountFixed)
 {
-    RenderingProfiler profiler;
-    std::ofstream outputFile;
+    std::ofstream outputDurationFile;
+    std::ofstream outputTriangleFile;
+
     if(ringCountFixed)
-        outputFile.open("benchmarkTorus1.dat");
+    {
+        outputDurationFile.open("benchmarkDurationTorus1.dat");
+        outputTriangleFile.open("benchmarkTriangleTorus1.dat");
+    }
     else
-        outputFile.open("benchmarkTorus2.dat");
+    {
+        outputDurationFile.open("benchmarkDurationTorus2.dat");
+        outputTriangleFile.open("benchmarkTriangleTorus2.dat");
+    }
 
     for(int subdiv = 3; subdiv < maxSubdivisions; subdiv++)
     {
-        //Torus torusCreated = Torus(1, 1, 1, 1);
-        double totalForSubdiv = 0;
+        Torus torusCreated(1, 1);
+
+        long long int bestTimeForSubdiv = std::numeric_limits<long long int>::max();
+
         for(int i = 0; i < iterations; i++)
         {
             if(ringCountFixed)
             {
-                profiler.InitCPUOnly();
-                Torus(1, 2, ringCount, subdiv);
+                auto start = std::chrono::high_resolution_clock::now();
+                torusCreated = Torus(1, 2, ringCount, subdiv);
+                auto stop = std::chrono::high_resolution_clock::now();
+
+                long long int duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+
+                if(duration < bestTimeForSubdiv)
+                    bestTimeForSubdiv = duration;
             }
             else
             {
-                profiler.InitCPUOnly();
-                Torus(1, 2, subdiv, ringSubdiv);
-            }
-            profiler.Update();
+                auto start = std::chrono::high_resolution_clock::now();
+                torusCreated = Torus(1, 2, subdiv, ringSubdiv);
+                auto stop = std::chrono::high_resolution_clock::now();
 
-            totalForSubdiv += profiler.msPerFrame;
+                long long int duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+
+                if(duration < bestTimeForSubdiv)
+                    bestTimeForSubdiv = duration;
+            }
         }
 
-        //std::cout << torusCreated.getMemorySize() / 1000.0 << "KO" << std::endl;
-        double time = totalForSubdiv / (double)iterations;
+        std::cout << "Torus[" << (ringCountFixed ? ringCount : subdiv) << ", " << (ringCountFixed ? subdiv : ringSubdiv) << "] --- " << bestTimeForSubdiv << "microseconds [" << 1.0 / bestTimeForSubdiv << "FPS]" << std::endl;
 
-        std::cout << "Torus[" << (ringCountFixed ? ringCount : subdiv) << ", " << (ringCountFixed ? subdiv : ringSubdiv) << "] --- " << time << "ms [" << profiler.framePerSecond << "FPS]" << std::endl;
-        outputFile << subdiv << " " << time << std::endl;
+        outputDurationFile << subdiv << " " << bestTimeForSubdiv << std::endl;
+        outputTriangleFile << subdiv << " " << torusCreated.IndicesCount() / 3 << std::endl;
     }
 
-    outputFile.close();
+    outputDurationFile.close();
+    outputTriangleFile.close();
+
     std::cout << std::endl;
     std::cout << std::endl;
 }
 
 void Benchmarks::BenchmarkCapsule(int iterations, int maxSubdivisions)
 {
-    RenderingProfiler profiler;
-    std::ofstream outputFile;
-    outputFile.open("benchmarkCapsule.dat");
+    std::ofstream outputDurationFile;
+    std::ofstream outputTriangleFile;
+
+    outputDurationFile.open("benchmarkDurationCapsule.dat");
+    outputTriangleFile.open("benchmarkTriangleCapsule.dat");
 
     for(int subdiv = 3; subdiv < maxSubdivisions; subdiv++)
     {
-        double totalForSubdiv = 0;
         Capsule capsuleCreated = Capsule(10, 10, 10, 10, 10);
+        long long int bestTimeForSubdiv = std::numeric_limits<long long int>::max();
+
         for(int i = 0; i < iterations; i++)
         {
-            profiler.InitCPUOnly();
+            auto start = std::chrono::high_resolution_clock::now();
             capsuleCreated = Capsule(1, 2, 2, subdiv, 30);
-            profiler.Update();
+            auto stop = std::chrono::high_resolution_clock::now();
 
-            totalForSubdiv += profiler.msPerFrame;
+            long long int duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+
+            if(duration < bestTimeForSubdiv)
+                bestTimeForSubdiv = duration;
         }
 
-        double time = totalForSubdiv / (double)iterations;
+        std::cout << "Capsule[" << subdiv << "] --- " << bestTimeForSubdiv << "microseconds [" << 1.0 / bestTimeForSubdiv << "FPS]" << std::endl;
 
-        //std::cout << capsuleCreated.getMemorySize() /1000.0 << "KO" << std::endl;
-
-        std::cout << "Capsule[" << subdiv << "] --- " << time << "ms [" << profiler.framePerSecond << "FPS]" << std::endl;
-        outputFile << subdiv << " " << time << std::endl;
+        outputDurationFile << subdiv << " " << bestTimeForSubdiv << std::endl;
+        outputTriangleFile << subdiv << " " << capsuleCreated.IndicesCount() / 3.0 / 1000.0 << std::endl;
     }
 
-    outputFile.close();
+    outputDurationFile.close();
+    outputTriangleFile.close();
+
     std::cout << std::endl;
     std::cout << std::endl;
 }
 
 void Benchmarks::BenchmarkCylinder(int iterations, int maxSubdivisions)
 {
-    RenderingProfiler profiler;
-    std::ofstream outputFile;
-    outputFile.open("benchmarkCylinder.dat");
+    std::ofstream outputDurationFile;
+    std::ofstream outputTriangleFile;
+
+    outputDurationFile.open("benchmarkDurationCylinder.dat");
+    outputTriangleFile.open("benchmarkTriangleCylinder.dat");
 
     for(int subdiv = 3; subdiv < maxSubdivisions; subdiv++)
     {
-        double totalForSubdiv = 0;
+        Cylinder cylinderCreated(1, 1, 2, 5);
+        long long int bestTimeForSubdiv = std::numeric_limits<long long int>::max();
+
         for(int i = 0; i < iterations; i++)
         {
-            profiler.InitCPUOnly();
-            Cylinder(1, 2, 2, subdiv);
-            profiler.Update();
 
-            totalForSubdiv += profiler.msPerFrame;
+            auto start = std::chrono::high_resolution_clock::now();
+            cylinderCreated = Cylinder(1, 2, 2, subdiv);
+            auto stop = std::chrono::high_resolution_clock::now();
+
+            long long int duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count();
+
+            if(duration < bestTimeForSubdiv)
+                bestTimeForSubdiv = duration;
         }
 
-        double time = totalForSubdiv / (double)iterations;
+        std::cout << "Cylinder[" << subdiv << "] --- " << bestTimeForSubdiv << "microseconds [" << 1.0 / bestTimeForSubdiv << "FPS]" << std::endl;
 
-        std::cout << "Cylinder[" << subdiv << "] --- " << time << "ms [" << profiler.framePerSecond << "FPS]" << std::endl;
-        outputFile << subdiv << " " << time << std::endl;
+        outputDurationFile << subdiv << " " << bestTimeForSubdiv << std::endl;
+        outputTriangleFile << subdiv << " " << cylinderCreated.IndicesCount() / 3 << std::endl;
     }
 
-    outputFile.close();
+    outputDurationFile.close();
+    outputTriangleFile.close();
+
     std::cout << std::endl;
     std::cout << std::endl;
 }

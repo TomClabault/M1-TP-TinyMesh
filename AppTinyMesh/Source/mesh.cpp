@@ -233,6 +233,9 @@ Mesh::Mesh(const SimpleMesh& mesh)
 
   for(unsigned int  i = 0; i < indicesCount; i += 3)
       AddTriangle(mesh.VertexIndex(i), mesh.VertexIndex(i + 1), mesh.VertexIndex(i + 2), mesh.NormalIndex(i));
+
+  for(AnalyticApproximation* approx : mesh.GetAnalyticApproximations())
+    this->analyticApproximations.push_back(approx);
 }
 
 /*!
@@ -294,6 +297,11 @@ void Mesh::Merge(const Mesh& secondMesh)
 
     for(int normalIndex : secondMesh.NormalIndexes())
         this->narray.push_back(normalIndex + currentNormalsCount);
+
+    //Also adding all the approximations of the second mesh if they exist
+    if(secondMesh.analyticApproximations.size() > 0)
+        for(AnalyticApproximation* approx : secondMesh.analyticApproximations)
+            this->analyticApproximations.push_back(approx);
 }
 
 void Mesh::SphereWarp(Sphere sphere)
@@ -324,7 +332,8 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
     const double epsilon = 1.0e-3;
 
     //TODO ne pas recalculer 50 fois le même vertex. En bouclant sur les indices des vertex comme ça, on va recalculer l'accessibilité même pour des vertex partagés par plusieurs triangles
-    for(size_t vertexIndex = 0; vertexIndex < this->varray.size(); vertexIndex++)
+    //ça va coûter du temps de calcul
+    for(size_t vertexIndex = 0; vertexIndex < this->Vertexes(); vertexIndex++)
     {
         double obstructedValue = 0;
 
@@ -347,11 +356,20 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             Ray ray(vertex + normal * epsilon, randomVec);
 
             double intersectionDistance;
-            bool intersectionFound = this->intersect(ray, intersectionDistance);
+            bool intersectionFound;
+
+            if(this->analyticApproximations.size() != 0)
+                intersectionFound = this->intersectAnalytic(ray, intersectionDistance);
+            else
+                intersectionFound = this->intersect(ray, intersectionDistance);
 
             //In front of the ray and within the given occlusion radius
-            if(intersectionFound && intersectionDistance > epsilon && intersectionDistance <= radius)
+            if(intersectionFound && intersectionDistance <= radius)
+            {
                 obstructedValue += colorIncrement;
+
+                this->intersectAnalytic(ray, intersectionDistance);
+            }
         }
 
         accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
@@ -387,6 +405,24 @@ bool Mesh::intersect(const Ray& ray, double& outT)
     return found;
 }
 
+bool Mesh::intersectAnalytic(const Ray& ray, double& t)
+{
+    bool found = false;
+
+    double nearestT = std::numeric_limits<double>::max();
+    for(AnalyticApproximation* approx : this->analyticApproximations)
+    {
+        approx->intersect(ray, t);
+        if(t < nearestT && t > 0)
+        {
+            found = true;
+
+            nearestT = t;
+        }
+    }
+
+    return found;
+}
 
 
 #include <QtCore/QFile>

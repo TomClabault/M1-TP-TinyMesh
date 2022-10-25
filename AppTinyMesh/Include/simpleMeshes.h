@@ -4,9 +4,8 @@
 #include <vector>
 #include <iostream>
 
-#include "analyticShapes.h"
+#include "analyticApproximations.h"
 #include "mathematics.h"
-#include "ray.h"
 
 class SimpleMesh
 {
@@ -70,25 +69,36 @@ public:
      */
     unsigned long long int MemorySize() const;
 
+    /*!
+     * \brief Returns the analytic shape that can approximate this simple mesh.
+     * \return The analytic mesh that approximates this mesh
+     */
+    std::vector<AnalyticApproximation*> GetAnalyticApproximations() const;
+
 protected:
     std::vector<Vector> vertices;
     std::vector<Vector> normals;
     std::vector<int> indices;
     std::vector<int> normalIndices;
+
+    std::vector<AnalyticApproximation*> analyticApproximations;
 };
 
 class Icosphere : public SimpleMesh
 {
 public:
+    Icosphere(double radius, int subdivisions) : Icosphere(Vector(0, 0, 0), radius, subdivisions) {};
+
     /*!
      * \brief Creates an icosphere of radius
+     * \param center The center of the icosphere
      * \p radius and that has been subdivided
      * \p subdivisions times
      * \param radius The radius of the icopshere
      * \param subdivisions The number of subdivisions
      * of the icosphere
      */
-    Icosphere(double radius, int subdivisions);
+    Icosphere(Vector center, double radius, int subdivisions);
 
     /*!
      * \brief Subdivides the current icosphere one time (quadruples
@@ -113,8 +123,6 @@ private:
 private:
     double radius;
     int subdivisions = 0;
-
-    AnalyticShape<AnalyticSphere> analyticShape;
 };
 
 class Torus : public SimpleMesh

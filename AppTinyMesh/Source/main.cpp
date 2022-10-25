@@ -1,19 +1,20 @@
+#include "analyticApproximations.h"
+#include "benchmarks.h"
+
 #include "qtemainwindow.h"
 #include <QtWidgets/qapplication.h>
 
 int main(int argc, char *argv[])
 {
-//    int iterations = 1000;
+    //Benchmarks benchmarks;
 
-//    Benchmarks benchmarks;
+    //benchmarks.BenchmarkIcosphere(30, 11);
+    //benchmarks.BenchmarkTorus(2000, 600, 20, 20, false);
+    //benchmarks.BenchmarkTorus(1200, 600, 20, 20, true);
+    //benchmarks.BenchmarkCapsule(5000, 300);
+    //benchmarks.BenchmarkCylinder(5000, 750);
 
-//    benchmarks.BenchmarkIcosphere(iterations, 11);
-//    benchmarks.BenchmarkTorus(iterations, 600, 20, 20, false);
-//    benchmarks.BenchmarkTorus(600, 600, 20, 20, true);
-//    benchmarks.BenchmarkCapsule(7500, 300);
-//    benchmarks.BenchmarkCylinder(500, 750);
-
-//    return 0;
+    //return 0;
 #ifdef VISUAL_STUDIO_EDITOR
 	//Opening a console so that we can get cout output
 	AllocConsole();

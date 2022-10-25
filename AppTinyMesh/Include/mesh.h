@@ -96,6 +96,9 @@ protected:
   std::vector<Vector> normals;  //!< Normals.
   std::vector<int> varray;     //!< Vertex indexes.
   std::vector<int> narray;     //!< Normal indexes.
+
+  std::vector<AnalyticApproximation*> analyticApproximations; //!< The shape that can approximate the current mesh. If no such shape exists,
+
 public:
   explicit Mesh();
   explicit Mesh(const std::vector<Vector>&, const std::vector<int>&);
@@ -197,6 +200,16 @@ public:
    * \return True if an intersection was found, false otherwise
    */
   bool intersect(const Ray& ray, double& outT);
+
+  /*!
+   * \brief Computes the intersection of a ray and all the analytic approximations that compose this mesh
+   *
+   * \param ray The ray that is going to be tested against the mesh
+   * \param t [out] The nearest intersection found with the analytic approximations of this mesh
+   *
+   * \return True if an intersection was found, false otherwise
+   */
+  bool intersectAnalytic(const Ray& ray, double& t);
 
   void SmoothNormals();
 

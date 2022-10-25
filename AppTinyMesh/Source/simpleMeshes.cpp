@@ -1,4 +1,5 @@
-#include "realtime.h"
+#include "analyticApproximations.h"
+#include "qmath.h"
 #include "simpleMeshes.h"
 
 #define _USE_MATH_DEFINES
@@ -53,6 +54,11 @@ unsigned long long int SimpleMesh::MemorySize() const
     return bytes;
 }
 
+std::vector<AnalyticApproximation*> SimpleMesh::GetAnalyticApproximations() const
+{
+    return this->analyticApproximations;
+}
+
 //Cache used to avoid the duplication of vertices when subdividing the icosphere
 std::unordered_map<int, int> midPointsCache;
 
@@ -101,7 +107,7 @@ void Icosphere::initBaseIcosphere(double radius)
     }
 }
 
-Icosphere::Icosphere(double radius, int subdivisions)
+Icosphere::Icosphere(Vector center, double radius, int subdivisions)
 {
     midPointsCache = std::unordered_map<int, int>();
 
@@ -113,7 +119,12 @@ Icosphere::Icosphere(double radius, int subdivisions)
         this->subdivide();
 
     for(Vector& vertex : this->vertices)
+    {
         vertex *= radius;
+        vertex += center;
+    }
+
+    SimpleMesh::analyticApproximations.push_back(new AnalyticSphere(center, radius));
 }
 
 /*!
