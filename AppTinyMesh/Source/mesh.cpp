@@ -1,4 +1,5 @@
 #include "analyticApproximations.h"
+#include "BVH.h"
 #include "mesh.h"
 #include "meshcolor.h"
 
@@ -330,6 +331,9 @@ void Mesh::SphereWarp(Sphere sphere)
     }
 }
 
+BVH* bvh = nullptr;
+bool computed = false;
+
 void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
 {
     double colorIncrement = 1.0 / samples;
@@ -369,10 +373,21 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             double intersectionDistance;
             bool intersectionFound;
 
+            analyticIntersection = false;//TODO remove
             if(analyticIntersection)
                 intersectionFound = this->intersectAnalytic(ray, intersectionDistance);
             else
-                intersectionFound = this->intersect(ray, intersectionDistance);
+            {
+                if(!computed)
+                {
+                    bvh = new BVH(*this->GetTriangles(), 2000000, 2000000);
+                    computed = true;
+                }
+
+                intersectionFound = bvh->intersect(ray, intersectionDistance);
+
+                //intersectionFound = this->intersect(ray, intersectionDistance);
+            }
 
             //In front of the ray and within the given occlusion radius
             if(intersectionFound && intersectionDistance <= radius)

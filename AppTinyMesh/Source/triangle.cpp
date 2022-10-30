@@ -154,6 +154,11 @@ Box Triangle::GetBox() const
   return Box(Vector::Min(Vector::Min(p[0], p[1]), p[2]), Vector::Max(Vector::Max(p[0], p[1]), p[2]));
 }
 
+Vector Triangle::Centroid() const
+{
+    return (p[0] + p[1] + p[2]) / 3;
+}
+
 /*!
 \brief Compute the radius of the circle inscribed in the
 triangle.

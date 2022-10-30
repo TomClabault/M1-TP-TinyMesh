@@ -112,10 +112,7 @@ void MainWindow::HandleAO(Mesh& mesh, std::vector<Color>& cols)
     GetAOParameters(AORadius, AOSamples, AOStrength);
 
     if(uiw->AOCheckbox->isChecked())
-    {
-        //TODO remove
         mesh.accessibility(cols, AORadius, AOSamples, AOStrength);
-    }
     else
     {
         for(Color& color : cols)

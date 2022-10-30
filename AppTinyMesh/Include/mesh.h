@@ -18,6 +18,9 @@ public:
   Triangle() {}
   explicit Triangle(const Vector&, const Vector&, const Vector&);
 
+  //TODO remove. On doit faire en sorte que dans le code, on ait plus une seule copie de triangle puisque normalement, une fois que les triangles sont construits, on se balade des références des triangles, on ne les copie pas
+  Triangle(Triangle&) {std::cout << "copy constructor triangel";};
+
   //! Empty.
   ~Triangle() {}
 
@@ -44,6 +47,8 @@ public:
   double Area() const;
   double Aspect() const;
   Box GetBox() const;
+
+  Vector Centroid() const;
 
   // Stream
   friend std::ostream& operator<<(std::ostream&, const Triangle&);
@@ -108,6 +113,7 @@ public:
   void Reserve(int, int, int, int);
 
   Triangle GetTriangle(int) const;
+  std::vector<Triangle*>* GetTriangles() const;
   Vector Vertex(int) const;
   Vector Vertex(int, int) const;
 
@@ -115,6 +121,8 @@ public:
 
   int Triangles() const;
   int Vertexes() const;
+
+  std::vector<Vector> Vertices() const;
 
   std::vector<int> VertexIndexes() const;
   std::vector<int> NormalIndexes() const;
@@ -226,6 +234,11 @@ protected:
   void AddQuadrangle(int, int, int, int);
 };
 
+inline std::vector<Vector> Mesh::Vertices() const
+{
+    return this->vertices;
+}
+
 /*!
 \brief Return the set of vertex indexes.
 */
@@ -270,6 +283,21 @@ inline int Mesh::NormalIndex(int t, int i) const
 inline Triangle Mesh::GetTriangle(int i) const
 {
   return Triangle(vertices.at(varray.at(i * 3 + 0)), vertices.at(varray.at(i * 3 + 1)), vertices.at(varray.at(i * 3 + 2)));
+}
+
+inline std::vector<Triangle*>* Mesh::GetTriangles() const
+{
+    std::vector<Triangle*>* triangles = new std::vector<Triangle*>;
+    triangles->reserve(this->VertexIndexes().size() / 3);
+
+    for(int vertexIndex = 0; vertexIndex < VertexIndexes().size(); vertexIndex += 3)
+    {
+        triangles->push_back(new Triangle(this->vertices.at(this->varray.at(vertexIndex + 0)),
+                                      this->vertices.at(this->varray.at(vertexIndex + 1)),
+                                      this->vertices.at(this->varray.at(vertexIndex + 2))));
+    }
+
+    return triangles;
 }
 
 /*!
