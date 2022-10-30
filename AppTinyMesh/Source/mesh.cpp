@@ -1,4 +1,8 @@
+#include "analyticApproximations.h"
 #include "mesh.h"
+#include "meshcolor.h"
+
+const double epsilon = 1.0e-4;
 
 //For M_PI
 #include "qmath.h"
@@ -329,11 +333,13 @@ void Mesh::SphereWarp(Sphere sphere)
 void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
 {
     double colorIncrement = 1.0 / samples;
-    const double epsilon = 1.0e-3;
+
+    bool analyticIntersection = this->analyticApproximations.size() > 0;
 
     //TODO ne pas recalculer 50 fois le même vertex. En bouclant sur les indices des vertex comme ça, on va recalculer l'accessibilité même pour des vertex partagés par plusieurs triangles
     //ça va coûter du temps de calcul
-    for(size_t vertexIndex = 0; vertexIndex < this->Vertexes(); vertexIndex++)
+    int vertexIndexCount = this->VertexIndexes().size();
+    for(size_t vertexIndex = 0; vertexIndex < vertexIndexCount; vertexIndex++)
     {
         double obstructedValue = 0;
 
@@ -345,20 +351,25 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
 
             //Using xorshift96 to generate random numbers is faster than std::rand by 2 orders of magnitude
-            Vector randomVec = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-                                                 (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-                                                 (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
-            if(randomVec * normal < 0)//If the random point we draw is below the surface
-                randomVec = -1 * randomVec;//Flipping the random point for it to be above the surface
+            Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
+            //TODO remove
+//            Vector randomRayDirection = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1,
+//                                                 (std::rand() / (double)RAND_MAX) * 2 - 1,
+//                                                 (std::rand() / (double)RAND_MAX) * 2 - 1));
+
+            if(randomRayDirection * normal < 0)//If the random point we draw is below the surface
+                randomRayDirection *= -1;//Flipping the random point for it to be above the surface
 
             //We're slightly shifting the origin of the ray in the
             //direction of the normal otherwise we will intersect ourselves
-            Ray ray(vertex + normal * epsilon, randomVec);
+            Ray ray(vertex + normal * epsilon, randomRayDirection);
 
             double intersectionDistance;
             bool intersectionFound;
 
-            if(this->analyticApproximations.size() != 0)
+            if(analyticIntersection)
                 intersectionFound = this->intersectAnalytic(ray, intersectionDistance);
             else
                 intersectionFound = this->intersect(ray, intersectionDistance);
@@ -368,15 +379,42 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             {
                 obstructedValue += colorIncrement;
 
-                this->intersectAnalytic(ray, intersectionDistance);
+                std::cout << "vertex: " << vertex << std::endl;
+                std::cout << "normal: " << normal << std::endl;
+                std::cout << "ray origin: " << ray.Origin() << std::endl;
+                std::cout << "ray direction: " << ray.Direction() << std::endl;
+//                std::cout << "vertex distance : " << Norm(vertex - center) << std::endl;
+//                std::cout << "intersection distance : " << Norm((ray.Origin() + intersectionDistance * ray.Direction()) - center) << std::endl;
+//                std::cout << "ray origin distance: " << Norm(center - ray.Origin()) << std::endl;
+
+                std::cout << std::endl << std::endl;
+                //this->intersectAnalytic(ray, intersectionDistance);
+
+                //std::cout << normal * randomVec << " | " << normal * ((intersectionDistance * randomVec + ray.Origin()) - vertex) << " | " << normal * ((static_cast<AnalyticSphere*>(this->analyticApproximations.at(0))->Center() - (intersectionDistance * randomVec + ray.Origin()))) << std::endl;
+                //std::cout << "Inter[" << intersectionDistance << "] ------ Vertex: " << vertex << " | Random vec: " << randomVec << " | Normal:" << normal << std::endl;
+
+//                MeshColor* thisColor = static_cast<MeshColor*>(this);
+
+//                Mesh boxMesh = Mesh(Box(Vector(ray.Origin() + intersectionDistance * randomVec), 0.025));
+
+//                std::vector<Color> cols;
+//                cols.resize(boxMesh.Vertexes());
+//                for(int c = 0; c < boxMesh.Vertexes(); c++)
+//                    cols.at(c) = Color(0.0, 1.0, 0.0);
+
+//                MeshColor boxColor(boxMesh, cols, boxMesh.VertexIndexes());
+//                thisColor->Merge(boxColor);
             }
         }
 
         accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
     }
+
+    std::cout << std::endl;
+    std::cout << std::endl;
 }
 
-bool Mesh::intersect(const Ray& ray, double& outT)
+bool Mesh::intersect(const Ray& ray, double& outT) const
 {
     bool found = false;
     double closestT = 10e64;//Used to keep track of the closest
@@ -405,21 +443,25 @@ bool Mesh::intersect(const Ray& ray, double& outT)
     return found;
 }
 
-bool Mesh::intersectAnalytic(const Ray& ray, double& t)
+bool Mesh::intersectAnalytic(const Ray& ray, double& t) const
 {
     bool found = false;
 
     double nearestT = std::numeric_limits<double>::max();
     for(AnalyticApproximation* approx : this->analyticApproximations)
     {
-        approx->intersect(ray, t);
-        if(t < nearestT && t > 0)
+        if(approx->intersect(ray, t))
         {
-            found = true;
+            if(t < nearestT && t > 0)
+            {
+                found = true;
 
-            nearestT = t;
+                nearestT = t;
+            }
         }
     }
+
+    t = nearestT;
 
     return found;
 }

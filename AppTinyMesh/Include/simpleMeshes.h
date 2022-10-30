@@ -196,7 +196,24 @@ public:
      * smoother the cylinder. With a value of 4 for example,
      * the cylinder will look much like an elongated cube.
      */
-    Cylinder(double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
+    Cylinder(double radius, double height, int heightSubdivisions, int cylinderSubdivisions) : Cylinder(Vector(0, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions) {};
+
+    /*!
+     * \brief Creates a cylinder with the given parameters
+     *
+     * \param bottomDiskCenter The center of the bottom disk of the cylinder
+     * \param radius The radius of the cylinder
+     * \param height The height of the cylinder
+     * \param heightSubdivisions The number of subdivisions
+     * in height of the cylinder. This parameter has no
+     * visual impact but can be useful for later operations
+     * applied to the cylinder.
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder. The higher this parameter, the
+     * smoother the cylinder. With a value of 4 for example,
+     * the cylinder will look much like an elongated cube.
+     */
+    Cylinder(const Vector& bottomDiskCenter, double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
 };
 
 #endif // SIMPLE_MESHES_H

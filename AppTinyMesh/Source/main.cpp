@@ -6,6 +6,11 @@
 
 int main(int argc, char *argv[])
 {
+    AnalyticSphere::intersectionTest();
+    AnalyticCylinder::intersectionTest();
+
+    //return 0;
+
     //Benchmarks benchmarks;
 
     //benchmarks.BenchmarkIcosphere(30, 11);

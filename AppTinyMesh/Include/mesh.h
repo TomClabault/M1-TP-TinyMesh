@@ -199,7 +199,7 @@ public:
    *
    * \return True if an intersection was found, false otherwise
    */
-  bool intersect(const Ray& ray, double& outT);
+  bool intersect(const Ray& ray, double& outT) const;
 
   /*!
    * \brief Computes the intersection of a ray and all the analytic approximations that compose this mesh
@@ -209,7 +209,7 @@ public:
    *
    * \return True if an intersection was found, false otherwise
    */
-  bool intersectAnalytic(const Ray& ray, double& t);
+  bool intersectAnalytic(const Ray& ray, double& t) const;
 
   void SmoothNormals();
 

@@ -104,7 +104,7 @@ void MainWindow::GetAOParameters(double& AORadius, int& AOSamples, double& AOStr
     }
 }
 
-void MainWindow::HandleAO(Mesh& mesh, std::vector<Color>& meshColors)
+void MainWindow::HandleAO(Mesh& mesh, std::vector<Color>& cols)
 {
     double AORadius;
     int AOSamples;
@@ -113,11 +113,12 @@ void MainWindow::HandleAO(Mesh& mesh, std::vector<Color>& meshColors)
 
     if(uiw->AOCheckbox->isChecked())
     {
-        mesh.accessibility(meshColors, 1, 15);
+        //TODO remove
+        mesh.accessibility(cols, AORadius, AOSamples, AOStrength);
     }
     else
     {
-        for(Color& color : meshColors)
+        for(Color& color : cols)
             color = Color(1.0);
     }
 }
@@ -133,6 +134,12 @@ void MainWindow::BoxMeshExample()
     HandleAO(boxMesh, cols);
 
     meshColor = MeshColor(boxMesh, cols, boxMesh.VertexIndexes());
+
+    std::cout << "indexes: ";
+    for(int color : meshColor.ColorIndexes())
+        std::cout << color << " ";
+    std::cout << std::endl;
+
     UpdateGeometry();
 }
 
@@ -156,8 +163,8 @@ void MainWindow::SphereImplicitExample()
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
-    //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
-    //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
+//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
+//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
     //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 2 * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
     std::vector<Color> cols;
@@ -215,7 +222,7 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    Mesh cylinderMesh = Mesh(Cylinder(radius, height, heightSubdivisions, cylinderSubdivisions));
+    Mesh cylinderMesh = Mesh(Cylinder(Vector(1, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions));
 
     std::vector<Color> cols;
     cols.resize(cylinderMesh.Vertexes());
@@ -231,6 +238,9 @@ void MainWindow::LoadObjMesh(QString objFilePath)
 
     std::vector<Color> cols;
     cols.resize(objMesh.Vertexes());
+    for(Color& color : cols)
+        color = Color(1.0, 0.0, 0.0);
+
     HandleAO(objMesh, cols);
 
     meshColor = MeshColor(objMesh, cols, objMesh.VertexIndexes());
@@ -405,9 +415,6 @@ void MainWindow::UpdateAO()
     }
     else
     {
-        std::vector<Color> cols;
-        cols.resize(meshColor.Vertexes());
-
         double AORadius;
         int AOSamples;
         double AOStrength;
@@ -415,7 +422,21 @@ void MainWindow::UpdateAO()
         GetAOParameters(AORadius, AOSamples, AOStrength);
 
         if(AORadius != -1 && AOSamples != -1 && AOStrength != -1)
+        {
+//            Mesh icospherMesh = Mesh(Icosphere(1, 1));
+//            std::vector<Color> cols;
+//            cols.resize(icospherMesh.Vertexes());
+//            for(Color& color : cols)
+//                color = Color(1.0, 0.0, 0.0);
+
+//            meshColor = MeshColor(icospherMesh, cols, icospherMesh.VertexIndexes());
+
             meshColor.computeAccessibility(AORadius, AOSamples, AOStrength);
+
+//            //TODO remove
+//            MeshColor meshColor2 = MeshColor(meshColor, meshColor.GetColors(), meshColor.VertexIndexes());//TODO remove
+//            meshColor = meshColor2;//TODO remove
+        }
     }
 
     UpdateGeometry();

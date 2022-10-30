@@ -34,6 +34,19 @@ MeshColor::~MeshColor()
 {
 }
 
+void MeshColor::Merge(const MeshColor& secondMesh)
+{
+    int currentVertexCount = this->Vertexes();
+
+    Mesh::Merge(secondMesh);
+
+    for(int vertexIndex : secondMesh.carray)
+        this->carray.push_back(vertexIndex + currentVertexCount);
+
+    for(Color color : secondMesh.colors)
+        this->colors.push_back(color);
+}
+
 void MeshColor::computeAccessibility(double radius, int samples, double occlusionStrength)
 {
     Mesh::accessibility(this->colors, radius, samples, occlusionStrength);

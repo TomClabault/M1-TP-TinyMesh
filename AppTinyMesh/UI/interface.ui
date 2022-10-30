@@ -68,7 +68,7 @@
        <property name="title">
         <string>Basic Shapes</string>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>5</x>
@@ -336,13 +336,13 @@ p, li { white-space: pre-wrap; }
        <property name="title">
         <string>Shading</string>
        </property>
-       <widget class="QWidget" name="">
+       <widget class="QWidget" name="layoutWidget">
         <property name="geometry">
          <rect>
           <x>6</x>
           <y>23</y>
           <width>290</width>
-          <height>180</height>
+          <height>181</height>
          </rect>
         </property>
         <layout class="QGridLayout" name="gridLayout_4">
@@ -427,7 +427,7 @@ p, li { white-space: pre-wrap; }
            <item row="1" column="1">
             <widget class="QLineEdit" name="AOSamplesInput">
              <property name="text">
-              <string>10</string>
+              <string>1</string>
              </property>
             </widget>
            </item>

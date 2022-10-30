@@ -62,9 +62,9 @@ std::vector<AnalyticApproximation*> SimpleMesh::GetAnalyticApproximations() cons
 //Cache used to avoid the duplication of vertices when subdividing the icosphere
 std::unordered_map<int, int> midPointsCache;
 
-const float X=.525731112119133606f;
-const float Z=.850650808352039932f;
-const float N=0.f;
+const double X=.525731112119133606f;
+const double Z=.850650808352039932f;
+const double N=0.f;
 
 //From https://schneide.blog/2016/07/15/generating-an-icosphere-in-c/
 const Vector Icosphere::baseVertices[12] =
@@ -457,10 +457,12 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     }
 }
 
-Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
+Cylinder::Cylinder(const Vector& center, double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
+    SimpleMesh::analyticApproximations.push_back(new AnalyticCylinder(center, radius + 1, height + 1));
+
     //First point at the middle of the bottom circle of the cylinder
-    this->vertices.push_back(Vector(0, 0, 0));
+    this->vertices.push_back(center);
 
     //Generating the bottom ring of the cylinder
     double ringIncrement = 1.0 / cylinderSubdivisions;
@@ -470,7 +472,7 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
         double y = 0;
         double z = std::sin(2 * M_PI * ringIncrement * cylinderSubdiv) * radius;
 
-        this->vertices.push_back(Vector(x, y, z));
+        this->vertices.push_back(Vector(x, y, z) + center);
     }
 
 
@@ -484,7 +486,7 @@ Cylinder::Cylinder(double radius, double height, int heightSubdivisions, int cyl
             double y = heightIncrement * (ringIndex + 1);
             double z = std::sin(2 * M_PI * ringIncrement * cylinderRing) * radius;
 
-            this->vertices.push_back(Vector(x, y, z));
+            this->vertices.push_back(Vector(x, y, z) + center);
         }
     }
 

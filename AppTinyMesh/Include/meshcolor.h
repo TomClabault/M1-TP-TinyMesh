@@ -14,9 +14,17 @@ public:
   explicit MeshColor();
   explicit MeshColor(const Mesh&);
   explicit MeshColor(const Mesh&, const std::vector<Color>&, const std::vector<int>&);
-  ~MeshColor();
+
+  /*!
+   * \brief Merges another mesh into the current one
+   * \param secondMesh The mesh to merge into the current one
+   */
+  void Merge(const MeshColor& secondMesh);
 
   void computeAccessibility(double radius, int samples, double occlusionStrength);
+
+  ~MeshColor();
+
 
   Color GetColor(int) const;
   std::vector<Color> GetColors() const;

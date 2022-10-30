@@ -472,6 +472,7 @@ inline Vector Vector::Max(const Vector& a, const Vector& b)
 \brief Linear interpolation between two vectors.
 \param a,b Interpolated points.
 \param t Interpolant.
+\return If t==0, the result is equal to a. If t == 1, the result is b
 */
 inline Vector Lerp(const Vector& a, const Vector& b, double t)
 {

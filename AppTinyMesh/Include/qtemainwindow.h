@@ -69,11 +69,11 @@ public:
      *
      * \param mesh The mesh whose ambient occlusion will
      * be computed if the ambient occlusion checkbox is checked.
-     * \param meshColors The resulting color after the
+     * \param cols The resulting color after the
      * computation of the ambient occlusion
      * (or the set operation to all white)
      */
-    void HandleAO(Mesh& mesh, std::vector<Color>& meshColors);
+    void HandleAO(Mesh& mesh, std::vector<Color>& cols);
 
     void CreateIcosphereMesh(double radius, int subdivisions);
     void CreateTorusMesh(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions);
