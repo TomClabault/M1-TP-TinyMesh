@@ -469,5 +469,6 @@ BVH::BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDe
 
 bool BVH::intersect(const Ray& ray, double& t) const
 {
+    std::cout << "BVH inter" << std::endl;
     return _octree.intersect(ray, t);
 }

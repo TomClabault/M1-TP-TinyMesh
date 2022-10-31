@@ -380,7 +380,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             {
                 if(!computed)
                 {
-                    bvh = new BVH(*this->GetTriangles(), 2000000, 2000000);
+                    bvh = new BVH(*this->GetTriangles(), 8, 2000000);
                     computed = true;
                 }
 

@@ -1,4 +1,5 @@
 #include "analyticApproximations.h"
+#include "qmath.h"
 
 const double epsilon = 10e-6;
 
@@ -115,7 +116,9 @@ bool AnalyticCylinder::intersect(const Ray& ray, double& t)
     double b = 2 * (rayDirX * (rayOrigX - centerX) + rayDirZ * (rayOrigZ - centerZ));
     double c = rayOrigX * rayOrigX + rayOrigZ * rayOrigZ - 2 * (rayOrigX * centerX + rayOrigZ + centerZ) + centerX * centerX + centerZ * centerZ - this->_radius * this->_radius;
 
-    double closestT = -1;//This variable will keep the closest intersection we've found (bewteen the body of the cylinder and its disks)
+    double closestT = std::numeric_limits<double>::max();//This variable will keep the closest intersection we've found (bewteen the body of the cylinder and its disks)
+
+    bool intersectionFound = false;
 
     //Intersection with the infinite (in height)
     //'body' of the cylinder
@@ -134,25 +137,30 @@ bool AnalyticCylinder::intersect(const Ray& ray, double& t)
             if(intersectionPoint[1] < centerY || intersectionPoint[1] > this->_height - centerY)
                 return false;
 
+            intersectionFound = true;
             closestT = tBody;
         }
     }
 
     double tDisk = std::numeric_limits<double>::max();
     if(intersectWithDisk(ray, this->_radius, Vector(0, 0, 0) + this->_center, Vector(0, 1, 0), tDisk))
+    {
         closestT = std::min(tDisk, tBody);
 
+        intersectionFound = true;
+    }
+
     if(intersectWithDisk(ray, this->_radius, Vector(0, this->_height, 0) + this->_center, Vector(0, -1, 0), tDisk))
+    {
         closestT = std::min(closestT, tDisk);
 
-    if(closestT > 0)
-    {
+        intersectionFound = true;
+    }
+
+    if(intersectionFound)
         t = closestT;
 
-        return true;
-    }
-    else
-        return false;
+    return intersectionFound;
 }
 
 #include <cassert>
@@ -254,6 +262,18 @@ void AnalyticCylinder::intersectionTest()
     assert(cylinderModified.intersect(Ray(Vector(2, -3, 0), Vector(0, 1, 0)), t));
     assert(t == 3.0);
 
+    //Ray inside the cylinder pointing to the right
+    assert(cylinderModified.intersect(Ray(Vector(3, 0, 0), Vector(1, 0, 0)), t));
+    assert(t == 1.0);
+
+    //Ray inside the cylinder pointing to the right
+    assert(cylinderModified.intersect(Ray(Vector(3.5, 0, 0), Vector(1, 0, 0)), t));
+    assert(t == 0.5);
+
+    //Ray inside the cylinder pointing up
+    assert(cylinderModified.intersect(Ray(Vector(3, 0.5, 0), Vector(0, 1, 0)), t));
+    assert(t == 0.5);
+
     AnalyticCylinder cylinderTranslatedUp(Vector(0, 2, 0), 1, 2);
 
     //Ray below pointing up
@@ -263,4 +283,52 @@ void AnalyticCylinder::intersectionTest()
     //Ray above pointing down
     assert(cylinderTranslatedUp.intersect(Ray(Vector(0, 5, 0), Vector(0, -1, 0)), t));
     assert(t == 1.0);
+
+    AnalyticCylinder cylinderRad1Height2(Vector(0, 0, 0), 1, 2);
+    //Ray's origin at the border of the cylinder, between the top disk and the body. Auto intersection
+    assert(cylinderRad1Height2.intersect(Ray(Vector(1, 2, 0), Vector(0.295226, 0.181165, -0.938094)), t));
+    assert(t == 0.0);
+
+    //Generating 100 random rays direction and ray's origin around the body of the cylinder. They should all auto-intersect.
+    //Also testing for the same ray / ray direction but with the ray origin offset off the cylinder which should prevent
+    //auto intersection
+    //TODO Not working
+//    unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
+//    Vector dump = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                    (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                    (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
+//            Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
+//            Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
+//    for(int i = 0; i < 100; i++)
+//    {
+//        double randomAngle = (Math::xorshift96() / (double)max_unsigned_int) * 2 * M_PI;
+//        double randomHeight = (Math::xorshift96() / (double)max_unsigned_int) * 2;
+
+//        double x = std::cos(randomAngle);
+//        double y = randomHeight;
+//        double z = std::sin(randomAngle);
+
+//        Vector rayOrigin(x, y, z);
+//        Vector normalAtRayOrigin = rayOrigin - Vector(0, randomHeight, 0);
+//        Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                      (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                      (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
+//        if(randomRayDirection * normalAtRayOrigin < 0)
+//            randomRayDirection *= -1;
+
+//        std::cout << normalAtRayOrigin << std::endl;
+//        std::cout << rayOrigin << std::endl;
+//        std::cout << randomRayDirection << std::endl;
+
+//        //Auto intersection
+//        assert(cylinderRad1Height2.intersect(Ray(rayOrigin, randomRayDirection), t));
+//        assert(t == 0.0);
+
+//        //Origin + Offset : shouldn't auto intersect
+//        assert(!cylinderRad1Height2.intersect(Ray(rayOrigin + 1.0e-5 * normalAtRayOrigin, randomRayDirection), t));
+//    }
 }
