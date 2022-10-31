@@ -164,6 +164,13 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 //    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
     //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 2 * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
+    //TODO remove
+//    for(int i = 0; i < 5; i++)
+//    {
+//        Mesh boxMesh = Mesh(Box(Vector(0,0.850685,0.525821) + (i / 5.0) * Vector(0.277985,0.456299,0.84529) * 4, 0.025));
+//        icosphereMesh.Merge(boxMesh);
+//    }
+
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());
     HandleAO(icosphereMesh, cols);
@@ -274,7 +281,7 @@ void MainWindow::SetupTorusToolbox()
     QVBoxLayout vboxLayout(uiw->toolboxGroupBox);
     vboxLayout.addWidget(toolboxWidget);
 
-    //Default settings for the icosphere at its creation
+    //Default settings for the torus at its creation
     torusToolbox.torusInRadiusInput->setText("0.375");
     torusToolbox.torusOutRadiusInput->setText("1.5");
     torusToolbox.torusRingCountInput->setText("20");
@@ -298,7 +305,7 @@ void MainWindow::SetupCapsuleToolbox()
     QVBoxLayout vboxLayout(uiw->toolboxGroupBox);
     vboxLayout.addWidget(toolboxWidget);
 
-    //Default settings for the icosphere at its creation
+    //Default settings for the capsule at its creation
     capsuleToolbox.capsuleRadiusInput->setText("1.0");
     capsuleToolbox.capsuleCylinderHeightInput->setText("2.0");
     capsuleToolbox.capsuleCylinderHeightSubdivInput->setText("5");
@@ -324,7 +331,7 @@ void MainWindow::SetupCylinderToolbox()
     QVBoxLayout vboxLayout(uiw->toolboxGroupBox);
     vboxLayout.addWidget(toolboxWidget);
 
-    //Default settings for the icosphere at its creation
+    //Default settings for the cylinder at its creation
     cylinderToolbox.cylinderRadiusInput->setText("1.0");
     cylinderToolbox.cylinderHeightInput->setText("2.0");
     cylinderToolbox.cylinderHeightSubdivInput->setText("5");
@@ -339,11 +346,9 @@ void MainWindow::SetupCylinderToolbox()
 
 void MainWindow::DisplayIcosphere()
 {
-    CreateIcosphereMesh(1.0, 1);
-
-    UpdateGeometry();
-
     SetupIcosphereToolbox();
+
+    UpdateIcosphere();
 }
 
 void MainWindow::DisplayTorus()
@@ -404,10 +409,10 @@ void MainWindow::UpdateAO()
 {
     if(!uiw->AOCheckbox->isChecked())
     {
-        std::vector<Color> cols = meshColor.GetColors();
+        std::vector<Color>* cols = meshColor.GetColorsVector();
 
         //Repainting the mesh in white
-        for(Color& color : cols)
+        for(Color& color : *cols)
             color = Color(1.0);
     }
     else

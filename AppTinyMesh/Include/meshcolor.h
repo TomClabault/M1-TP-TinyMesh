@@ -27,7 +27,7 @@ public:
 
 
   Color GetColor(int) const;
-  std::vector<Color> GetColors() const;
+  std::vector<Color>* GetColorsVector();
   std::vector<int> ColorIndexes() const;
 };
 
@@ -44,9 +44,9 @@ inline Color MeshColor::GetColor(int i) const
 /*!
 \brief Get the array of colors.
 */
-inline std::vector<Color> MeshColor::GetColors() const
+inline std::vector<Color>* MeshColor::GetColorsVector()
 {
-  return colors;
+  return &colors;
 }
 
 /*!

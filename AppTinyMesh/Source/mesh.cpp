@@ -336,6 +336,11 @@ bool computed = false;
 
 void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
 {
+    auto startAO = std::chrono::high_resolution_clock::now();
+
+    computed = false;
+
+    std::srand(0);
     double colorIncrement = 1.0 / samples;
 
     bool analyticIntersection = this->analyticApproximations.size() > 0;
@@ -355,13 +360,13 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
 
             //Using xorshift96 to generate random numbers is faster than std::rand by 2 orders of magnitude
-            Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
+//            Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+//                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
             //TODO remove
-//            Vector randomRayDirection = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1,
-//                                                 (std::rand() / (double)RAND_MAX) * 2 - 1,
-//                                                 (std::rand() / (double)RAND_MAX) * 2 - 1));
+            Vector randomRayDirection = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1,
+                                                 (std::rand() / (double)RAND_MAX) * 2 - 1,
+                                                 (std::rand() / (double)RAND_MAX) * 2 - 1));
 
             if(randomRayDirection * normal < 0)//If the random point we draw is below the surface
                 randomRayDirection *= -1;//Flipping the random point for it to be above the surface
@@ -380,12 +385,17 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             {
                 if(!computed)
                 {
-                    bvh = new BVH(*this->GetTriangles(), 8, 2000000);
+                    auto start = std::chrono::high_resolution_clock::now();
+                    bvh = new BVH(*this->GetTriangles(), 16);
+                    auto stop = std::chrono::high_resolution_clock::now();
+
+                    std::cout << "BVH Construction time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << std::endl;
                     computed = true;
                 }
 
                 intersectionFound = bvh->intersect(ray, intersectionDistance);
 
+                //TODO decomment
                 //intersectionFound = this->intersect(ray, intersectionDistance);
             }
 
@@ -394,15 +404,13 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             {
                 obstructedValue += colorIncrement;
 
-                std::cout << "vertex: " << vertex << std::endl;
-                std::cout << "normal: " << normal << std::endl;
-                std::cout << "ray origin: " << ray.Origin() << std::endl;
-                std::cout << "ray direction: " << ray.Direction() << std::endl;
-//                std::cout << "vertex distance : " << Norm(vertex - center) << std::endl;
-//                std::cout << "intersection distance : " << Norm((ray.Origin() + intersectionDistance * ray.Direction()) - center) << std::endl;
-//                std::cout << "ray origin distance: " << Norm(center - ray.Origin()) << std::endl;
+//                std::cout << "vertex index: " << vertexIndex << std::endl;
+//                std::cout << "vertex number: " << this->varray.at(vertexIndex) << std::endl;
+//                std::cout << "vertex: " << vertex << std::endl;
+//                std::cout << "normal: " << normal << std::endl;
+//                std::cout << "ray origin: " << ray.Origin() << std::endl;
+//                std::cout << "ray direction: " << ray.Direction() << std::endl;
 
-                std::cout << std::endl << std::endl;
                 //this->intersectAnalytic(ray, intersectionDistance);
 
                 //std::cout << normal * randomVec << " | " << normal * ((intersectionDistance * randomVec + ray.Origin()) - vertex) << " | " << normal * ((static_cast<AnalyticSphere*>(this->analyticApproximations.at(0))->Center() - (intersectionDistance * randomVec + ray.Origin()))) << std::endl;
@@ -425,6 +433,10 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
         accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
     }
 
+    auto stopAO = std::chrono::high_resolution_clock::now();
+
+    std::cout << "AO time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stopAO - startAO).count() << std::endl;
+
     std::cout << std::endl;
     std::cout << std::endl;
 }
@@ -432,7 +444,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 bool Mesh::intersect(const Ray& ray, double& outT) const
 {
     bool found = false;
-    double closestT = 10e64;//Used to keep track of the closest
+    double closestT = INFINITY;//Used to keep track of the closest
 
     //Looping through indices 3 by 3 to get the triangles
     for(size_t i = 0; i < this->varray.size(); i += 3)

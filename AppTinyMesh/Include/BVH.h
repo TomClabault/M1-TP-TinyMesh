@@ -77,13 +77,13 @@ public:
     Vector Centroid() const;
 
     //TODO remove if not used
-    /*!
-     * \brief Computes the minimum and the maximum point of the AABB of
-     * this volume
-     * \param min [out] The minimum point
-     * \param max [out] The maximum point
-     */
-    void GetMinMax(Vector& min, Vector& max) const;
+//    /*!
+//     * \brief Computes the minimum and the maximum point of the AABB of
+//     * this volume
+//     * \param min [out] The minimum point
+//     * \param max [out] The maximum point
+//     */
+//    void GetMinMax(Vector& min, Vector& max) const;
 
     //TODO remove
 //    /*!
@@ -101,10 +101,12 @@ public:
 private:
     /*!
      * \brief Computes all the near and far distances of the 7 planes
-     * used by the volume using the triangles of the _triangles
-     * attribute.
+     * used by the volume using the given triangles
+     *
+     * \param triangles The triangles
      */
-    void computeDNearDFar();
+    void computeDNearDFar(const std::vector<Triangle>& triangles);
+    void computeDNearDFar(const Triangle* triangle);
 
 public:
     //The 7 planes that are going to
@@ -116,14 +118,11 @@ public:
     static const Plane planes[7];
 
 private:
-    //TODO remove if not used
-    std::vector<const Triangle*> _triangles;
-
-    double dNears[7];//The nears 'd' (as in the
+    double _dNears[7];//The nears 'd' (as in the
     //equation of a plane Ax+By+cZ-d=0) of the
     //7 planes (see BoundingVolume::planes) of
     //this bounding volumes
-    double dFars[7];//The fars 'd'
+    double _dFars[7];//The fars 'd'
 
     //TODO remove
     //Vector _min, _max;
@@ -228,6 +227,12 @@ public:
     Octree(Vector min, Vector max);
 
     /*!
+     * \brief Returns the root of this octree
+     * \return The root of this octree.
+     */
+    OctreeNode* Root() const;
+
+    /*!
      * \brief Constructs the octree with the given triangles
      * and the given constraints
      * \param triangles The triangles to insert into the octree
@@ -283,7 +288,13 @@ public:
      * allowed to sit in a volume of the BVH
      * \param The maximum allowed depth of the nodes of the hierarchy
      */
-    BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDepth);
+    BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDepth = 15);
+
+    /*!
+    * \brief Returns the underlying octree
+    * \return The octree used by the BVH
+    */
+   Octree GetOctree() const;
 
     /*!
      * \brief Computes the intersection of a ray and the BVH
@@ -295,6 +306,8 @@ public:
      * false otherwise
      */
     bool intersect(const Ray& ray, double& t) const;
+
+    void static BVHTests();
 
 private:
     //TODO remove if not used

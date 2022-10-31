@@ -2,89 +2,107 @@
 
 #include <queue>
 
+//TODO remove stat counters
+int boundingVolumeTest = 0;
+int triangleIntersectionTest = 0;
+int triangleIntersection = 0;
+
 BoundingVolume::BoundingVolume()
 {
     for(int i = 0; i < 7; i++)
-        dNears[i] = INFINITY;
+        _dNears[i] = INFINITY;
     for(int i = 0; i < 7; i++)
-        dFars[i] = -INFINITY;
+        _dFars[i] = -INFINITY;
 }
 
 BoundingVolume::BoundingVolume(const Triangle& triangle)
 {
-    _triangles.reserve(1);
-
-    _triangles.push_back(&triangle);
-
-    computeDNearDFar();
+    computeDNearDFar(&triangle);
 }
 
 BoundingVolume::BoundingVolume(const std::vector<Triangle>& triangles)
 {
-    _triangles.reserve(triangles.size());
-
-    for(const Triangle& triangle : triangles)
-        _triangles.push_back(&triangle);
-
-    computeDNearDFar();
+    computeDNearDFar(triangles);
 }
 
 BoundingVolume::BoundingVolume(const std::vector<Vector>& vertexes, const std::vector<int>& indices)
 {
-    _triangles.reserve(indices.size() / 3);
+    std::vector<Triangle> triangles;
+    triangles.reserve(indices.size() / 3);
 
     for(int vertexIndex  = 0; vertexIndex < indices.size(); vertexIndex += 3)
-        _triangles.push_back(new Triangle(vertexes.at(indices.at(vertexIndex)),
+        triangles.push_back(Triangle(vertexes.at(indices.at(vertexIndex)),
                                           vertexes.at(indices.at(vertexIndex + 1)),
                                           vertexes.at(indices.at(vertexIndex + 2))));
 
-    computeDNearDFar();
+    computeDNearDFar(triangles);
 }
 
 void BoundingVolume::extend(const BoundingVolume& volume)
 {
     for(int i = 0; i < 7; i++)
     {
-        dNears[i] = std::min(dNears[i], volume.dNears[i]);
-        dFars[i] = std::max(dFars[i], volume.dFars[i]);
+        _dNears[i] = std::min(_dNears[i], volume._dNears[i]);
+        _dFars[i] = std::max(_dFars[i], volume._dFars[i]);
     }
 }
 
-void BoundingVolume::computeDNearDFar()
+void BoundingVolume::computeDNearDFar(const Triangle* triangle)
 {
-    for(const Triangle* triangle : _triangles)
+    for(int triangleVertex = 0; triangleVertex < 3; triangleVertex++)
+    {
+        Vector vertex = (*triangle)[triangleVertex];
+
+        //Computing dNears and dFars
+        for(int plane = 0; plane < 7; plane++)
+        {
+            double value = BoundingVolume::planes[plane].Normal() * vertex;
+
+            _dNears[plane] = std::min(_dNears[plane], value);
+            _dFars[plane] = std::max(_dFars[plane], value);
+        }
+    }
+}
+
+void BoundingVolume::computeDNearDFar(const std::vector<Triangle>& triangles)
+{
+    for(const Triangle& triangle : triangles)
     {
         for(int triangleVertex = 0; triangleVertex < 3; triangleVertex++)
         {
-            Vector vertex = (*triangle)[triangleVertex];
+            Vector vertex = triangle[triangleVertex];
 
             //Computing dNears and dFars
             for(int plane = 0; plane < 7; plane++)
             {
-                dNears[plane] = BoundingVolume::planes[plane].Normal() * vertex;
-                dFars[plane] = BoundingVolume::planes[plane].Normal() * vertex;
+                _dNears[plane] = BoundingVolume::planes[plane].Normal() * vertex;
+                _dFars[plane] = BoundingVolume::planes[plane].Normal() * vertex;
             }
         }
     }
 }
 
-void BoundingVolume::GetMinMax(Vector& min, Vector& max) const
-{
-    for(const Triangle* triangle : _triangles)
-    {
-        for(int triangleVertex = 0; triangleVertex < 3; triangleVertex++)
-        {
-            Vector vertex = (*triangle)[triangleVertex];
+//TODO remove
+//void BoundingVolume::GetMinMax(Vector& min, Vector& max) const
+//{
+//    min[0] =
+//    return Vector((dNears[0] + dFars[0]) / 2, (dNears[1] + dFars[1]) / 2, (dNears[2] + dFars[2]) / 2);
 
-            for(int component = 0; component < 3; component++)
-            {
-                //Updating the minimum and maximum point of the AABB of this bounding volume
-                min[triangleVertex] = std::min(min[triangleVertex], vertex[component]);
-                max[triangleVertex] = std::max(max[triangleVertex], vertex[component]);
-            }
-        }
-    }
-}
+//    for(const Triangle* triangle : _triangles)
+//    {
+//        for(int triangleVertex = 0; triangleVertex < 3; triangleVertex++)
+//        {
+//            Vector vertex = (*triangle)[triangleVertex];
+
+//            for(int component = 0; component < 3; component++)
+//            {
+//                //Updating the minimum and maximum point of the AABB of this bounding volume
+//                min[triangleVertex] = std::min(min[triangleVertex], vertex[component]);
+//                max[triangleVertex] = std::max(max[triangleVertex], vertex[component]);
+//            }
+//        }
+//    }
+//}
 
 //TODO remove tFar if never used
 bool BoundingVolume::intersect(const Ray& ray, double& tNear, double& tFar) const
@@ -94,11 +112,12 @@ bool BoundingVolume::intersect(const Ray& ray, double& tNear, double& tFar) cons
 
     for(int i = 0; i < 7; i++)
     {
+        //TODO precompute ND and NO
         double ND = BoundingVolume::planes[i].Normal() * ray.Direction();
         double NO = BoundingVolume::planes[i].Normal() * ray.Origin();
 
-        double near = (dNears[i] - NO) / ND;
-        double far = (dFars[i] - NO) / ND;
+        double near = (_dNears[i] - NO) / ND;
+        double far = (_dFars[i] - NO) / ND;
 
         if(ND < 0)
             std::swap(near, far);
@@ -115,16 +134,13 @@ bool BoundingVolume::intersect(const Ray& ray, double& tNear, double& tFar) cons
     tNear = outNear;
     tFar = outFar;
 
-    if(tFar >= 0)
-        return true;
-    else
-        return false;
+    return true;
 }
 
 Vector BoundingVolume::Centroid() const
 {
     //The average of the nears and fars of the axis aligned planes
-    return Vector((dNears[0] + dFars[0]) / 2, (dNears[1] + dFars[1]) / 2, (dNears[2] + dFars[2]) / 2);
+    return Vector((_dNears[0] + _dFars[0]) / 2, (_dNears[1] + _dFars[1]) / 2, (_dNears[2] + _dFars[2]) / 2);
 }
 
 //TODO remove
@@ -222,9 +238,9 @@ void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int m
             _isLeaf = false;
             _childrenNodes = new OctreeNode[8];
 
-            double halfWidth = (_min[0] + _max[0]) / 2;
-            double halfHeight = (_min[1] + _max[1]) / 2;
-            double halfDepth = (_min[2] + _max[2]) / 2;
+            double halfWidth = (_max[0] - _min[0]) / 2;
+            double halfHeight = (_max[1] - _min[1]) / 2;
+            double halfDepth = (_max[2] - _min[2]) / 2;
 
             /**
              *     +-----------+
@@ -239,9 +255,9 @@ void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int m
                +----------+/
             */
             _childrenNodes[0] = OctreeNode(Vector(_min[0], halfHeight, _min[2]), _center + Vector(0, halfHeight, 0) , _depth + 1);
-            _childrenNodes[1] = OctreeNode(Vector(halfWidth, halfHeight, _min[2]), _center + Vector(0, 0, halfWidth), _depth + 1);
+            _childrenNodes[1] = OctreeNode(Vector(halfWidth, halfHeight, _min[2]), _center + Vector(halfWidth, halfHeight, 0), _depth + 1);
             _childrenNodes[2] = OctreeNode(_min, _center, _depth + 1);
-            _childrenNodes[3] = OctreeNode(Vector(halfWidth, _min[1], _min[2]), _center + Vector(0, 0, halfWidth), _depth + 1);
+            _childrenNodes[3] = OctreeNode(Vector(halfWidth, _min[1], _min[2]), _center + Vector(halfWidth, 0, 0), _depth + 1);
             _childrenNodes[4] = OctreeNode(_center - Vector(halfWidth, 0, 0), _center + Vector(0, halfHeight, halfDepth), _depth + 1);
             _childrenNodes[5] = OctreeNode(_center, _max, _depth + 1);
             _childrenNodes[6] = OctreeNode(_center - Vector(halfWidth, halfHeight, 0), _center + Vector(0, 0, halfDepth), _depth + 1);
@@ -311,6 +327,11 @@ Octree::Octree() {};
 
 Octree::Octree(const Vector min, const Vector max) : _min(min), _max(max), _center((min + max) / 2) {};
 
+OctreeNode* Octree::Root() const
+{
+    return _root;
+}
+
 void Octree::construct(const std::vector<Triangle*>& triangles, int maxChildren, int maxDepth)
 {
     _root = new OctreeNode(_min, _max, 0);
@@ -327,20 +348,30 @@ bool Octree::intersect(const Ray& ray, double& t) const
     //TODO remove tFar from BoundingVolume.intersect if trash is never used
     double trash;
 
-    double tInterTriangle = INFINITY;//Keeps the closest intersection of the ray with a triangle of the octree
+    double closestIntersection = INFINITY;//Keeps the closest intersection of the ray with a triangle of the octree
     bool intersectionFound = false;
 
-    //If we're not even intersecting the bounding volumes
-    //of the whole scene, we're not going to intersect anything
-    if(!_root->GetBoundingVolume().intersect(ray, t, trash))
+    boundingVolumeTest++;
+    if(!_root->GetBoundingVolume().intersect(ray, trash, closestIntersection))
+    {
+        //If we're not even intersecting the bounding volumes
+        //of the whole scene, we're not going to intersect anything
         return false;
+    }
     else
     {
         std::priority_queue<Octree::OctreeQueueNode> queue;
-        Octree::OctreeQueueNode _rootQueueNode(_root, t);
+        Octree::OctreeQueueNode _rootQueueNode(_root, -1);
         queue.push(_rootQueueNode);
 
-        while(!queue.empty() && tInterTriangle > queue.top()._nodeInterDistance)
+        //As long as there is something to intersect and that
+        //the closest intersection we've found so far is not
+        //in front of the next volume to test (this would mean
+        //that we're going to intersect a volume that is behind
+        //the closest intersection we've found so far. We're not
+        //going to find a closer intersection than we already
+        //have in this case)
+        while(!queue.empty() && closestIntersection > queue.top()._nodeInterDistance)
         {
             OctreeNode* node = queue.top()._node;
             queue.pop();
@@ -349,9 +380,14 @@ bool Octree::intersect(const Ray& ray, double& t) const
             {
                 for(const Triangle* triangle : node->Triangles())
                 {
-                    if(triangle->Intersect(ray, trash, trash, t))
+                    double triangleInterDist = INFINITY;
+                    double u, v;
+
+                    triangleIntersectionTest++;
+                    if(triangle->Intersect(ray, triangleInterDist, u, v) && triangleInterDist > 0)
                     {
-                        tInterTriangle = std::min(tInterTriangle, t);
+                        triangleIntersection++;
+                        closestIntersection = std::min(closestIntersection, triangleInterDist);
                         intersectionFound = true;
                     }
                 }
@@ -364,6 +400,7 @@ bool Octree::intersect(const Ray& ray, double& t) const
                     double nodeIntersectionNear;
                     double nodeIntersectionFar;
                     OctreeNode* node = &childrenNodes[i];
+                    boundingVolumeTest++;
                     if(node->GetBoundingVolume().intersect(ray, nodeIntersectionNear, nodeIntersectionFar))
                     {
                         double nodeInterT;
@@ -378,13 +415,12 @@ bool Octree::intersect(const Ray& ray, double& t) const
                     }
                 }
             }
-
         }
     }
 
     if(intersectionFound)
     {
-        t = tInterTriangle;
+        t = closestIntersection;
 
         return true;
     }
@@ -467,8 +503,130 @@ BVH::BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDe
     _octree.computeVolumes();
 }
 
+Octree BVH::GetOctree() const
+{
+    return _octree;
+}
+
 bool BVH::intersect(const Ray& ray, double& t) const
 {
-    std::cout << "BVH inter" << std::endl;
-    return _octree.intersect(ray, t);
+    boundingVolumeTest = 0;
+    triangleIntersectionTest = 0;
+    triangleIntersection = 0;
+
+    bool returned = _octree.intersect(ray, t);
+
+    std::cout << "Volume intersection test: " << boundingVolumeTest << std::endl;
+    std::cout << "Triangle intersection test: " << triangleIntersectionTest << std::endl;
+    std::cout << "Triangle effective intersection: " << triangleIntersection << std::endl;
+
+    return returned;
+}
+
+#include <cassert>
+
+void BVH::BVHTests()
+{
+    //TODO decomment les tests
+//    //Test on a simple triangle
+//    Triangle triangle(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0.5, 0.5, 0));
+
+//    std::vector<Triangle*> triangles;
+//    triangles.push_back(&triangle);
+
+//    BVH bvh(triangles, 8, 2);
+
+//    double t;
+//    //Ray pointing towards the center of the triangle
+//    assert(bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(0, 0, -1)), t));
+//    assert(t == 1.0);
+
+//    //One ray to each vertex of the triangle
+//    //Also one ray to each vertex of the triangle while being inside the volume, directly on the vertex (auto-intersection)
+//    //Skipping the last one as the ray/triangle intersection is the problem for this one
+//    for(int i = 0; i < 2; i++)
+//    {
+//        Vector vertex = triangle[i];
+
+//        assert(bvh.intersect(Ray(vertex - Vector(0, 0, 5), Vector(0, 0, 1)), t));
+//        assert(t == 5.0);
+
+//        assert(bvh.intersect(Ray(vertex, Vector(0, 0, -1)), t));
+//        assert(t == 0.0);
+//    }
+
+//    //Ray pointing away from the triangle
+//    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(0, 0, 1)), t));
+//    //Ray parallel to the triangle
+//    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(1, 0, 0)), t));
+//    //Ray that intersects the bounding volume of the triangle but not the triangle itself
+//    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 0.001), Vector(1, 0, 0)), t));
+
+//    BVH bvhSphere(*Mesh(Icosphere(1, 2)).GetTriangles(), 8, 1000);
+//    assert(bvhSphere.intersect(Ray(Vector(0, 0, -1), Vector(0, 0, 1)), t));
+
+    //Testing the repartition of the triangles in the octants of the octree
+    std::vector<Triangle*> trianglesRepartition;
+    std::vector<Triangle> baseTrianglesRepartition;
+
+    const int NB_TRIANGLES_REPARTITION = 1;
+
+    //Creating triangles close to each other, they will be in the
+    //octant 0 and they will be used to create more triangles that
+    //will be in the other octants
+    for(int i = 0; i < NB_TRIANGLES_REPARTITION; i++)
+        baseTrianglesRepartition.push_back(Triangle(Vector(-3, 2, i * 0.05 + 2), Vector(-2, 2, i * 0.05 + 2), Vector(-2.5, 2.5, i * 0.05 + 2)));
+
+    for(int octant = 0; octant < 8; octant++)
+    {
+        double offsetX = (octant & 1) / 1 * 6;
+        double offsetY = (octant & 2) / 2 * -4;
+        double offsetZ = (octant & 4) / 4 * -4;
+        for(int i = 0; i < NB_TRIANGLES_REPARTITION; i++)
+        {
+            Triangle* baseTriangleOffset = new Triangle(baseTrianglesRepartition.at(i));
+            baseTriangleOffset->Translate(Vector(offsetX, offsetY, offsetZ));
+
+            trianglesRepartition.push_back(baseTriangleOffset);
+        }
+    }
+
+    //TODO destructeur de la BVH
+    BVH bvhRepartition(trianglesRepartition, 1, 10);
+
+    //We're now going to make sure that the triangles have correctly been inserted in the octants
+    Octree repartitionOctree = bvhRepartition.GetOctree();
+    OctreeNode* octants = repartitionOctree.Root()->ChildrenNodes();
+    for(int octant = 0; octant < 8; octant++)
+    {
+        OctreeNode octreeNode = octants[octant];
+        const std::vector<const Triangle*> octantTriangles = octreeNode.Triangles();
+        for(const Triangle* triangle : octantTriangles)
+        {
+            bool triangleFound = false;
+            for(int j = octant * NB_TRIANGLES_REPARTITION; j < (octant + 1) * NB_TRIANGLES_REPARTITION; j++)
+            {
+                bool allVertexEqual = true;
+
+                for(int vertex = 0; vertex < 3; vertex++)
+                {
+                    if((*triangle)[vertex] == (*trianglesRepartition.at(j))[vertex])
+                    {
+                        allVertexEqual = false;
+
+                        break;
+                    }
+                }
+
+                if(allVertexEqual)
+                {
+                    triangleFound = true;
+
+                    break;
+                }
+            }
+
+            assert(triangleFound);
+        }
+    }
 }

@@ -1,5 +1,6 @@
 #include "analyticApproximations.h"
 #include "benchmarks.h"
+#include "BVH.h"
 
 #include "qtemainwindow.h"
 #include <QtWidgets/qapplication.h>
@@ -8,6 +9,7 @@ int main(int argc, char *argv[])
 {
     AnalyticSphere::intersectionTest();
     AnalyticCylinder::intersectionTest();
+    BVH::BVHTests();
 
     //return 0;
 

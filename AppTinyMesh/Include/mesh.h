@@ -18,8 +18,7 @@ public:
   Triangle() {}
   explicit Triangle(const Vector&, const Vector&, const Vector&);
 
-  //TODO remove. On doit faire en sorte que dans le code, on ait plus une seule copie de triangle puisque normalement, une fois que les triangles sont construits, on se balade des références des triangles, on ne les copie pas
-  Triangle(Triangle&) {std::cout << "copy constructor triangel";};
+  Triangle(const Triangle& triangle) : p {triangle.p[0], triangle.p[1], triangle.p[2]} {};
 
   //! Empty.
   ~Triangle() {}
@@ -35,7 +34,7 @@ public:
   /*!
   * \brief This function allows the computation of the intersection between a ray and a triangle without having to instantiate a triangle
   */
-  static bool IntersectFromPoints(Vector a, Vector b, Vector c, const Ray&, double&, double&, double&);
+  static bool IntersectFromPoints(const Vector& a, const Vector& b, const Vector& c, const Ray&, double&, double&, double&);
 
   void Translate(const Vector&);
 

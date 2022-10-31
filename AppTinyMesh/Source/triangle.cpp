@@ -96,7 +96,7 @@ bool Triangle::Intersect(const Ray& ray, double& t, double& u, double& v) const
   return true;
 }
 
-bool Triangle::IntersectFromPoints(Vector a, Vector b, Vector c, const Ray& ray, double& t, double& u, double& v)
+bool Triangle::IntersectFromPoints(const Vector& a, const Vector& b, const Vector& c, const Ray& ray, double& t, double& u, double& v)
 {
     Vector e[2];
 
