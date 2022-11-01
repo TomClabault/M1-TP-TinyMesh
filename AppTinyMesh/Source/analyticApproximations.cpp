@@ -112,7 +112,7 @@ Vector AnalyticCylinder::GetNormalAt(const Vector& vertex)
     else if(vertex[1] == this->_center[1] + _height)//On the top disk of the cylinder
         return Vector(0, 1, 0);
     else//On the body of the cylinder
-        return Normalized(vertex - (_center + Vector(0, vertex[1], 0)));
+        return Normalized(vertex - (Vector(_center[0], vertex[1], _center[2])));
 }
 
 bool AnalyticCylinder::intersect(const Ray& ray, double& t)

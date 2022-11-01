@@ -164,7 +164,10 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
     icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
     icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 2*std::sqrt(6)/3, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
+    //TODO debug inter volumique cylindre
     //TODO debug la lenteur de la BVH
+    //TODO inter volumique tore
+    //TODO comparaison perf inter volumique sphere et non volumique + partie dans le rapport
 
     //TODO remove
 //    for(int i = 0; i < 5; i++)
@@ -229,6 +232,11 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
     Mesh cylinderMesh = Mesh(Cylinder(Vector(0, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions));
+
+    cylinderMesh.Merge(Mesh(Box(Vector(0.550779,1.61109,1.64221), 0.05)));
+//    for(int i = 0; i < 5; i++)
+//        cylinderMesh.Merge(Mesh(Box(Vector(-1.83697e-16,0,1) * 2 * i / 5.0 + Vector(6.12323e-17,1.33333,1), 0.025)));
+
 
     std::vector<Color> cols;
     cols.resize(cylinderMesh.Vertexes());
@@ -336,8 +344,8 @@ void MainWindow::SetupCylinderToolbox()
     //Default settings for the cylinder at its creation
     cylinderToolbox.cylinderRadiusInput->setText("1.0");
     cylinderToolbox.cylinderHeightInput->setText("2.0");
-    cylinderToolbox.cylinderHeightSubdivInput->setText("5");
-    cylinderToolbox.cylinderSubdivInput->setText("10");
+    cylinderToolbox.cylinderHeightSubdivInput->setText("2");
+    cylinderToolbox.cylinderSubdivInput->setText("4");
 
     connect(cylinderToolbox.cylinderRadiusInput, SIGNAL(returnPressed()), this, SLOT(UpdateCylinder()));
     connect(cylinderToolbox.cylinderHeightInput, SIGNAL(returnPressed()), this, SLOT(UpdateCylinder()));

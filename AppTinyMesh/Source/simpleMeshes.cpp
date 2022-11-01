@@ -459,7 +459,7 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
 
 Cylinder::Cylinder(const Vector& center, double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    SimpleMesh::analyticApproximation = new AnalyticCylinder(center, radius + 1, height + 1);
+    SimpleMesh::analyticApproximation = new AnalyticCylinder(center, radius, height);
 
     //First point at the middle of the bottom circle of the cylinder
     this->vertices.push_back(center);
