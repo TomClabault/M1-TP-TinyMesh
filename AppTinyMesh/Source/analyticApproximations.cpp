@@ -86,9 +86,14 @@ bool intersectWithDisk(const Ray& ray, const double diskRadius, const Vector& di
     return false;
 }
 
+Vector AnalyticSphere::GetNormalAt(const Vector& vertex)
+{
+    return Normalized(vertex - _center);
+}
+
 bool AnalyticSphere::intersect(const Ray& ray, double& t)
 {
-    Vector oc = (ray.Origin() - this->_center);
+    Vector oc = ray.Origin() - this->_center;
     double a = ray.Direction() * ray.Direction();
     double b = 2 * ray.Direction() * oc;
     double c = oc*oc - this->_radius * this->_radius;
@@ -98,6 +103,16 @@ bool AnalyticSphere::intersect(const Ray& ray, double& t)
         return false;
 
     return getTFromX1X2(x1, x2, t);
+}
+
+Vector AnalyticCylinder::GetNormalAt(const Vector& vertex)
+{
+    if(vertex[1] == this->_center[1])//The vertex is on the bottom disk of the cylinder
+        return Vector(0, -1, 0);
+    else if(vertex[1] == this->_center[1] + _height)//On the top disk of the cylinder
+        return Vector(0, 1, 0);
+    else//On the body of the cylinder
+        return Normalized(vertex - (_center + Vector(0, vertex[1], 0)));
 }
 
 bool AnalyticCylinder::intersect(const Ray& ray, double& t)
@@ -195,6 +210,25 @@ void AnalyticSphere::intersectionTest()
     assert(t == 1.0);
 
     assert(!sphere1.intersect(Ray(Vector(1, 0, 0) + Vector(1, 0, 0) * 1.0e-6, Vector(1, 0, 0)), t));
+
+    //Rays inside the sphere
+    assert(sphere1.intersect(Ray(Vector(0, 0, 0), Vector(1, 0, 0)), t));
+    assert(t == 1.0);
+
+    assert(sphere1.intersect(Ray(Vector(0, 0, 0), Vector(-1, 0, 0)), t));
+    assert(t == 1.0);
+
+    assert(sphere1.intersect(Ray(Vector(0, 0, 0), Vector(0, 1, 0)), t));
+    assert(t == 1.0);
+
+    assert(sphere1.intersect(Ray(Vector(0, 0, 0), Vector(0, -1, 0)), t));
+    assert(t == 1.0);
+
+    assert(sphere1.intersect(Ray(Vector(0.5, 0, 0), Vector(1, 0, 0)), t));
+    assert(t == 0.5);
+
+    assert(sphere1.intersect(Ray(Vector(0.5, 0, 0), Vector(-1, 0, 0)), t));
+    assert(t == 1.5);
 }
 
 void AnalyticCylinder::intersectionTest()

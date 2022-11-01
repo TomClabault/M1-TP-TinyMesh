@@ -54,9 +54,9 @@ unsigned long long int SimpleMesh::MemorySize() const
     return bytes;
 }
 
-std::vector<AnalyticApproximation*> SimpleMesh::GetAnalyticApproximations() const
+AnalyticApproximation* SimpleMesh::GetAnalyticApproximation() const
 {
-    return this->analyticApproximations;
+    return this->analyticApproximation;
 }
 
 //Cache used to avoid the duplication of vertices when subdividing the icosphere
@@ -124,7 +124,7 @@ Icosphere::Icosphere(Vector center, double radius, int subdivisions)
         vertex += center;
     }
 
-    SimpleMesh::analyticApproximations.push_back(new AnalyticSphere(center, radius));
+    SimpleMesh::analyticApproximation = new AnalyticSphere(center, radius);
 }
 
 /*!
@@ -459,7 +459,7 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
 
 Cylinder::Cylinder(const Vector& center, double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
-    SimpleMesh::analyticApproximations.push_back(new AnalyticCylinder(center, radius + 1, height + 1));
+    SimpleMesh::analyticApproximation = new AnalyticCylinder(center, radius + 1, height + 1);
 
     //First point at the middle of the bottom circle of the cylinder
     this->vertices.push_back(center);

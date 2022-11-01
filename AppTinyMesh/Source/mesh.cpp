@@ -1,14 +1,13 @@
 #include "analyticApproximations.h"
 #include "BVH.h"
+#include "qmath.h" //For M_PI
 #include "mesh.h"
-#include "meshcolor.h"
-
-const double epsilon = 1.0e-4;
-
-//For M_PI
-#include "qmath.h"
 
 #include <chrono>
+#include <unordered_set>
+
+
+const double epsilon = 1.0e-4;
 
 /*!
 \class Mesh mesh.h
@@ -33,9 +32,13 @@ Indices must have a size multiple of three (three for triangle vertices and thre
 \param vertices List of geometry vertices.
 \param indices List of indices wich represent the geometry triangles.
 */
-Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<int>& indices) :vertices(vertices), varray(indices)
+Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<int>& indices) :vertices(vertices), vertexIndices(indices)
 {
-  normals.resize(vertices.size(), Vector::Z);
+    normals.resize(vertices.size(), Vector::Z);
+
+    //We're adding the analytic approximation that corresponds to the vertices we just added to the mesh.
+    //Because we added arbitrary vertices, there is no corresponding approximation so we're adding nullptr
+    this->analyticApproxToVertexIndex.insert(std::make_pair(indices.size(), nullptr));
 }
 
 /*!
@@ -45,8 +48,9 @@ Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<int>& indices)
 \param normals Array of normals.
 \param va, na Array of vertex and normal indexes.
 */
-Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<Vector>& normals, const std::vector<int>& va, const std::vector<int>& na) :vertices(vertices), normals(normals), varray(va), narray(na)
+Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<Vector>& normals, const std::vector<int>& vIndices, const std::vector<int>& nIndices) :vertices(vertices), normals(normals), vertexIndices(vIndices), normalIndices(nIndices)
 {
+    this->analyticApproxToVertexIndex.insert(std::make_pair(vIndices.size(), nullptr));
 }
 
 /*!
@@ -55,10 +59,10 @@ Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<Vector>& norma
 */
 void Mesh::Reserve(int nv, int nn, int nvi, int nvn)
 {
-  vertices.reserve(nv);
-  normals.reserve(nn);
-  varray.reserve(nvi);
-  narray.reserve(nvn);
+    vertices.reserve(nv);
+    normals.reserve(nn);
+    vertexIndices.reserve(nvi);
+    normalIndices.reserve(nvn);
 }
 
 /*!
@@ -66,6 +70,21 @@ void Mesh::Reserve(int nv, int nn, int nvi, int nvn)
 */
 Mesh::~Mesh()
 {
+}
+
+AnalyticApproximation* Mesh::GetAnalyticApproxFromVertexIndex(int vertexIndex) const
+{
+    //Getting the analytic approximation that contains the vertex index number 'vertexIndex' using upper_bound
+    auto analyticApproxIte = this->analyticApproxToVertexIndex.upper_bound(vertexIndex);
+
+    if(analyticApproxIte == this->analyticApproxToVertexIndex.end())
+        return nullptr;
+    else
+    {
+        AnalyticApproximation* approx = analyticApproxIte->second;
+
+        return approx;
+    }
 }
 
 /*!
@@ -76,25 +95,25 @@ This function weights the normals of the faces by their corresponding area.
 */
 void Mesh::SmoothNormals()
 {
-  // Initialize 
-  normals.resize(vertices.size(), Vector::Null);
+    // Initialize
+    normals.resize(vertices.size(), Vector::Null);
 
-  narray = varray;
+    normalIndices = vertexIndices;
 
-  // Accumulate normals
-  for (size_t i = 0; i < varray.size(); i += 3)
-  {
-    Vector tn = Triangle(vertices[varray.at(i)], vertices[varray.at(i + 1)], vertices[varray.at(i + 2)]).AreaNormal();
-    normals[narray[i + 0]] += tn;
-    normals[narray[i + 1]] += tn;
-    normals[narray[i + 2]] += tn;
-  }
+    // Accumulate normals
+    for (size_t i = 0; i < vertexIndices.size(); i += 3)
+    {
+        Vector tn = Triangle(vertices[vertexIndices.at(i)], vertices[vertexIndices.at(i + 1)], vertices[vertexIndices.at(i + 2)]).AreaNormal();
+        normals[normalIndices[i + 0]] += tn;
+        normals[normalIndices[i + 1]] += tn;
+        normals[normalIndices[i + 2]] += tn;
+    }
 
-  // Normalize 
-  for (size_t i = 0; i < normals.size(); i++)
-  {
-    Normalize(normals[i]);
-  }
+    // Normalize
+    for (size_t i = 0; i < normals.size(); i++)
+    {
+        Normalize(normals[i]);
+    }
 }
 
 /*!
@@ -104,12 +123,12 @@ void Mesh::SmoothNormals()
 */
 void Mesh::AddSmoothTriangle(int a, int na, int b, int nb, int c, int nc)
 {
-  varray.push_back(a);
-  narray.push_back(na);
-  varray.push_back(b);
-  narray.push_back(nb);
-  varray.push_back(c);
-  narray.push_back(nc);
+    vertexIndices.push_back(a);
+    normalIndices.push_back(na);
+    vertexIndices.push_back(b);
+    normalIndices.push_back(nb);
+    vertexIndices.push_back(c);
+    normalIndices.push_back(nc);
 }
 
 /*!
@@ -119,12 +138,12 @@ void Mesh::AddSmoothTriangle(int a, int na, int b, int nb, int c, int nc)
 */
 void Mesh::AddTriangle(int a, int b, int c, int n)
 {
-  varray.push_back(a);
-  narray.push_back(n);
-  varray.push_back(b);
-  narray.push_back(n);
-  varray.push_back(c);
-  narray.push_back(n);
+    vertexIndices.push_back(a);
+    normalIndices.push_back(n);
+    vertexIndices.push_back(b);
+    normalIndices.push_back(n);
+    vertexIndices.push_back(c);
+    normalIndices.push_back(n);
 }
 
 /*!
@@ -137,11 +156,11 @@ Creates two smooth triangles abc and acd.
 */
 void Mesh::AddSmoothQuadrangle(int a, int na, int b, int nb, int c, int nc, int d, int nd)
 {
-  // First triangle
-  AddSmoothTriangle(a, na, b, nb, c, nc);
+    // First triangle
+    AddSmoothTriangle(a, na, b, nb, c, nc);
 
-  // Second triangle
-  AddSmoothTriangle(a, na, c, nc, d, nd);
+    // Second triangle
+    AddSmoothTriangle(a, na, c, nc, d, nd);
 }
 
 /*!
@@ -151,7 +170,7 @@ void Mesh::AddSmoothQuadrangle(int a, int na, int b, int nb, int c, int nc, int 
 */
 void Mesh::AddQuadrangle(int a, int b, int c, int d)
 {
-  AddSmoothQuadrangle(a, a, b, b, c, c, d, d);
+    AddSmoothQuadrangle(a, a, b, b, c, c, d, d);
 }
 
 /*!
@@ -159,11 +178,11 @@ void Mesh::AddQuadrangle(int a, int b, int c, int d)
 */
 Box Mesh::GetBox() const
 {
-  if (vertices.size() == 0)
-  {
-    return Box::Null;
-  }
-  return Box(vertices);
+    if (vertices.size() == 0)
+    {
+        return Box::Null;
+    }
+    return Box(vertices);
 }
 
 /*!
@@ -174,43 +193,46 @@ The object has 8 vertices, 6 normals and 12 triangles.
 */
 Mesh::Mesh(const Box& box)
 {
-  // Vertices
-  vertices.resize(8);
+    // Vertices
+    vertices.resize(8);
 
-  for (int i = 0; i < 8; i++)
-  {
-    vertices[i] = box.Vertex(i);
-  }
+    for (int i = 0; i < 8; i++)
+    {
+        vertices[i] = box.Vertex(i);
+    }
 
-  // Normals
-  normals.push_back(Vector(-1, 0, 0));
-  normals.push_back(Vector(1, 0, 0));
-  normals.push_back(Vector(0, -1, 0));
-  normals.push_back(Vector(0, 1, 0));
-  normals.push_back(Vector(0, 0, -1));
-  normals.push_back(Vector(0, 0, 1));
+    // Normals
+    normals.push_back(Vector(-1, 0, 0));
+    normals.push_back(Vector(1, 0, 0));
+    normals.push_back(Vector(0, -1, 0));
+    normals.push_back(Vector(0, 1, 0));
+    normals.push_back(Vector(0, 0, -1));
+    normals.push_back(Vector(0, 0, 1));
 
-  // Reserve space for the triangle array
-  varray.reserve(12 * 3);
-  narray.reserve(12 * 3);
+    // Reserve space for the triangle array
+    vertexIndices.reserve(12 * 3);
+    normalIndices.reserve(12 * 3);
 
-  AddTriangle(0, 2, 1, 4);
-  AddTriangle(1, 2, 3, 4);
+    AddTriangle(0, 2, 1, 4);
+    AddTriangle(1, 2, 3, 4);
 
-  AddTriangle(4, 5, 6, 5);
-  AddTriangle(5, 7, 6, 5);
+    AddTriangle(4, 5, 6, 5);
+    AddTriangle(5, 7, 6, 5);
 
-  AddTriangle(0, 4, 2, 0);
-  AddTriangle(4, 6, 2, 0);
+    AddTriangle(0, 4, 2, 0);
+    AddTriangle(4, 6, 2, 0);
 
-  AddTriangle(1, 3, 5, 1);
-  AddTriangle(3, 7, 5, 1);
+    AddTriangle(1, 3, 5, 1);
+    AddTriangle(3, 7, 5, 1);
 
-  AddTriangle(0, 1, 5, 2);
-  AddTriangle(0, 5, 4, 2);
+    AddTriangle(0, 1, 5, 2);
+    AddTriangle(0, 5, 4, 2);
 
-  AddTriangle(3, 2, 7, 3);
-  AddTriangle(6, 7, 2, 3);
+    AddTriangle(3, 2, 7, 3);
+    AddTriangle(6, 7, 2, 3);
+
+    //Analytic approximation for the boxes not implemented
+    this->analyticApproxToVertexIndex.insert(std::make_pair(vertexIndices.size(), nullptr));
 }
 
 /*!
@@ -218,29 +240,29 @@ Mesh::Mesh(const Box& box)
 
 \param mesh The simple mesh
 */
-Mesh::Mesh(const SimpleMesh& mesh)
+Mesh::Mesh(const SimpleMesh& simpleMesh)
 {
-  // Vertices
-  unsigned int verticesCount = mesh.VerticesCount();
-  vertices.resize(verticesCount);
+    // Vertices
+    unsigned int verticesCount = simpleMesh.VerticesCount();
+    vertices.resize(verticesCount);
 
-  for (unsigned int i = 0; i < verticesCount; i++)
-      vertices[i] = mesh.Vertex(i);
+    for (unsigned int i = 0; i < verticesCount; i++)
+        vertices[i] = simpleMesh.Vertex(i);
 
-  // Normals
-  for(unsigned int i = 0; i < mesh.NormalsCount(); i++)
-      normals.push_back(mesh.Normal(i));
+    // Normals
+    for(unsigned int i = 0; i < simpleMesh.NormalsCount(); i++)
+        normals.push_back(simpleMesh.Normal(i));
 
-  // Reserve space for the triangle array
-  unsigned int indicesCount = mesh.IndicesCount();
-  varray.reserve(indicesCount);
-  narray.reserve(indicesCount);
+    // Reserve space for the triangle array
+    unsigned int indicesCount = simpleMesh.IndicesCount();
+    vertexIndices.reserve(indicesCount);
+    normalIndices.reserve(indicesCount);
 
-  for(unsigned int  i = 0; i < indicesCount; i += 3)
-      AddTriangle(mesh.VertexIndex(i), mesh.VertexIndex(i + 1), mesh.VertexIndex(i + 2), mesh.NormalIndex(i));
+    for(unsigned int  i = 0; i < indicesCount; i += 3)
+        AddTriangle(simpleMesh.VertexIndex(i), simpleMesh.VertexIndex(i + 1), simpleMesh.VertexIndex(i + 2), simpleMesh.NormalIndex(i));
 
-  for(AnalyticApproximation* approx : mesh.GetAnalyticApproximations())
-    this->analyticApproximations.push_back(approx);
+    this->analyticApproximations.push_back(simpleMesh.GetAnalyticApproximation());
+    this->analyticApproxToVertexIndex.insert(std::make_pair(simpleMesh.IndicesCount(), simpleMesh.GetAnalyticApproximation()));
 }
 
 /*!
@@ -288,6 +310,7 @@ void Mesh::Translate(const Vector& translationVector)
 
 void Mesh::Merge(const Mesh& secondMesh)
 {
+    int currentIndicesCount = this->vertexIndices.size();
     int currentVerticesCount = this->Vertexes();
     int currentNormalsCount = this->normals.size();
 
@@ -298,12 +321,17 @@ void Mesh::Merge(const Mesh& secondMesh)
         this->normals.push_back(normal);
 
     for(int vertexIndex : secondMesh.VertexIndexes())
-        this->varray.push_back(vertexIndex + currentVerticesCount);
+        this->vertexIndices.push_back(vertexIndex + currentVerticesCount);
 
     for(int normalIndex : secondMesh.NormalIndexes())
-        this->narray.push_back(normalIndex + currentNormalsCount);
+        this->normalIndices.push_back(normalIndex + currentNormalsCount);
 
     //Also adding all the approximations of the second mesh if they exist
+    for(auto secondMeshApproxIte = secondMesh.analyticApproxToVertexIndex.begin();
+             secondMeshApproxIte != secondMesh.analyticApproxToVertexIndex.end();
+             secondMeshApproxIte++)
+        this->analyticApproxToVertexIndex.insert(std::make_pair(secondMeshApproxIte->first + currentIndicesCount, secondMeshApproxIte->second));
+
     if(secondMesh.analyticApproximations.size() > 0)
         for(AnalyticApproximation* approx : secondMesh.analyticApproximations)
             this->analyticApproximations.push_back(approx);
@@ -336,24 +364,43 @@ bool computed = false;
 
 void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
 {
-    auto startAO = std::chrono::high_resolution_clock::now();
+    auto startAO = std::chrono::high_resolution_clock::now();//TODO remove
 
-    computed = false;
+    std::unordered_set<int> alreadyComputedVertices;//Holds the index of the vertices
+    //whose accessibility we already have computed. Useful not to compute
+    //several time the accessibility of the same vertex
 
-    std::srand(0);
+    computed = false;//TODO remove
+
+    std::srand(2);//TODO remove
     double colorIncrement = 1.0 / samples;
 
     bool analyticIntersection = this->analyticApproximations.size() > 0;
 
-    //TODO ne pas recalculer 50 fois le même vertex. En bouclant sur les indices des vertex comme ça, on va recalculer l'accessibilité même pour des vertex partagés par plusieurs triangles
-    //ça va coûter du temps de calcul
-    int vertexIndexCount = this->VertexIndexes().size();
+    size_t vertexIndexCount = this->VertexIndexes().size();
     for(size_t vertexIndex = 0; vertexIndex < vertexIndexCount; vertexIndex++)
     {
         double obstructedValue = 0;
 
-        Vector vertex = this->vertices.at(this->varray.at(vertexIndex));
-        Vector normal = this->normals.at(this->narray.at(vertexIndex));
+        int vertexNumber = this->vertexIndices.at(vertexIndex);
+        if(alreadyComputedVertices.find(vertexNumber) != alreadyComputedVertices.end())//We have already computed this vertex
+            continue;//Skipping it
+        else
+            alreadyComputedVertices.insert(vertexNumber);
+
+        Vector vertex = this->vertices.at(vertexNumber);
+        Vector normal;
+
+        if(analyticIntersection)
+        {
+            AnalyticApproximation* approx = this->GetAnalyticApproxFromVertexIndex(vertexIndex);
+            if(approx != nullptr)
+                normal = approx->GetNormalAt(vertex);
+            else
+                normal = this->normals.at(this->normalIndices.at(vertexIndex));
+        }
+        else
+            normal = this->normals.at(this->normalIndices.at(vertexIndex));
 
         for(int sample = 0; sample < samples; sample++)
         {
@@ -378,12 +425,28 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             double intersectionDistance;
             bool intersectionFound;
 
-            analyticIntersection = false;//TODO remove
+            analyticIntersection = true;//TODO remove this line
             if(analyticIntersection)
+            {
+                double intersectionDistNonAnalytic = INFINITY;
+
+                //This is only going to intersect the analytic approximations of our mesh
                 intersectionFound = this->intersectAnalytic(ray, intersectionDistance);
+                //If our mesh is composed of analytic approximations and of other pieces that cannot
+                //be approximated, we're going to have to intersect those as well
+                intersectionFound  |= this->intersectNonAnalytic(ray, intersectionDistNonAnalytic);
+
+                //TODO whole if
+//                if(vertexNumber == 126)
+//                    std::cout << vertex << std::endl;
+
+                //We'll keep the smallest intersection distance that we've found between the intersection
+                //with the analytic shapes and with the non-analytic shapes
+                intersectionDistance = std::min(intersectionDistNonAnalytic, intersectionDistance);
+            }
             else
             {
-                if(!computed)
+                if(!computed)//TODO remove et compute la BVH à la construction du mesh
                 {
                     auto start = std::chrono::high_resolution_clock::now();
                     bvh = new BVH(*this->GetTriangles(), 16);
@@ -395,7 +458,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
                 intersectionFound = bvh->intersect(ray, intersectionDistance);
 
-                //TODO decomment
+                //TODO remove cette ligne, on doit utiliser l'intersection avec la BVH à la place de l'intersection avec le mesh
                 //intersectionFound = this->intersect(ray, intersectionDistance);
             }
 
@@ -404,38 +467,39 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             {
                 obstructedValue += colorIncrement;
 
-//                std::cout << "vertex index: " << vertexIndex << std::endl;
-//                std::cout << "vertex number: " << this->varray.at(vertexIndex) << std::endl;
-//                std::cout << "vertex: " << vertex << std::endl;
-//                std::cout << "normal: " << normal << std::endl;
-//                std::cout << "ray origin: " << ray.Origin() << std::endl;
-//                std::cout << "ray direction: " << ray.Direction() << std::endl;
+                //TODO remove tout les commentaires, on dsoit juste avoir 'obstructedValue += colorIncrement;' dans le if
+                //                std::cout << "vertex index: " << vertexIndex << std::endl;
+                //                std::cout << "vertex number: " << this->varray.at(vertexIndex) << std::endl;
+                //                std::cout << "vertex: " << vertex << std::endl;
+                //                std::cout << "normal: " << normal << std::endl;
+                //                std::cout << "ray origin: " << ray.Origin() << std::endl;
+                //                std::cout << "ray direction: " << ray.Direction() << std::endl;
 
                 //this->intersectAnalytic(ray, intersectionDistance);
 
                 //std::cout << normal * randomVec << " | " << normal * ((intersectionDistance * randomVec + ray.Origin()) - vertex) << " | " << normal * ((static_cast<AnalyticSphere*>(this->analyticApproximations.at(0))->Center() - (intersectionDistance * randomVec + ray.Origin()))) << std::endl;
                 //std::cout << "Inter[" << intersectionDistance << "] ------ Vertex: " << vertex << " | Random vec: " << randomVec << " | Normal:" << normal << std::endl;
 
-//                MeshColor* thisColor = static_cast<MeshColor*>(this);
+                //                MeshColor* thisColor = static_cast<MeshColor*>(this);
 
-//                Mesh boxMesh = Mesh(Box(Vector(ray.Origin() + intersectionDistance * randomVec), 0.025));
+                //                Mesh boxMesh = Mesh(Box(Vector(ray.Origin() + intersectionDistance * randomVec), 0.025));
 
-//                std::vector<Color> cols;
-//                cols.resize(boxMesh.Vertexes());
-//                for(int c = 0; c < boxMesh.Vertexes(); c++)
-//                    cols.at(c) = Color(0.0, 1.0, 0.0);
+                //                std::vector<Color> cols;
+                //                cols.resize(boxMesh.Vertexes());
+                //                for(int c = 0; c < boxMesh.Vertexes(); c++)
+                //                    cols.at(c) = Color(0.0, 1.0, 0.0);
 
-//                MeshColor boxColor(boxMesh, cols, boxMesh.VertexIndexes());
-//                thisColor->Merge(boxColor);
+                //                MeshColor boxColor(boxMesh, cols, boxMesh.VertexIndexes());
+                //                thisColor->Merge(boxColor);
             }
         }
 
-        accessibilityColors.at(this->varray.at(vertexIndex)) = Color(1 - obstructedValue * occlusionStrength);
+        accessibilityColors.at(vertexNumber) = Color(1 - obstructedValue * occlusionStrength);
     }
 
     auto stopAO = std::chrono::high_resolution_clock::now();
 
-    std::cout << "AO time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stopAO - startAO).count() << std::endl;
+    std::cout << "AO time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stopAO - startAO).count() << "ms" << std::endl;
 
     std::cout << std::endl;
     std::cout << std::endl;
@@ -447,11 +511,11 @@ bool Mesh::intersect(const Ray& ray, double& outT) const
     double closestT = INFINITY;//Used to keep track of the closest
 
     //Looping through indices 3 by 3 to get the triangles
-    for(size_t i = 0; i < this->varray.size(); i += 3)
+    for(size_t i = 0; i < this->vertexIndices.size(); i += 3)
     {
-        int index1 = this->varray.at(i + 0);
-        int index2 = this->varray.at(i + 1);
-        int index3 = this->varray.at(i + 2);
+        int index1 = this->vertexIndices.at(i + 0);
+        int index2 = this->vertexIndices.at(i + 1);
+        int index3 = this->vertexIndices.at(i + 2);
 
         double t, u, v;
 
@@ -474,7 +538,7 @@ bool Mesh::intersectAnalytic(const Ray& ray, double& t) const
 {
     bool found = false;
 
-    double nearestT = std::numeric_limits<double>::max();
+    double nearestT = INFINITY;
     for(AnalyticApproximation* approx : this->analyticApproximations)
     {
         if(approx->intersect(ray, t))
@@ -493,6 +557,52 @@ bool Mesh::intersectAnalytic(const Ray& ray, double& t) const
     return found;
 }
 
+bool Mesh::intersectNonAnalytic(const Ray& ray, double& t) const
+{
+    bool found = false;
+    double closestT = INFINITY;//Used to keep track of the closest
+    //intersection we've found so far
+
+    //Looping through the meshes (possibly merged into this mesh) of this mesh
+    int previousEntryLastVertexIndex = 0;//This variable will hold the last vertex
+    //index of the previous entry of the map. This will be useful to retrieve
+    //the vertices of a mesh because by iterating on the map, we will only
+    //have access to the last vertex index of the mesh, not its first one
+    //so this is what this variable is here for
+    for(auto mapEntry = this->analyticApproxToVertexIndex.begin();
+             mapEntry != this->analyticApproxToVertexIndex.end();
+             mapEntry++)
+    {
+        if(mapEntry->second == nullptr) //This means that we found a mesh that
+        //doesn't have an analytic approximation
+        {
+            for(size_t i = previousEntryLastVertexIndex; i < mapEntry->first; i += 3)
+            {
+                int index1 = this->vertexIndices.at(i + 0);
+                int index2 = this->vertexIndices.at(i + 1);
+                int index3 = this->vertexIndices.at(i + 2);
+
+                double interT, u, v;
+                if(Triangle::IntersectFromPoints(this->vertices.at(index1), this->vertices.at(index2), this->vertices.at(index3), ray, interT, u, v))
+                {
+                    if(interT > 0 && interT < closestT)//Intersection in front of the ray
+                    {
+                        closestT = interT;
+                        t = interT;
+
+                        found = true;
+                    }
+                }
+            }
+        }
+
+        //Keeping the number of the last vertex ofthe mesh we just iterated over
+        previousEntryLastVertexIndex = mapEntry->first;
+    }
+
+    return found;
+}
+
 
 #include <QtCore/QFile>
 #include <QtCore/QTextStream>
@@ -505,79 +615,81 @@ bool Mesh::intersectAnalytic(const Ray& ray, double& t) const
 */
 void Mesh::Load(const QString& filename)
 {
-  vertices.clear();
-  normals.clear();
-  varray.clear();
-  narray.clear();
+    vertices.clear();
+    normals.clear();
+    vertexIndices.clear();
+    normalIndices.clear();
 
-  QFile data(filename);
+    QFile data(filename);
 
-  if (!data.open(QFile::ReadOnly))
-    return;
-  QTextStream in(&data);
+    if (!data.open(QFile::ReadOnly))
+        return;
+    QTextStream in(&data);
 
-  // Set of regular expressions : Vertex, Normal, Triangle
-  QRegularExpression rexV("v\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
-  QRegularExpression rexN("vn\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
-  //f 1/1/4 3/7/4 5/8/4 6/6/4
-  QRegularExpression rexF4("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
-  //f 6/6/5 5/8/5 4/9/5
-  QRegularExpression rexF3("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
+    // Set of regular expressions : Vertex, Normal, Triangle
+    QRegularExpression rexV("v\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
+    QRegularExpression rexN("vn\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)\\s*([-|+|\\s]\\d*\\.\\d+)");
+    //f 1/1/4 3/7/4 5/8/4 6/6/4
+    QRegularExpression rexF4("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
+    //f 6/6/5 5/8/5 4/9/5
+    QRegularExpression rexF3("f\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)\\s*(\\d*)/\\d*/(\\d*)");
 
-  while (!in.atEnd())
-  {
-    QString line = in.readLine();
-    QRegularExpressionMatch matchV = rexV.match(line);
-    QRegularExpressionMatch matchN = rexN.match(line);
-    QRegularExpressionMatch matchF4 = rexF4.match(line);
-    QRegularExpressionMatch matchF3 = rexF3.match(line);
-    if (matchV.hasMatch())//rexv.indexIn(line, 0) > -1)
+    while (!in.atEnd())
     {
-      Vector q = Vector(matchV.captured(1).toDouble(), matchV.captured(2).toDouble(), matchV.captured(3).toDouble());
+        QString line = in.readLine();
+        QRegularExpressionMatch matchV = rexV.match(line);
+        QRegularExpressionMatch matchN = rexN.match(line);
+        QRegularExpressionMatch matchF4 = rexF4.match(line);
+        QRegularExpressionMatch matchF3 = rexF3.match(line);
+        if (matchV.hasMatch())//rexv.indexIn(line, 0) > -1)
+        {
+            Vector q = Vector(matchV.captured(1).toDouble(), matchV.captured(2).toDouble(), matchV.captured(3).toDouble());
 
-      vertices.push_back(q);
+            vertices.push_back(q);
+        }
+        else if (matchN.hasMatch())//rexn.indexIn(line, 0) > -1)
+        {
+            Vector q = Vector(matchN.captured(1).toDouble(), matchN.captured(2).toDouble(), matchN.captured(3).toDouble());
+
+            normals.push_back(q);
+        }
+        else if (matchF4.hasMatch())
+        {
+            //f 3/3/2 2/2/2 4/4/2 5/5/2
+            //C B D E
+            //--> BEC, BDE --> 2, 4, 1 // 2, 3, 4
+
+            //Quad face, 2 triangles
+            vertexIndices.push_back(matchF4.captured(1).toInt() - 1);
+            vertexIndices.push_back(matchF4.captured(3).toInt() - 1);
+            vertexIndices.push_back(matchF4.captured(5).toInt() - 1);
+
+            vertexIndices.push_back(matchF4.captured(1).toInt() - 1);
+            vertexIndices.push_back(matchF4.captured(5).toInt() - 1);
+            vertexIndices.push_back(matchF4.captured(7).toInt() - 1);
+
+
+            normalIndices.push_back(matchF4.captured(2).toInt() - 1);
+            normalIndices.push_back(matchF4.captured(4).toInt() - 1);
+            normalIndices.push_back(matchF4.captured(6).toInt() - 1);
+
+            normalIndices.push_back(matchF4.captured(2).toInt() - 1);
+            normalIndices.push_back(matchF4.captured(6).toInt() - 1);
+            normalIndices.push_back(matchF4.captured(8).toInt() - 1);
+        }
+        else if (matchF3.hasMatch())//rexF3.indexIn(line, 0) > -1)
+        {
+            vertexIndices.push_back(matchF3.captured(1).toInt() - 1);
+            vertexIndices.push_back(matchF3.captured(3).toInt() - 1);
+            vertexIndices.push_back(matchF3.captured(5).toInt() - 1);
+            normalIndices.push_back(matchF3.captured(2).toInt() - 1);
+            normalIndices.push_back(matchF3.captured(4).toInt() - 1);
+            normalIndices.push_back(matchF3.captured(6).toInt() - 1);
+        }
     }
-    else if (matchN.hasMatch())//rexn.indexIn(line, 0) > -1)
-    {
-      Vector q = Vector(matchN.captured(1).toDouble(), matchN.captured(2).toDouble(), matchN.captured(3).toDouble());
+    data.close();
 
-      normals.push_back(q);
-    }
-    else if (matchF4.hasMatch())
-    {
-        //f 3/3/2 2/2/2 4/4/2 5/5/2
-        //C B D E
-        //--> BEC, BDE --> 2, 4, 1 // 2, 3, 4
-
-        //Quad face, 2 triangles
-        varray.push_back(matchF4.captured(1).toInt() - 1);
-        varray.push_back(matchF4.captured(3).toInt() - 1);
-        varray.push_back(matchF4.captured(5).toInt() - 1);
-
-        varray.push_back(matchF4.captured(1).toInt() - 1);
-        varray.push_back(matchF4.captured(5).toInt() - 1);
-        varray.push_back(matchF4.captured(7).toInt() - 1);
-
-
-        narray.push_back(matchF4.captured(2).toInt() - 1);
-        narray.push_back(matchF4.captured(4).toInt() - 1);
-        narray.push_back(matchF4.captured(6).toInt() - 1);
-
-        narray.push_back(matchF4.captured(2).toInt() - 1);
-        narray.push_back(matchF4.captured(6).toInt() - 1);
-        narray.push_back(matchF4.captured(8).toInt() - 1);
-    }
-    else if (matchF3.hasMatch())//rexF3.indexIn(line, 0) > -1)
-    {
-      varray.push_back(matchF3.captured(1).toInt() - 1);
-      varray.push_back(matchF3.captured(3).toInt() - 1);
-      varray.push_back(matchF3.captured(5).toInt() - 1);
-      narray.push_back(matchF3.captured(2).toInt() - 1);
-      narray.push_back(matchF3.captured(4).toInt() - 1);
-      narray.push_back(matchF3.captured(6).toInt() - 1);
-    }
-  }
-  data.close();
+    this->analyticApproxToVertexIndex.insert(std::make_pair(vertexIndices.size(), nullptr));
 }
 
 /*!
@@ -587,23 +699,23 @@ void Mesh::Load(const QString& filename)
 */
 void Mesh::SaveObj(const QString& url, const QString& meshName) const
 {
-  QFile data(url);
-  if (!data.open(QFile::WriteOnly))
-    return;
-  QTextStream out(&data);
-  out << "g " << meshName << Qt::endl;
-  for (size_t i = 0; i < vertices.size(); i++)
-    out << "v " << vertices.at(i)[0] << " " << vertices.at(i)[1] << " " << vertices.at(i)[2] << QString('\n');
-  for (size_t i = 0; i < normals.size(); i++)
-    out << "vn " << normals.at(i)[0] << " " << normals.at(i)[1] << " " << normals.at(i)[2] << QString('\n');
-  for (size_t i = 0; i < varray.size(); i += 3)
-  {
-    out << "f " << varray.at(i) + 1 << "//" << narray.at(i) + 1 << " "
-      << varray.at(i + 1) + 1 << "//" << narray.at(i + 1) + 1 << " "
-      << varray.at(i + 2) + 1 << "//" << narray.at(i + 2) + 1 << " "
-      << "\n";
-  }
-  out.flush();
-  data.close();
+    QFile data(url);
+    if (!data.open(QFile::WriteOnly))
+        return;
+    QTextStream out(&data);
+    out << "g " << meshName << Qt::endl;
+    for (size_t i = 0; i < vertices.size(); i++)
+        out << "v " << vertices.at(i)[0] << " " << vertices.at(i)[1] << " " << vertices.at(i)[2] << QString('\n');
+    for (size_t i = 0; i < normals.size(); i++)
+        out << "vn " << normals.at(i)[0] << " " << normals.at(i)[1] << " " << normals.at(i)[2] << QString('\n');
+    for (size_t i = 0; i < vertexIndices.size(); i += 3)
+    {
+        out << "f " << vertexIndices.at(i) + 1 << "//" << normalIndices.at(i) + 1 << " "
+            << vertexIndices.at(i + 1) + 1 << "//" << normalIndices.at(i + 1) + 1 << " "
+            << vertexIndices.at(i + 2) + 1 << "//" << normalIndices.at(i + 2) + 1 << " "
+            << "\n";
+    }
+    out.flush();
+    data.close();
 }
 

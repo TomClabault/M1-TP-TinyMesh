@@ -73,7 +73,7 @@ public:
      * \brief Returns the analytic shape that can approximate this simple mesh.
      * \return The analytic mesh that approximates this mesh
      */
-    std::vector<AnalyticApproximation*> GetAnalyticApproximations() const;
+    AnalyticApproximation* GetAnalyticApproximation() const;
 
 protected:
     std::vector<Vector> vertices;
@@ -81,7 +81,7 @@ protected:
     std::vector<int> indices;
     std::vector<int> normalIndices;
 
-    std::vector<AnalyticApproximation*> analyticApproximations;
+    AnalyticApproximation* analyticApproximation = nullptr;
 };
 
 class Icosphere : public SimpleMesh

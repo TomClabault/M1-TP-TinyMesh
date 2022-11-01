@@ -1,5 +1,6 @@
 #pragma once
 
+#include "analyticApproximations.h"
 #include "box.h"
 #include "color.h"
 #include "simpleMeshes.h"
@@ -7,6 +8,8 @@
 #include "mathematics.h"
 #include "matrix.h"
 #include "sphere.h"
+
+#include <map>
 
 // Triangle
 class Triangle
@@ -98,10 +101,23 @@ class Mesh
 protected:
   std::vector<Vector> vertices; //!< Vertices.
   std::vector<Vector> normals;  //!< Normals.
-  std::vector<int> varray;     //!< Vertex indexes.
-  std::vector<int> narray;     //!< Normal indexes.
+  std::vector<int> vertexIndices;     //!< Vertex indexes.
+  std::vector<int> normalIndices;     //!< Normal indexes.
 
   std::vector<AnalyticApproximation*> analyticApproximations; //!< The shape that can approximate the current mesh. If no such shape exists,
+
+  //!< The map that is used to store the analytic approximation
+  //!< associated with a certain vertex index.
+  //!< This map maps the largest vertex number of the mesh to
+  //!< its analytic approximation (or nullptr) if the mesh doesn't
+  //!< have an analytic approximation
+  //!< As an example, if a mesh has 20 vertices, then this map will
+  //!< contain an entry (20, approx) that maps 20 (the number of vertices)
+  //!< to the approximation of the mesh. If another mesh of 20 vertices
+  //!< is merged into this one, another entry (40, approx2) will be added
+  //!< to the map. The key of this entry is 40 since the first 20 vertices
+  //!< are taken up by the first mesh.
+  std::map<int, AnalyticApproximation*> analyticApproxToVertexIndex;
 
 public:
   explicit Mesh();
@@ -110,6 +126,14 @@ public:
   ~Mesh();
 
   void Reserve(int, int, int, int);
+
+  /*!
+   * \brief Returns the analytic approximation associated with a certain vertex index
+   * \param vertexIndex The vertex index (this should be a number out of the varray vector)
+   * \return The analytic approximation to which the vertex "belongs".
+   * If there is no analytic approximation for this vertex, returns nullptr.
+   */
+  AnalyticApproximation* GetAnalyticApproxFromVertexIndex(int vertexIndex) const;
 
   Triangle GetTriangle(int) const;
   std::vector<Triangle*>* GetTriangles() const;
@@ -209,20 +233,34 @@ public:
   bool intersect(const Ray& ray, double& outT) const;
 
   /*!
-   * \brief Computes the intersection of a ray and all the analytic approximations that compose this mesh
+   * \brief Computes the intersection of a ray and all the
+   * analytic approximations that compose this mesh
    *
    * \param ray The ray that is going to be tested against the mesh
-   * \param t [out] The nearest intersection found with the analytic approximations of this mesh
+   * \param t [out] The nearest intersection found with the
+   * analytic approximations of this mesh
    *
    * \return True if an intersection was found, false otherwise
    */
   bool intersectAnalytic(const Ray& ray, double& t) const;
 
+  /*!
+   * \brief Computes the intersection of a ray and all the
+   * parts of this mesh that don't have an analytic approximation.
+   *
+   * \param ray The ray
+   * \param t [out] The closest intersection found with the
+   * analytic approximations of this mesh
+   *
+   * \return True if an intersection was found, false otherwise
+   */
+  bool intersectNonAnalytic(const Ray& ray, double& t) const;
+
   void SmoothNormals();
 
   // Constructors from core classes
   explicit Mesh(const Box&);
-  explicit Mesh(const SimpleMesh&);
+  explicit Mesh(const SimpleMesh& simpleMesh);
 
   void Load(const QString&);
   void SaveObj(const QString&, const QString&) const;
@@ -243,7 +281,7 @@ inline std::vector<Vector> Mesh::Vertices() const
 */
 inline std::vector<int> Mesh::VertexIndexes() const
 {
-  return varray;
+  return vertexIndices;
 }
 
 /*!
@@ -251,7 +289,7 @@ inline std::vector<int> Mesh::VertexIndexes() const
 */
 inline std::vector<int> Mesh::NormalIndexes() const
 {
-  return narray;
+  return normalIndices;
 }
 
 /*!
@@ -261,7 +299,7 @@ inline std::vector<int> Mesh::NormalIndexes() const
 */
 inline int Mesh::VertexIndex(int t, int i) const
 {
-  return varray.at(t * 3 + i);
+  return vertexIndices.at(t * 3 + i);
 }
 
 /*!
@@ -271,7 +309,7 @@ inline int Mesh::VertexIndex(int t, int i) const
 */
 inline int Mesh::NormalIndex(int t, int i) const
 {
-  return narray.at(t * 3 + i);
+  return normalIndices.at(t * 3 + i);
 }
 
 /*!
@@ -281,7 +319,7 @@ inline int Mesh::NormalIndex(int t, int i) const
 */
 inline Triangle Mesh::GetTriangle(int i) const
 {
-  return Triangle(vertices.at(varray.at(i * 3 + 0)), vertices.at(varray.at(i * 3 + 1)), vertices.at(varray.at(i * 3 + 2)));
+  return Triangle(vertices.at(vertexIndices.at(i * 3 + 0)), vertices.at(vertexIndices.at(i * 3 + 1)), vertices.at(vertexIndices.at(i * 3 + 2)));
 }
 
 inline std::vector<Triangle*>* Mesh::GetTriangles() const
@@ -291,9 +329,9 @@ inline std::vector<Triangle*>* Mesh::GetTriangles() const
 
     for(int vertexIndex = 0; vertexIndex < VertexIndexes().size(); vertexIndex += 3)
     {
-        triangles->push_back(new Triangle(this->vertices.at(this->varray.at(vertexIndex + 0)),
-                                      this->vertices.at(this->varray.at(vertexIndex + 1)),
-                                      this->vertices.at(this->varray.at(vertexIndex + 2))));
+        triangles->push_back(new Triangle(this->vertices.at(this->vertexIndices.at(vertexIndex + 0)),
+                                      this->vertices.at(this->vertexIndices.at(vertexIndex + 1)),
+                                      this->vertices.at(this->vertexIndices.at(vertexIndex + 2))));
     }
 
     return triangles;
@@ -317,7 +355,7 @@ inline Vector Mesh::Vertex(int i) const
 */
 inline Vector Mesh::Vertex(int t, int v) const
 {
-  return vertices[varray[t * 3 + v]];
+  return vertices[vertexIndices[t * 3 + v]];
 }
 
 /*!
@@ -344,7 +382,7 @@ inline Vector Mesh::Normal(int i) const
 */
 inline int Mesh::Triangles() const
 {
-  return int(varray.size()) / 3;
+  return int(vertexIndices.size()) / 3;
 }
 
 /*!

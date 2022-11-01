@@ -24,7 +24,7 @@ MeshColor::MeshColor(const Mesh& m, const std::vector<Color>& cols, const std::v
 MeshColor::MeshColor(const Mesh& m) : Mesh(m)
 {
 	colors.resize(vertices.size(), Color(1.0, 1.0, 1.0));
-	carray = varray;
+	carray = vertexIndices;
 }
 
 /*!

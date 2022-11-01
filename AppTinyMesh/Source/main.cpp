@@ -8,8 +8,8 @@
 int main(int argc, char *argv[])
 {
     AnalyticSphere::intersectionTest();
-    AnalyticCylinder::intersectionTest();
-    BVH::BVHTests();
+//    AnalyticCylinder::intersectionTest();
+//    BVH::BVHTests();
 
     //return 0;
 
