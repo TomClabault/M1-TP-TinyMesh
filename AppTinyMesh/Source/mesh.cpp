@@ -7,8 +7,6 @@
 #include <unordered_set>
 
 
-const double epsilon = 1.0e-4;
-
 /*!
 \class Mesh mesh.h
 
@@ -424,7 +422,8 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
             //We're slightly shifting the origin of the ray in the
             //direction of the normal otherwise we will intersect ourselves
-            Ray ray(vertex + normal * epsilon, randomRayDirection);
+            //TODO testre avec epsilon 1.0e-5
+            Ray ray(vertex + normal * 1.0e-4, randomRayDirection);
 
             double intersectionDistance;
             bool intersectionFound;
@@ -440,16 +439,9 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 //be approximated, we're going to have to intersect those as well
                 intersectionFound  |= this->intersectNonAnalytic(ray, intersectionDistNonAnalytic);
 
-                //TODO whole if
-//                if(vertexNumber == 126)
-//                    std::cout << vertex << std::endl;
-
                 //We'll keep the smallest intersection distance that we've found between the intersection
                 //with the analytic shapes and with the non-analytic shapes
                 intersectionDistance = std::min(intersectionDistNonAnalytic, intersectionDistance);
-
-                if(vertexNumber == 10)
-                    std::cout << "inter point: " << ray(intersectionDistance) << std::endl;
             }
             else
             {
@@ -475,15 +467,12 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 obstructedValue += colorIncrement;
 
                 //TODO remove tout les commentaires, on dsoit juste avoir 'obstructedValue += colorIncrement;' dans le if
-                if(vertexNumber == 10)
-                {
                     std::cout << "vertex index: " << vertexIndex << std::endl;
                     std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
                     std::cout << "vertex: " << vertex << std::endl;
                     std::cout << "normal: " << normal << std::endl;
                     std::cout << "ray origin: " << ray.Origin() << std::endl;
                     std::cout << "ray direction: " << ray.Direction() << std::endl;
-                }
 
                 //this->intersectAnalytic(ray, intersectionDistance);
 

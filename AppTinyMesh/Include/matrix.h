@@ -166,8 +166,11 @@ public:
     friend std::ostream& operator << (std::ostream& os, const Matrix& A);
 
 private:
-    const static int HOMOTHETY_MATRIX = 1;
-    const static int ROTATION_MATRIX = 2;
+    enum MatrixType
+    {
+        HOMOTHETY_MATRIX,
+        ROTATION_MATRIX
+    };
 
     bool _isTransposed = false;
 

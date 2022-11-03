@@ -22,7 +22,6 @@ Vector b=box[1]; // Opposite vertex
 \endcode
 */
 
-const double Box::epsilon = 1.0e-5; //!< Epsilon value used to check intersections and some round off errors.
 const Box Box::Null(0.0); //!< Null box, equivalent to: \code Box(Vector(0.0)); \endcode 
 
 const int Box::edge[24] =

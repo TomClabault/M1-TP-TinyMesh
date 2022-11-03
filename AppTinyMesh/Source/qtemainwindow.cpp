@@ -159,12 +159,25 @@ void MainWindow::SphereImplicitExample()
 
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
+//normal: Vector(0,0,1)
+//ray origin: Vector(3.07167,-0.778475,-1.27495)
+//ray direction: Vector(-0.521938,0.55617,0.646727)
+
+      //Mesh icosphereMesh = Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions));
+//      icosphereMesh.Merge(Mesh(Box(Vector(3.07167,-0.778475,-1.27495), 0.025)));
+//      icosphereMesh.Merge(Mesh(Box(Vector(3.07167,-0.778475,-1.27495) + Vector(-0.521938,0.55617,0.646727) * 0.2, 0.025)));
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
     icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
     icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
-    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 2*std::sqrt(6)/3, std::sqrt(3) / 3 * radius), radius, subdivisions)));
+    //icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 2*std::sqrt(6)/3, std::sqrt(3) / 3 * radius * radius), radius, subdivisions)));
+    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
-    //TODO debug inter volumique cylindre
+//    icosphereMesh.Merge(Mesh(Box(Vector(0.850651,-0.525731,0.0001), 0.025)));
+//    icosphereMesh.Merge(Mesh(Box(Vector(0.850651,-0.525731,0.0001) + Vector(1/2.0,0, 0), 0.025)));
+//    ray origin: Vector(0.850651,-0.525731,0.0001)
+//    ray direction: Vector(0.268032,0.365336,0.891453)
+
+    //TODO debug inter volumique sphere
     //TODO debug la lenteur de la BVH
     //TODO inter volumique tore
     //TODO comparaison perf inter volumique sphere et non volumique + partie dans le rapport
@@ -172,7 +185,7 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
     //TODO remove
 //    for(int i = 0; i < 5; i++)
 //    {
-//        Mesh boxMesh = Mesh(Box(Vector(0,0.850685,0.525821) + (i / 5.0) * Vector(0.277985,0.456299,0.84529) * 4, 0.025));
+//        Mesh boxMesh = Mesh(Box(Vector(3.07167,-0.778475,-1.27495) + (i / 5.0) * Vector(0,0,1) * 4, 0.025));
 //        icosphereMesh.Merge(boxMesh);
 //    }
 
@@ -232,11 +245,6 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
     Mesh cylinderMesh = Mesh(Cylinder(Vector(0, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions));
-
-    cylinderMesh.Merge(Mesh(Box(Vector(0.550779,1.61109,1.64221), 0.05)));
-//    for(int i = 0; i < 5; i++)
-//        cylinderMesh.Merge(Mesh(Box(Vector(-1.83697e-16,0,1) * 2 * i / 5.0 + Vector(6.12323e-17,1.33333,1), 0.025)));
-
 
     std::vector<Color> cols;
     cols.resize(cylinderMesh.Vertexes());

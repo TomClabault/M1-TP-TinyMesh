@@ -1,5 +1,6 @@
 #pragma once
 
+#include "matrix.h"
 #include "ray.h"
 
 class AnalyticApproximation
@@ -22,6 +23,25 @@ public:
      * intersection behind the ray occured
      */
     virtual bool intersect(const Ray& ray, double& t) = 0;
+
+protected:
+    /*!
+     * \brief Protected constructor used by sub classes to initialize the translation, rotation and scale attributes
+     * \param translation The translation vector used to translate the analytic approximation
+     * \param rotation The rotation matrix
+     * \param scale The homothety matrix
+     */
+    AnalyticApproximation(Vector translation, Matrix rotation, Matrix scale) :
+        _translation(translation), _rotation(rotation), _scale(scale),
+        _invRotation(rotation.GetInverse()), _invScale(scale.GetInverse()) {};
+
+protected:
+    Vector _translation;
+    Matrix _rotation;//No rotation by default
+    Matrix _scale;//No scale by default
+
+    Matrix _invRotation;//Inverse of the rotate matrix
+    Matrix _invScale;//Inverse the of the scale matrix
 };
 
 class AnalyticSphere : public AnalyticApproximation
@@ -29,17 +49,35 @@ class AnalyticSphere : public AnalyticApproximation
 public:
     /*!
      * \brief Initializes an analytic sphere
+     * \param radius The radius of the sphere
+     */
+    AnalyticSphere(double radius) : AnalyticApproximation(Vector(0, 0, 0), Matrix::RotationX(0), Matrix::Homothety(Vector(radius, radius, radius))) {};
+
+    /*!
+     * \brief Initializes an analytic sphere
      * \param center The center of the sphere
      * \param radius The radius of the sphere
      */
-    AnalyticSphere(Vector center, double radius) : _center(center), _radius(radius) {};
+    AnalyticSphere(Vector center, double radius) : AnalyticApproximation(center, Matrix::RotationX(0), Matrix::Homothety(Vector(radius, radius, radius))) {};
 
-    Vector Center() { return _center; }
+    /*!
+     * \brief Initializes an analytic sphere
+     * \param translation The translation vector used to translate the sphere
+     * \param rotation The rotation matrix
+     * \param scale The homothety matrix
+     */
+    AnalyticSphere(Vector translation, Matrix rotation, Matrix scale) : AnalyticApproximation(translation, rotation, scale) {};
+
+    /*!
+     * \brief Returns the center of the sphere
+     * \return The center of the sphere
+     */
+    Vector Center() { return _translation; }
 
     /*!
      * \brief Returns the normal to the sphere at a given vertex.
-     * This method does not check whether the vertex actually is
-     * on the sphere or not
+     * This method assumes that the given vertex actually is on
+     * the sphere
      * \param vertex The vertex
      * \return The normal to the sphere at the vertex
      */
@@ -47,12 +85,12 @@ public:
 
     bool intersect(const Ray& ray, double& t) override;
 
-    static void intersectionTest();
+    static void intersectionTests();
+    static void normalAtTests();
+    static void tests();
 
 private:
-    Vector _center;
-
-    double _radius;
+    bool intersectBasic(const Ray& ray, double& t);
 };
 
 class AnalyticCylinder : public AnalyticApproximation
@@ -65,7 +103,15 @@ public:
      * \param height The height of the cylinder. This correspond
      * to the height of the top disk of the cylinder.
      */
-    AnalyticCylinder(Vector center, double radius, double height) : _center(center), _radius(radius), _height(height) {};
+    AnalyticCylinder(Vector center, double radius, double height) : AnalyticApproximation(center, Matrix::RotationX(0), Matrix::Homothety(radius, height, radius)) {};
+
+    /*!
+     * \brief Initializes an analytic cylinder
+     * \param translation The translation vector used to translate the cylinder
+     * \param rotation The rotation matrix
+     * \param scale The homothety matrix
+     */
+    AnalyticCylinder(Vector translation, Matrix rotation, Matrix scale) : AnalyticApproximation(translation, rotation, scale) {};
 
     /*!
      * \brief Returns the normal to the cylinder at a given vertex.
@@ -78,11 +124,22 @@ public:
 
     bool intersect(const Ray& ray, double& t) override;
 
-    static void intersectionTest();
+    static void intersectionTests();
+    static void tests();
 
 private:
-    Vector _center;// <! The center of the bottom disk of the cylinder
+    /*!
+     * \brief Intersects a "standard" cylinder that is at the origin,
+     * of height 1 and radius 1. This method is mainly used after
+     * having inverse transformed the ray with the transformations
+     * applied to the actual cylinder.
+     * \param ray The inverse transformed ray
+     * \param t The intersection distance to the cylinder
+     * \return True if an intersection occured, false otherwise
+     */
+    bool intersectBasic(const Ray& ray, double& t);
 
+private:
     double _radius;
     double _height;
 };

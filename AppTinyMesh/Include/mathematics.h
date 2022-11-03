@@ -18,6 +18,9 @@ public:
     static constexpr double RadianToDegree(double);
 
     static unsigned int xorshift96(void);
+
+public:
+    static constexpr double EPSILON = 1.0e-5;
 };
 
 /*!

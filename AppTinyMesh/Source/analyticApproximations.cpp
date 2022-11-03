@@ -1,8 +1,6 @@
 #include "analyticApproximations.h"
 #include "qmath.h"
 
-const double epsilon = 10e-6;
-
 /*!
  * \brief Computes the closest intersection distance and stores the result in \p t
  * \param x1 First solution of the quadratic equation
@@ -69,7 +67,7 @@ bool solveQuadratic(double& x1, double& x2, const double a, const double b, cons
 bool intersectWithDisk(const Ray& ray, const double diskRadius, const Vector& diskCenter, const Vector& diskNormal, double& t)
 {
     double dotProd = diskNormal * ray.Direction();
-    if(dotProd > epsilon || dotProd < -epsilon)//Different from 0
+    if(dotProd > Math::EPSILON || dotProd < Math::EPSILON)//Different from 0
     {
         t = (diskCenter * diskNormal - ray.Origin() * diskNormal) / dotProd;
 
@@ -88,48 +86,123 @@ bool intersectWithDisk(const Ray& ray, const double diskRadius, const Vector& di
 
 Vector AnalyticSphere::GetNormalAt(const Vector& vertex)
 {
-    return Normalized(vertex - _center);
+    //First transforming the given vertex to the coordinate system of the unit sphere at the origin
+    Vector transformedVertex = vertex - _translation;
+    transformedVertex = transformedVertex * _invRotation;
+    transformedVertex = transformedVertex * _invScale;
+
+    Vector normal = transformedVertex * _rotation.GetInverse().GetTranspose() * _scale.GetInverse().GetTranspose();
+
+    return Normalized(normal);
 }
 
 bool AnalyticSphere::intersect(const Ray& ray, double& t)
 {
-    Vector oc = ray.Origin() - this->_center;
-    double a = ray.Direction() * ray.Direction();
-    double b = 2 * ray.Direction() * oc;
-    double c = oc*oc - this->_radius * this->_radius;
+    Vector invTransformedOrigin = ray.Origin();
+    invTransformedOrigin = invTransformedOrigin * _invScale;
+    invTransformedOrigin = invTransformedOrigin * _invRotation;
+    invTransformedOrigin -= _translation;
+
+    Vector invTransformedDirection = ray.Direction();
+    invTransformedDirection = invTransformedDirection * _invScale;
+    invTransformedDirection = invTransformedDirection * _invRotation;
+
+    Ray transformedRay(invTransformedOrigin, Normalized(invTransformedDirection));
+
+    double transformedT;
+    if(intersectBasic(transformedRay, transformedT))
+    {
+        Vector intersectionPoint = transformedRay(transformedT);
+
+        Vector pointWorldCoords = intersectionPoint * _rotation * _scale;
+        pointWorldCoords += _translation;
+
+        //Computing the distance to the ray's origin in world coords
+        ray.T(pointWorldCoords, t);
+
+        return true;
+    }
+    else
+        return false;
+}
+
+bool AnalyticSphere::intersectBasic(const Ray& ray, double& t)
+{
+    double a = 1;//Ray direction is assumed normalized
+    double b = 2 * ray.Direction() * ray.Origin();
+    double c = ray.Origin() * ray.Origin() - 1;
 
     double x1, x2;
     if(!solveQuadratic(x1, x2, a, b, c))
         return false;
 
-    return getTFromX1X2(x1, x2, t);
+    bool tFound = getTFromX1X2(x1, x2, t);
+
+    //Considering there is no intersection below a certain threshold epsilon
+    //Intersection distance such as 1.0e-7 are within
+    return tFound && (t == 0.0 || t > Math::EPSILON);
 }
 
 Vector AnalyticCylinder::GetNormalAt(const Vector& vertex)
 {
-    if(vertex[1] == this->_center[1])//The vertex is on the bottom disk of the cylinder
-        return Vector(0, -1, 0);
-    else if(vertex[1] == this->_center[1] + _height)//On the top disk of the cylinder
-        return Vector(0, 1, 0);
+    Vector normal;
+
+    //Computing the un-transformed normal
+    if(vertex[1] == 0)//The vertex is on the bottom disk of the cylinder
+        normal = Vector(0, -1, 0);
+    else if(vertex[1] == _height)//On the top disk of the cylinder
+        normal = Vector(0, 1, 0);
     else//On the body of the cylinder
-        return Normalized(vertex - (Vector(_center[0], vertex[1], _center[2])));
+        normal = Normalized(Vector(vertex[0], 0, vertex[2]));
+
+    return normal * _rotation.GetInverse().GetTranspose() * _scale.GetInverse();
 }
 
 bool AnalyticCylinder::intersect(const Ray& ray, double& t)
 {
-    double centerX = this->_center[0];
-    double centerY = this->_center[1];
-    double centerZ = this->_center[2];
+    Matrix invRotation = _rotation.GetInverse();
+    Matrix invScale = _scale.GetInverse();
 
+    Vector invTransformedOrigin = ray.Origin();
+    invTransformedOrigin -= _translation;
+    invTransformedOrigin = invTransformedOrigin * invScale;
+    invTransformedOrigin = invTransformedOrigin * invRotation;
+
+    Vector invTransformedDirection = ray.Direction();
+    invTransformedDirection = invTransformedDirection * invScale;
+    invTransformedDirection = invTransformedDirection * invRotation;
+
+    Ray transformedRay(invTransformedOrigin, Normalized(invTransformedDirection));
+
+    double transformedT;
+    if(intersectBasic(transformedRay, transformedT))
+    {
+        Vector intersectionPoint = transformedRay(transformedT);
+
+        Vector pointWorldCoords = intersectionPoint * _rotation * _scale;
+        pointWorldCoords += _translation;
+
+        //Computing the distance to the ray's origin in world coords
+        ray.T(pointWorldCoords, t);
+
+        return true;
+    }
+    else
+        return false;
+}
+
+bool AnalyticCylinder::intersectBasic(const Ray& ray, double& t)
+{
     double rayOrigX = ray.Origin()[0];
     double rayOrigZ = ray.Origin()[2];
 
     double rayDirX = ray.Direction()[0];
     double rayDirZ = ray.Direction()[2];
 
+    //TODO refaire les équations sur papier pour voir ce que ça donne
     double a = rayDirX * rayDirX + rayDirZ * rayDirZ;
-    double b = 2 * (rayDirX * (rayOrigX - centerX) + rayDirZ * (rayOrigZ - centerZ));
-    double c = rayOrigX * rayOrigX + rayOrigZ * rayOrigZ - 2 * (rayOrigX * centerX + rayOrigZ + centerZ) + centerX * centerX + centerZ * centerZ - this->_radius * this->_radius;
+    double b = 2 * (rayDirX * rayOrigX + rayDirZ * rayOrigZ);
+    double c = rayOrigX * rayOrigX + rayOrigZ * rayOrigZ - 1;
 
     double closestT = std::numeric_limits<double>::max();//This variable will keep the closest intersection we've found (bewteen the body of the cylinder and its disks)
 
@@ -149,7 +222,7 @@ bool AnalyticCylinder::intersect(const Ray& ray, double& t)
             //the actual cylinder, there won't be an
             //intersection with the actual cylinder,
             //aborting
-            if(intersectionPoint[1] < centerY || intersectionPoint[1] > this->_height - centerY)
+            if(intersectionPoint[1] < 0 || intersectionPoint[1] > 1)
                 return false;
 
             intersectionFound = true;
@@ -158,14 +231,14 @@ bool AnalyticCylinder::intersect(const Ray& ray, double& t)
     }
 
     double tDisk = std::numeric_limits<double>::max();
-    if(intersectWithDisk(ray, this->_radius, Vector(0, 0, 0) + this->_center, Vector(0, 1, 0), tDisk))
+    if(intersectWithDisk(ray, 1, Vector(0, 0, 0), Vector(0, 1, 0), tDisk))
     {
         closestT = std::min(tDisk, tBody);
 
         intersectionFound = true;
     }
 
-    if(intersectWithDisk(ray, this->_radius, Vector(0, this->_height, 0) + this->_center, Vector(0, -1, 0), tDisk))
+    if(intersectWithDisk(ray, 1, Vector(0, 1, 0), Vector(0, -1, 0), tDisk))
     {
         closestT = std::min(closestT, tDisk);
 
@@ -179,7 +252,7 @@ bool AnalyticCylinder::intersect(const Ray& ray, double& t)
 }
 
 #include <cassert>
-void AnalyticSphere::intersectionTest()
+void AnalyticSphere::intersectionTests()
 {
     AnalyticSphere sphere1(Vector(0, 0, 0), 1);
 
@@ -188,10 +261,10 @@ void AnalyticSphere::intersectionTest()
     assert(sphere1.intersect(Ray(Vector(0, 0, -1), Vector(0, 0, 1)), t));
     assert(t == 0.0);
 
-    assert(sphere1.intersect(Ray(Vector(0, 0, -1), Vector(0, 0, -2)), t));
+    assert(sphere1.intersect(Ray(Vector(0, 0, -1), Vector(0, 0, -1)), t));
     assert(t == 0.0);
 
-    assert(!sphere1.intersect(Ray(Vector(0, 0, -2), Vector(0, 0, -3)), t));
+    assert(!sphere1.intersect(Ray(Vector(0, 0, -2), Vector(0, 0, -1)), t));
 
     assert(sphere1.intersect(Ray(Vector(0, 0, -2), Normalized(Vector(1, 0, 0) - Vector(0, 0, -2))), t));
 
@@ -207,6 +280,14 @@ void AnalyticSphere::intersectionTest()
     assert(!sphereTranslated.intersect(Ray(Vector(3, 0, 0), Vector(0, 0, 1)), t));
 
     assert(sphereTranslated.intersect(Ray(Vector(3, 0, 0), Vector(-1, 0, 0)), t));
+    assert(t == 1.0);
+
+    AnalyticSphere sphereTranslated2(Vector(2, 0, 0), 1);
+    assert(!sphereTranslated2.intersect(Ray(Vector(4, 0, 0), Vector(1, 0, 0)), t));
+    assert(!sphereTranslated2.intersect(Ray(Vector(4, 0, 0), Vector(0, 1, 0)), t));
+    assert(!sphereTranslated2.intersect(Ray(Vector(4, 0, 0), Vector(0, 0, 1)), t));
+
+    assert(sphereTranslated2.intersect(Ray(Vector(4, 0, 0), Vector(-1, 0, 0)), t));
     assert(t == 1.0);
 
     assert(!sphere1.intersect(Ray(Vector(1, 0, 0) + Vector(1, 0, 0) * 1.0e-6, Vector(1, 0, 0)), t));
@@ -229,9 +310,54 @@ void AnalyticSphere::intersectionTest()
 
     assert(sphere1.intersect(Ray(Vector(0.5, 0, 0), Vector(-1, 0, 0)), t));
     assert(t == 1.5);
+
+    //Special cases that have caused problems
+    AnalyticSphere sphereSpecialCase1(Vector(0, 0, 0), 1);
+    assert(!sphereSpecialCase1.intersect(Ray(Vector(0.8506507873535156,-0.525731086730957,0.0001), Vector(0.2680317789104351,0.3653358064721789,0.8914531473966706)), t));
+
+    AnalyticSphere sphereSpecialCase2(Vector(1, 0, std::sqrt(3) * 1), 1);
+    t = -INFINITY;
+    assert(sphereSpecialCase2.intersect(Ray(Vector(0.8506507873535156,-0.525731086730957,0.0001), Vector(0.2680317789104351,0.3653358064721789,0.8914531473966706)), t));
+    assert(t != -INFINITY);
+
+//    AnalyticSphere sphereSpecialCase3(Vector(2, 0, 0), 1);
+//    assert(!sphereSpecialCase3.intersect(Ray(Vector(3, 0, 0) + Math::EPSILON * Vector(1, 0, 0), Vector(1, 0, 0)), t));
+//    assert(!sphereSpecialCase3.intersect(Ray(Vector(1.1911,-0.309048,-0.50005), Vector(0.256332,0.916576,-0.306891)), t));
+//    ray origin: Vector(1.1911,-0.309048,-0.50005)
+//    ray direction: Vector(0.256332,0.916576,-0.306891)
 }
 
-void AnalyticCylinder::intersectionTest()
+void AnalyticSphere::normalAtTests()
+{
+    double scale = 2;
+    Vector translate(2, 0, 0);
+
+    AnalyticSphere unitSphere(1);
+    AnalyticSphere scaledSphere(scale);
+    AnalyticSphere translatedUnitSphere(translate, 1);
+    AnalyticSphere translatedScaledSphere(translate, scale);
+
+    //Testing for a lot of random points.
+    //On a unit sphere (translated and/or or not), the normal should always be the point itself
+    for(int i = 0; i < 100000; i++)
+    {
+        Vector randomPoint = Normalized(Vector(Math::xorshift96(), Math::xorshift96(), Math::xorshift96()));
+
+        //We're using the distance to compare the results as directly comparing floating point numbers is unreliable
+        assert(Distance(unitSphere.GetNormalAt(randomPoint), randomPoint) <= Math::EPSILON);
+        assert(Distance(scaledSphere.GetNormalAt(randomPoint * scale), randomPoint) <= Math::EPSILON);
+        assert(Distance(translatedUnitSphere.GetNormalAt(randomPoint + translate), randomPoint) <= Math::EPSILON);
+        assert(Distance(translatedScaledSphere.GetNormalAt(randomPoint * scale + translate), randomPoint) <= Math::EPSILON);
+    }
+}
+
+void AnalyticSphere::tests()
+{
+    AnalyticSphere::intersectionTests();
+    AnalyticSphere::normalAtTests();
+}
+
+void AnalyticCylinder::intersectionTests()
 {
     AnalyticCylinder cylinder1(Vector(0, 0, 0), 1, 2);
 
@@ -365,4 +491,9 @@ void AnalyticCylinder::intersectionTest()
 //        //Origin + Offset : shouldn't auto intersect
 //        assert(!cylinderRad1Height2.intersect(Ray(rayOrigin + 1.0e-5 * normalAtRayOrigin, randomRayDirection), t));
 //    }
+}
+
+void AnalyticCylinder::tests()
+{
+    AnalyticCylinder::intersectionTests();
 }

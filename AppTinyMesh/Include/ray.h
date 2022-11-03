@@ -7,8 +7,8 @@
 class Ray
 {
 protected:
-  Vector c; //!< Origin of the ray.
-  Vector n; //!< Direction.
+  Vector origin; //!< Origin of the ray.
+  Vector direction; //!< Direction.
 public:
   //! Empty.
   Ray() {}
@@ -17,6 +17,14 @@ public:
   ~Ray() {}
 
   Ray Reflect(const Vector&, const Vector&);
+
+  /*!
+   * \brief For a ray equation: O + Dt, returns t given a point on the ray
+   * \param point The point on the ray
+   * \param t [out] The distance from the ray's origin
+   * \return True if the point is on the ray, false otherwise
+   */
+  bool T(const Vector& point, double& t) const;
 
   Vector operator()(double) const;
 
@@ -39,8 +47,8 @@ Ray ray(Vector(0.0,0.0,0.0),Normalized(Vector(2.0,-1.0,3.0)));
 */
 inline Ray::Ray(const Vector& p, const Vector& d)
 {
-  c = p;
-  n = d;
+  origin = p;
+  direction = d;
 }
 
 /*!
@@ -48,7 +56,7 @@ inline Ray::Ray(const Vector& p, const Vector& d)
 */
 inline Vector Ray::Origin() const
 {
-  return c;
+  return origin;
 }
 
 /*!
@@ -56,7 +64,25 @@ inline Vector Ray::Origin() const
 */
 inline Vector Ray::Direction() const
 {
-  return n;
+  return direction;
+}
+
+inline bool Ray::T(const Vector& point, double& t) const
+{
+    Vector cross = direction / (point - origin);
+    if(cross[0] > Math::EPSILON || cross[0] < -Math::EPSILON
+    || cross[1] > Math::EPSILON || cross[1] < -Math::EPSILON
+    || cross[2] > Math::EPSILON || cross[2] < -Math::EPSILON)//Point not on the ray
+        return false;
+    else
+    {
+        if(point == origin)
+            t = 0.0;
+        else
+            t = Norm(point - origin);
+
+        return true;
+    }
 }
 
 /*!
@@ -65,7 +91,7 @@ inline Vector Ray::Direction() const
 */
 inline Vector Ray::operator()(double t) const
 {
-  return c + t * n;
+  return origin + t * direction;
 }
 
 #endif
