@@ -217,7 +217,7 @@ public:
    * of the occlusion. The higher this parameter, the
    * darker the occlusion
    */
-  void accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength = 1);
+  void accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength = 1, std::vector<Mesh>* toMerge = nullptr);
 
   /*!
    * \brief Computes the intersection between a ray

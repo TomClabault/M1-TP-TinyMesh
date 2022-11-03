@@ -360,7 +360,8 @@ void Mesh::SphereWarp(Sphere sphere)
 BVH* bvh = nullptr;
 bool computed = false;
 
-void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength)
+//TODO remove toMerge aergument
+void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength, std::vector<Mesh>* toMerge)
 {
     auto startAO = std::chrono::high_resolution_clock::now();//TODO remove
 
@@ -396,10 +397,6 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 normal = approx->GetNormalAt(vertex);
             else
                 normal = this->normals.at(this->normalIndices.at(vertexIndex));
-
-            //TODO tremove
-            if(vertexNumber == 10)
-                normal = Vector(0, 0, 1);
         }
         else
             normal = this->normals.at(this->normalIndices.at(vertexIndex));
@@ -422,8 +419,29 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
             //We're slightly shifting the origin of the ray in the
             //direction of the normal otherwise we will intersect ourselves
+
             //TODO testre avec epsilon 1.0e-5
-            Ray ray(vertex + normal * 1.0e-4, randomRayDirection);
+            Ray ray(vertex + normal * Math::EPSILON, randomRayDirection);
+
+            //TODO remov whole if
+            if(vertexNumber == 10 && sample == 5)
+            {
+                //ray = Ray(ray.Origin(), Vector(1, 0, 0));
+                std::cout << "vertex index: " << vertexIndex << std::endl;
+                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
+                std::cout << "vertex: " << vertex << std::endl;
+                std::cout << "normal: " << normal << std::endl;
+                std::cout << "ray origin: " << ray.Origin() << std::endl;
+                std::cout << "ray direction: " << ray.Direction() << std::endl;
+
+                if(toMerge != nullptr)
+                {
+                    std::cout << sample << ": " << ray.Direction() << std::endl;
+
+                    for(int i = 0; i < 5; i++)
+                        toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction() * 2 * i / 5.0), 0.05)));
+                }
+            }
 
             double intersectionDistance;
             bool intersectionFound;
@@ -467,12 +485,12 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 obstructedValue += colorIncrement;
 
                 //TODO remove tout les commentaires, on dsoit juste avoir 'obstructedValue += colorIncrement;' dans le if
-                    std::cout << "vertex index: " << vertexIndex << std::endl;
-                    std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
-                    std::cout << "vertex: " << vertex << std::endl;
-                    std::cout << "normal: " << normal << std::endl;
-                    std::cout << "ray origin: " << ray.Origin() << std::endl;
-                    std::cout << "ray direction: " << ray.Direction() << std::endl;
+//                std::cout << "vertex index: " << vertexIndex << std::endl;
+//                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
+//                std::cout << "vertex: " << vertex << std::endl;
+//                std::cout << "normal: " << normal << std::endl;
+//                std::cout << "ray origin: " << ray.Origin() << std::endl;
+//                std::cout << "ray direction: " << ray.Direction() << std::endl;
 
                 //this->intersectAnalytic(ray, intersectionDistance);
 

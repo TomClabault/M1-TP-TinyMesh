@@ -99,13 +99,13 @@ Vector AnalyticSphere::GetNormalAt(const Vector& vertex)
 bool AnalyticSphere::intersect(const Ray& ray, double& t)
 {
     Vector invTransformedOrigin = ray.Origin();
-    invTransformedOrigin = invTransformedOrigin * _invScale;
-    invTransformedOrigin = invTransformedOrigin * _invRotation;
     invTransformedOrigin -= _translation;
+    invTransformedOrigin = invTransformedOrigin * _invRotation;
+    invTransformedOrigin = invTransformedOrigin * _invScale;
 
     Vector invTransformedDirection = ray.Direction();
-    invTransformedDirection = invTransformedDirection * _invScale;
     invTransformedDirection = invTransformedDirection * _invRotation;
+    invTransformedDirection = invTransformedDirection * _invScale;
 
     Ray transformedRay(invTransformedOrigin, Normalized(invTransformedDirection));
 
@@ -320,22 +320,30 @@ void AnalyticSphere::intersectionTests()
     assert(sphereSpecialCase2.intersect(Ray(Vector(0.8506507873535156,-0.525731086730957,0.0001), Vector(0.2680317789104351,0.3653358064721789,0.8914531473966706)), t));
     assert(t != -INFINITY);
 
-//    AnalyticSphere sphereSpecialCase3(Vector(2, 0, 0), 1);
-//    assert(!sphereSpecialCase3.intersect(Ray(Vector(3, 0, 0) + Math::EPSILON * Vector(1, 0, 0), Vector(1, 0, 0)), t));
-//    assert(!sphereSpecialCase3.intersect(Ray(Vector(1.1911,-0.309048,-0.50005), Vector(0.256332,0.916576,-0.306891)), t));
-//    ray origin: Vector(1.1911,-0.309048,-0.50005)
-//    ray direction: Vector(0.256332,0.916576,-0.306891)
+    AnalyticSphere sphereSpecialCase3(Vector(8, 0, 0), 4);
+    t = -INFINITY;
+    assert(sphereSpecialCase3.intersect(Ray(Vector(3.40261,-2.10293,0), Vector(0.719253,0.690758,0.0743505)), t));
+    assert(t != -INFINITY);
+//    ray origin: Vector(3.40261,-2.10293,0)
+//    ray direction: Vector(0.719253,0.690758,0.0743505)
 }
 
 void AnalyticSphere::normalAtTests()
 {
+    AnalyticSphere testSphere(4);
+    std::cout << testSphere.GetNormalAt(Vector(3.4026,-2.10292,0));
+
+
     double scale = 2;
+    double scaleBig = 100;
     Vector translate(2, 0, 0);
 
     AnalyticSphere unitSphere(1);
     AnalyticSphere scaledSphere(scale);
+    AnalyticSphere scaledBigSphere(scaleBig);
     AnalyticSphere translatedUnitSphere(translate, 1);
     AnalyticSphere translatedScaledSphere(translate, scale);
+    AnalyticSphere translatedScaledBigSphere(translate, scaleBig);
 
     //Testing for a lot of random points.
     //On a unit sphere (translated and/or or not), the normal should always be the point itself
@@ -346,8 +354,10 @@ void AnalyticSphere::normalAtTests()
         //We're using the distance to compare the results as directly comparing floating point numbers is unreliable
         assert(Distance(unitSphere.GetNormalAt(randomPoint), randomPoint) <= Math::EPSILON);
         assert(Distance(scaledSphere.GetNormalAt(randomPoint * scale), randomPoint) <= Math::EPSILON);
+        assert(Distance(scaledBigSphere.GetNormalAt(randomPoint * scaleBig), randomPoint) <= Math::EPSILON);
         assert(Distance(translatedUnitSphere.GetNormalAt(randomPoint + translate), randomPoint) <= Math::EPSILON);
         assert(Distance(translatedScaledSphere.GetNormalAt(randomPoint * scale + translate), randomPoint) <= Math::EPSILON);
+        assert(Distance(translatedScaledBigSphere.GetNormalAt(randomPoint * scaleBig + translate), randomPoint) <= Math::EPSILON);
     }
 }
 
