@@ -160,17 +160,14 @@ Vector AnalyticCylinder::GetNormalAt(const Vector& vertex)
 
 bool AnalyticCylinder::intersect(const Ray& ray, double& t)
 {
-    Matrix invRotation = _rotation.GetInverse();
-    Matrix invScale = _scale.GetInverse();
-
     Vector invTransformedOrigin = ray.Origin();
     invTransformedOrigin -= _translation;
-    invTransformedOrigin = invTransformedOrigin * invScale;
-    invTransformedOrigin = invTransformedOrigin * invRotation;
+    invTransformedOrigin = invTransformedOrigin * _invRotation;
+    invTransformedOrigin = invTransformedOrigin * _invScale;
 
     Vector invTransformedDirection = ray.Direction();
-    invTransformedDirection = invTransformedDirection * invScale;
-    invTransformedDirection = invTransformedDirection * invRotation;
+    invTransformedDirection = invTransformedDirection * _invRotation;
+    invTransformedDirection = invTransformedDirection * _invScale;
 
     Ray transformedRay(invTransformedOrigin, Normalized(invTransformedDirection));
 

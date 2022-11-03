@@ -59,6 +59,17 @@ AnalyticApproximation* SimpleMesh::GetAnalyticApproximation() const
     return this->analyticApproximation;
 }
 
+void SimpleMesh::transformVertices(Vector translation, Matrix rotation, Matrix scale)
+{
+    //Translate then rotate then scale.
+    for(Vector& vertex : this->vertices)
+    {
+        vertex = vertex * _scale;
+        vertex = vertex * _rotation;
+        vertex += _translation;
+    }
+}
+
 //Cache used to avoid the duplication of vertices when subdividing the icosphere
 std::unordered_map<int, int> midPointsCache;
 
@@ -107,24 +118,20 @@ void Icosphere::initBaseIcosphere(double radius)
     }
 }
 
-Icosphere::Icosphere(Vector center, double radius, int subdivisions)
+Icosphere::Icosphere(const Vector& center, double radius, int subdivisions) : Icosphere(center, Matrix::Homothety(radius, radius, radius), Matrix::RotationX(0), subdivisions) {}
+
+Icosphere::Icosphere(const Vector& translation, const Matrix& rotation, const Matrix& scale, int subdivisions) : SimpleMesh(translation, rotation, scale)
 {
     midPointsCache = std::unordered_map<int, int>();
-
-    this->radius = radius;
 
     initBaseIcosphere(1);
 
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
 
-    for(Vector& vertex : this->vertices)
-    {
-        vertex *= radius;
-        vertex += center;
-    }
+    transformVertices(translation, rotation, scale);
 
-    SimpleMesh::analyticApproximation = new AnalyticSphere(center, radius);
+    SimpleMesh::analyticApproximation = new AnalyticSphere(translation, rotation, scale);
 }
 
 /*!
@@ -269,7 +276,16 @@ void Icosphere::subdivide()
     this->subdivisions++;
 }
 
-Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
+Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions) : Torus(Vector(0, 0, 0), Matrix::RotationX(0), Matrix::Homothety(1, 1, 1), innerRadius, outerRadius, ringCount, ringsSubdivisions) {}
+
+Torus::Torus(const Vector& translation, const Matrix& rotation, const Matrix& scale, double innerRadius, double outerRadius, int ringCount, int ringSubdivisions) : SimpleMesh(translation, rotation, scale)
+{
+    initBaseTorus(innerRadius, outerRadius, ringCount, ringSubdivisions);
+
+    transformVertices(translation, rotation, scale);
+}
+
+void Torus::initBaseTorus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
 {
     double outerAngleSubdiv = (2 * M_PI) / ringCount;
     double innerAngleSubdiv = (2 * M_PI) / ringsSubdivisions;
@@ -325,10 +341,17 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
     }
 }
 
-Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions)
+Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions) : Capsule(Vector(0, 0, 0), Matrix::RotationX(0), Matrix::Homothety(radius, cylinderHeight, radius), cylinderHeightSubdivions, cylinderSubdivisions, sphereHeightSubdivisions) {}
+
+Capsule::Capsule(const Vector& translation, const Matrix& rotation, const Matrix& scale, int cylinderHeightSubdivisions, int cylinderSubdivisions, int sphereHeightSubdivions) : SimpleMesh(translation, rotation, scale)
 {
-    this->radius = radius;
-    this->cylinderHeight = cylinderHeight;
+    initBaseCapsule(cylinderHeightSubdivisions, cylinderSubdivisions, sphereHeightSubdivions);
+
+    transformVertices(translation, rotation, scale);
+}
+
+void Capsule::initBaseCapsule(int cylinderHeightSubdivisions, int cylinderSubdivisions, int sphereHeightSubdivisions)
+{
     this->cylinderSubdivisions = cylinderSubdivisions;
     this->sphereHeightSubdivisions = sphereHeightSubdivisions;
 
@@ -345,8 +368,8 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
 
         for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
-            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
-            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius;
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius;
 
             Vector vertex = Vector(x, y, z);
             this->vertices.push_back(vertex);
@@ -371,20 +394,20 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
 
     //To account for all the indices we have alredy generated for the first cap sphere
     int deltaIndex = sphereHeightSubdivisions * cylinderSubdivisions;
-    double cylinderHeightIncrement = 1 / (cylinderHeightSubdivions - 1.0);
+    double cylinderHeightIncrement = 1 / (cylinderHeightSubdivisions - 1.0);
 
     //Generating the cylinder
-    for(int cylinderRingIndex = 0; cylinderRingIndex < cylinderHeightSubdivions; cylinderRingIndex++)
+    for(int cylinderRingIndex = 0; cylinderRingIndex < cylinderHeightSubdivisions; cylinderRingIndex++)
     {
         for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
-            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * radius;
-            double y = cylinderRingIndex * cylinderHeightIncrement * cylinderHeight;
-            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * radius;
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement);
+            double y = cylinderRingIndex * cylinderHeightIncrement;
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement);
 
             this->vertices.push_back(Vector(x, y, z));
 
-            if(cylinderRingIndex < cylinderHeightSubdivions - 1)
+            if(cylinderRingIndex < cylinderHeightSubdivisions - 1)
             {
                 int index0 = deltaIndex + cylinderRingIndex * cylinderSubdivisions + ringSubdiv;
                 int index1 = deltaIndex + cylinderRingIndex * cylinderSubdivisions + (ringSubdiv + 1) % cylinderSubdivisions;
@@ -402,8 +425,8 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
         }
     }
 
-    deltaY += cylinderHeight + 1.0;
-    deltaIndex += cylinderHeightSubdivions * cylinderSubdivisions;
+    deltaY += 2.0;
+    deltaIndex += cylinderHeightSubdivisions * cylinderSubdivisions;
     for(int ringIndex = 0; ringIndex < sphereHeightSubdivisions; ringIndex++)
     {
         double localRadius = std::cos(M_PI / 2 * ringIndex * ringIncrement);
@@ -413,8 +436,8 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
 
         for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
         {
-            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
-            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius * radius;
+            double x = std::cos(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius;
+            double z = std::sin(2 * M_PI * ringSubdiv * ringSubdivIncrement) * localRadius;
 
             Vector vertex = Vector(x, y, z);
             this->vertices.push_back(vertex);
@@ -457,36 +480,46 @@ Capsule::Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivi
     }
 }
 
-Cylinder::Cylinder(const Vector& center, double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
+Cylinder::Cylinder(const Vector& center, double radius, double height, int heightSubdivisions, int cylinderSubdivisions) : Cylinder(center, Matrix::RotationX(0), Matrix::Homothety(radius, height, radius), heightSubdivisions, cylinderSubdivisions) {}
+
+Cylinder::Cylinder(const Vector& translation, const Matrix& rotation, const Matrix& scale, int heightSubdivisions, int cylinderSubdivisions) : SimpleMesh(translation, rotation, scale)
 {
-    SimpleMesh::analyticApproximation = new AnalyticCylinder(center, radius, height);
+    SimpleMesh::analyticApproximation = new AnalyticCylinder(translation, rotation, scale);
+
+    initBaseCylinder(heightSubdivisions, cylinderSubdivisions);
+
+    transformVertices(translation, rotation, scale);
+}
+
+void Cylinder::initBaseCylinder(int heightSubdivisions, int cylinderSubdivisions)
+{
 
     //First point at the middle of the bottom circle of the cylinder
-    this->vertices.push_back(center);
+    this->vertices.push_back(Vector(0, 0, 0));
 
     //Generating the bottom ring of the cylinder
     double ringIncrement = 1.0 / cylinderSubdivisions;
     for(int cylinderSubdiv = 0; cylinderSubdiv < cylinderSubdivisions; cylinderSubdiv++)
     {
-        double x = std::cos(2 * M_PI * ringIncrement * cylinderSubdiv) * radius;
+        double x = std::cos(2 * M_PI * ringIncrement * cylinderSubdiv);
         double y = 0;
-        double z = std::sin(2 * M_PI * ringIncrement * cylinderSubdiv) * radius;
+        double z = std::sin(2 * M_PI * ringIncrement * cylinderSubdiv);
 
-        this->vertices.push_back(Vector(x, y, z) + center);
+        this->vertices.push_back(Vector(x, y, z));
     }
 
 
     //Generating the cylinder
-    double heightIncrement = (double)height / (heightSubdivisions + 1.0);
+    double heightIncrement = 1.0 / (heightSubdivisions + 1.0);
     for(int ringIndex = 0; ringIndex < heightSubdivisions; ringIndex++)
     {
         for(int cylinderRing = 0; cylinderRing < cylinderSubdivisions; cylinderRing++)
         {
-            double x = std::cos(2 * M_PI * ringIncrement * cylinderRing) * radius;
+            double x = std::cos(2 * M_PI * ringIncrement * cylinderRing);
             double y = heightIncrement * (ringIndex + 1);
-            double z = std::sin(2 * M_PI * ringIncrement * cylinderRing) * radius;
+            double z = std::sin(2 * M_PI * ringIncrement * cylinderRing);
 
-            this->vertices.push_back(Vector(x, y, z) + center);
+            this->vertices.push_back(Vector(x, y, z));
         }
     }
 
@@ -495,7 +528,7 @@ Cylinder::Cylinder(const Vector& center, double radius, double height, int heigh
     //of the cylinder to effectively have the
     //"top circle"
     for(int i = 0; i <= cylinderSubdivisions; i++)
-        this->vertices.push_back(Vector(this->vertices[i] + Vector(0, height, 0)));
+        this->vertices.push_back(Vector(this->vertices[i] + Vector(0, 1, 0)));
 
 
     //Generating the indices and the normals of both

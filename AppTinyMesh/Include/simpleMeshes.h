@@ -75,6 +75,18 @@ public:
      */
     AnalyticApproximation* GetAnalyticApproximation() const;
 
+    /*!
+     * \brief Transforms the vertices of the mesh. The vertices are first
+     * translated, then rotated then scaled
+     * \param translation The translation
+     * \param rotation The rotation matrix
+     * \param scale The homotethy matrix
+     */
+    void transformVertices(Vector translation, Matrix rotation, Matrix scale);
+
+protected:
+    SimpleMesh(Vector translation, Matrix rotation, Matrix scale) : _translation(translation), _rotation(rotation), _scale(scale) {};
+
 protected:
     std::vector<Vector> vertices;
     std::vector<Vector> normals;
@@ -82,6 +94,10 @@ protected:
     std::vector<int> normalIndices;
 
     AnalyticApproximation* analyticApproximation = nullptr;
+
+    Vector _translation;
+    Matrix _rotation;
+    Matrix _scale;
 };
 
 class Icosphere : public SimpleMesh
@@ -98,17 +114,23 @@ public:
      * \param subdivisions The number of subdivisions
      * of the icosphere
      */
-    Icosphere(Vector center, double radius, int subdivisions);
+    Icosphere(const Vector& center, double radius, int subdivisions);
+
+    /*!
+     * \brief Initializes an icosphere using different linear transformations
+     * \param translation The translation vector
+     * \param scale The homothety matrix used to scale the sphere
+     * \param rotation The rotation matrix
+     * \param subdivisions The number of subdivisions
+     * of the icosphere
+     */
+    Icosphere(const Vector& translation, const Matrix& scale, const Matrix& rotation, int subdivisions);
 
     /*!
      * \brief Subdivides the current icosphere one time (quadruples
      * the number of triangles)
      */
     void subdivide();
-
-public:
-    static const Vector baseVertices[12];
-    static const int baseIndices[60];
 
 private:
     /*!
@@ -120,8 +142,11 @@ private:
      */
     void initBaseIcosphere(double radius);
 
+public:
+    static const Vector baseVertices[12];
+    static const int baseIndices[60];
+
 private:
-    double radius;
     int subdivisions = 0;
 };
 
@@ -143,6 +168,42 @@ public:
      * part of the doughnut
      */
     Torus(double innerRadius, double outerRadius, int ringCount = 4, int ringsSubdivisions = 5);
+
+    /*!
+     * \brief Initializes a torus
+     *
+     * \param translation The translation that will be applied to the torus
+     * \param rotation The rotation that will be applied to the torus
+     * \param scale The scaling that will be applied to the torus
+     * \param innerRadius The inner radius (radius of the "eatable" part
+     * of the doughnut) of the torus
+     * \param outerRadius The outer radius (radius of the "empty" part in
+     * the middle) of the torus
+     * \param ringCount The number of subdivision for the "outer ring"
+     * of the torus. The higer the subdivision, the smoother the "empty" ring
+     * inside the torus
+     * \param ringsSubdivisions The number of subdivision for the inner rings
+     * of the torus. The higher the subdivison, the smoother the "eatable"
+     * part of the doughnut
+     */
+    Torus(const Vector& translation, const Matrix& rotation, const Matrix& scale, double innerRadius, double outerRadius, int ringCount, int ringSubdivisions);
+
+private:
+    /*!
+     * \brief Creates a torus at the origin of the coordinates system,
+     * not scaled and without any rotation
+     * \param innerRadius The inner radius (radius of the "eatable" part
+     * of the doughnut) of the torus
+     * \param outerRadius The outer radius (radius of the "empty" part in
+     * the middle) of the torus
+     * \param ringCount The number of subdivision for the "outer ring"
+     * of the torus. The higer the subdivision, the smoother the "empty" ring
+     * inside the torus
+     * \param ringsSubdivisions The number of subdivision for the inner rings
+     * of the torus. The higher the subdivison, the smoother the "eatable"
+     * part of the doughnut
+     */
+    void initBaseTorus(double innerRadius, double outerRadius, int ringCount, int ringSubdivisions);
 };
 
 class Capsule : public SimpleMesh
@@ -171,10 +232,53 @@ public:
      */
     Capsule(double radius, double cylinderHeight, int cylinderHeightSubdivions, int cylinderSubdivisions, int sphereHeightSubdivisions);
 
-private:
-    double radius;
-    double cylinderHeight;
+    /*!
+     * \brief Create a capsule composed of one cylinder
+     * and two caps at its ends.
+     *
+     * \param translation The translation to be applied to the
+     * capsule
+     * \param rotation The rotation to be applied to the capsule
+     * \param scale The scaling to be applied to the capsule
+     * \param radius The radius of the capsule
+     * \param cylinderHeight The height of the cylinder
+     * of the capsule
+     * \param cylinderHeightSubdivions The number of
+     * subdivisions in height of the cylinder. This parameter
+     * has no visual impact but can be useful for later
+     * operations applied to the capsule
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder and the caps at the ends of the cylinder.
+     * The higher this parameter, the smoother the capsule.
+     * The lower, the rougher. With a value of 4 for example,
+     * the capsule will start to look like an elongated cube.
+     * \param sphereHeightSubdivisions The number of subdivisions
+     * in height of the caps at the ends of the cylinder.
+     * The higher this parameter, the smoother the caps
+     * (height-wise only).
+     */
+    Capsule(const Vector& translation, const Matrix& rotation, const Matrix& scale, int cylinderHeightSubdivisions, int cylinderSubdivisions, int sphereHeightSubdivions);
 
+    /*!
+     * \brief Initializes a capsule of height and radius 1 at the
+     * origin of the world
+     * \param cylinderHeightSubdivions The number of
+     * subdivisions in height of the cylinder. This parameter
+     * has no visual impact but can be useful for later
+     * operations applied to the capsule
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder and the caps at the ends of the cylinder.
+     * The higher this parameter, the smoother the capsule.
+     * The lower, the rougher. With a value of 4 for example,
+     * the capsule will start to look like an elongated cube.
+     * \param sphereHeightSubdivisions The number of subdivisions
+     * in height of the caps at the ends of the cylinder.
+     * The higher this parameter, the smoother the caps
+     * (height-wise only).
+     */
+    void initBaseCapsule(int cylinderHeightSubdivisions, int cylinderSubdivisions, int sphereHeightSubdivisions);
+
+private:
     int cylinderSubdivisions;
     int sphereHeightSubdivisions;
 };
@@ -214,6 +318,38 @@ public:
      * the cylinder will look much like an elongated cube.
      */
     Cylinder(const Vector& bottomDiskCenter, double radius, double height, int heightSubdivisions, int cylinderSubdivisions);
+
+    /*!
+     * \brief Creates a cylinder with the given parameters
+     *
+     * \param translation The translation to be applied to the
+     * capsule
+     * \param rotation The rotation to be applied to the capsule
+     * \param scale The scaling to be applied to the capsule
+     * \param heightSubdivisions The number of subdivisions
+     * in height of the cylinder. This parameter has no
+     * visual impact but can be useful for later operations
+     * applied to the cylinder.
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder. The higher this parameter, the
+     * smoother the cylinder. With a value of 4 for example,
+     * the cylinder will look much like an elongated cube.
+     */
+    Cylinder(const Vector& translation, const Matrix& rotation, const Matrix& scale, int heightSubdivisions, int cylinderSubdivisions);
+
+    /*!
+     * \brief Initializes a base cylinder of radius and height 1 at the
+     * origin of the world
+     * \param heightSubdivisions The number of subdivisions
+     * in height of the cylinder. This parameter has no
+     * visual impact but can be useful for later operations
+     * applied to the cylinder.
+     * \param cylinderSubdivisions The number of subdivisions
+     * of the cylinder. The higher this parameter, the
+     * smoother the cylinder. With a value of 4 for example,
+     * the cylinder will look much like an elongated cube.
+     */
+    void initBaseCylinder(int heightSubdivisions, int cylinderSubdivisions);
 };
 
 #endif // SIMPLE_MESHES_H
