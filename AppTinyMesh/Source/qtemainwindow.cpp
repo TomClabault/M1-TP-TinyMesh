@@ -257,6 +257,9 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
     Mesh cylinderMesh = Mesh(Cylinder(Vector(0, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions));
+    std::cout << cylinderMesh.Vertexes() << std::endl;
+    cylinderMesh.Merge(Mesh(Cylinder(Vector(2.1, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions)));
+    cylinderMesh.Merge(Mesh(Cylinder(Vector(1, 0, 1.73), radius, height, heightSubdivisions, cylinderSubdivisions)));
 
     std::vector<Color> cols;
     cols.resize(cylinderMesh.Vertexes());

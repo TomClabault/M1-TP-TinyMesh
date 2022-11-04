@@ -371,7 +371,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
     computed = false;//TODO remove
 
-    std::srand(2);//TODO remove
+    //std::srand(2);//TODO remove
     double colorIncrement = 1.0 / samples;
 
     bool analyticIntersection = this->analyticApproximations.size() > 0;
@@ -424,24 +424,24 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             Ray ray(vertex + normal * Math::EPSILON, randomRayDirection);
 
             //TODO remov whole if
-            if(vertexNumber == 10 && sample == 5)
-            {
-                //ray = Ray(ray.Origin(), Vector(1, 0, 0));
-                std::cout << "vertex index: " << vertexIndex << std::endl;
-                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
-                std::cout << "vertex: " << vertex << std::endl;
-                std::cout << "normal: " << normal << std::endl;
-                std::cout << "ray origin: " << ray.Origin() << std::endl;
-                std::cout << "ray direction: " << ray.Direction() << std::endl;
+//            if(vertexNumber == 10 && sample == 5)
+//            {
+//                //ray = Ray(ray.Origin(), Vector(1, 0, 0));
+//                std::cout << "vertex index: " << vertexIndex << std::endl;
+//                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
+//                std::cout << "vertex: " << vertex << std::endl;
+//                std::cout << "normal: " << normal << std::endl;
+//                std::cout << "ray origin: " << ray.Origin() << std::endl;
+//                std::cout << "ray direction: " << ray.Direction() << std::endl;
 
-                if(toMerge != nullptr)
-                {
-                    std::cout << sample << ": " << ray.Direction() << std::endl;
+//                if(toMerge != nullptr)
+//                {
+//                    std::cout << sample << ": " << ray.Direction() << std::endl;
 
-                    for(int i = 0; i < 5; i++)
-                        toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction() * 2 * i / 5.0), 0.05)));
-                }
-            }
+//                    for(int i = 0; i < 5; i++)
+//                        toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction() * 2 * i / 5.0), 0.05)));
+//                }
+//            }
 
             double intersectionDistance;
             bool intersectionFound;

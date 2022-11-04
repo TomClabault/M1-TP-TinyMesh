@@ -1,6 +1,8 @@
 #include "analyticApproximations.h"
 #include "qmath.h"
 
+#include <vector>
+
 /*!
  * \brief Computes the closest intersection distance and stores the result in \p t
  * \param x1 First solution of the quadratic equation
@@ -91,6 +93,8 @@ Vector AnalyticSphere::GetNormalAt(const Vector& vertex)
     transformedVertex = transformedVertex * _invRotation;
     transformedVertex = transformedVertex * _invScale;
 
+    //For a sphere, the normal is the point itself so there's nothing more
+    //to do than transform the normal back to the transformed object space
     Vector normal = transformedVertex * _rotation.GetInverse().GetTranspose() * _scale.GetInverse().GetTranspose();
 
     return Normalized(normal);
@@ -145,17 +149,24 @@ bool AnalyticSphere::intersectBasic(const Ray& ray, double& t)
 
 Vector AnalyticCylinder::GetNormalAt(const Vector& vertex)
 {
-    Vector normal;
+    //Getting the vertex as if on a unit cylinder
+    Vector transformedVertex = vertex - _translation;
+    transformedVertex = transformedVertex * _invRotation;
+    transformedVertex = transformedVertex * _invScale;
+
+    Vector transformedNormal;
 
     //Computing the un-transformed normal
-    if(vertex[1] == 0)//The vertex is on the bottom disk of the cylinder
-        normal = Vector(0, -1, 0);
-    else if(vertex[1] == _height)//On the top disk of the cylinder
-        normal = Vector(0, 1, 0);
+    if(transformedVertex[1] < Math::BIGGER_EPSILON)//The transformed vertex is on the bottom disk of the cylinder
+        transformedNormal = Vector(0, -1, 0);
+    else if(transformedVertex[1] > 1 - Math::BIGGER_EPSILON && transformedVertex[1] < 1 + Math::BIGGER_EPSILON)//On the top disk of the cylinder
+        transformedNormal = Vector(0, 1, 0);
     else//On the body of the cylinder
-        normal = Normalized(Vector(vertex[0], 0, vertex[2]));
+        transformedNormal = Vector(transformedVertex[0], 0, transformedVertex[2]);
 
-    return normal * _rotation.GetInverse().GetTranspose() * _scale.GetInverse();
+    Vector normal = transformedNormal * _rotation.GetInverse().GetTranspose() * _scale.GetInverse().Transpose();
+
+    return Normalized(normal);
 }
 
 bool AnalyticCylinder::intersect(const Ray& ray, double& t)
@@ -327,10 +338,6 @@ void AnalyticSphere::intersectionTests()
 
 void AnalyticSphere::normalAtTests()
 {
-    AnalyticSphere testSphere(4);
-    std::cout << testSphere.GetNormalAt(Vector(3.4026,-2.10292,0));
-
-
     double scale = 2;
     double scaleBig = 100;
     Vector translate(2, 0, 0);
@@ -343,7 +350,7 @@ void AnalyticSphere::normalAtTests()
     AnalyticSphere translatedScaledBigSphere(translate, scaleBig);
 
     //Testing for a lot of random points.
-    //On a unit sphere (translated and/or or not), the normal should always be the point itself
+    //On a unit sphere (translated and/or uniformly scaled or not), the normal should always be the point itself
     for(int i = 0; i < 100000; i++)
     {
         Vector randomPoint = Normalized(Vector(Math::xorshift96(), Math::xorshift96(), Math::xorshift96()));
@@ -500,7 +507,77 @@ void AnalyticCylinder::intersectionTests()
 //    }
 }
 
+void AnalyticCylinder::getNormalAtTests()
+{
+    //For any point on the body of a translated/uniformly scaled cylinder, the normal
+    //at this point should be the point itself (normalized)
+
+    double scale = 2;
+    double scaleBig = 100;
+    Vector translate(2, 0, 0);
+
+    AnalyticCylinder unitCylinder(Vector(0, 0, 0), 1, 1);
+    AnalyticCylinder scaledCylinder(Vector(0, 0, 0), scale, scale);
+    AnalyticCylinder scaledBigCylinder(Vector(0, 0, 0), scaleBig, scaleBig);
+    AnalyticCylinder translatedUnitCylinder(translate, 1, 1);
+    AnalyticCylinder translatedScaledCylinder(translate, scale, scale);
+    AnalyticCylinder translatedScaledBigCylinder(translate, scaleBig, scaleBig);
+
+    //Testing for a lot of random points.
+    for(int i = 0; i < 100000; i++)
+    {
+        unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
+
+        //Only the y coordinate is generated between 0.1 and the scale -0.1 to be sure the point is on the body of the cylinder
+        Vector scaleRandomPoint = Normalized(Vector(Math::xorshift96()/ (double)max_unsigned_int, (Math::xorshift96() / (double)max_unsigned_int) * (scale - 0.2) + 0.1, Math::xorshift96()/ (double)max_unsigned_int));
+        Vector scaleBigRandomPoint = Normalized(Vector(Math::xorshift96()/ (double)max_unsigned_int, (Math::xorshift96() / (double)max_unsigned_int) * (scaleBig - 0.2) + 0.1, Math::xorshift96()/ (double)max_unsigned_int));
+        Vector randomPoint = Normalized(Vector(Math::xorshift96()/ (double)max_unsigned_int, Math::xorshift96()/ (double)max_unsigned_int, Math::xorshift96()/ (double)max_unsigned_int));
+
+        Vector randomPointTopDisk = Vector(Math::xorshift96()/ (double)max_unsigned_int, 1, Math::xorshift96()/ (double)max_unsigned_int);
+        Vector randomPointBottomDisk = Vector(Math::xorshift96()/ (double)max_unsigned_int, 0, Math::xorshift96()/ (double)max_unsigned_int);
+
+        Vector expectedTopDisk = Vector(0, 1, 0);
+        Vector expectedBottomDisk = Vector(0, -1, 0);
+
+        //The expected normals will have a y coordinate equal to 0 if the point is on the body
+        //of the cylinder and if the cylidner is uniformly scaled (or not scaled at all)
+        Vector expectedScaleRandom = scaleRandomPoint;
+        Vector expectedScaleBigRandom = scaleBigRandomPoint;
+        Vector expectedRandom = randomPoint;
+        expectedScaleRandom[1] = 0;
+        expectedScaleBigRandom[1] = 0;
+        expectedRandom[1] = 0;
+        expectedScaleRandom = Normalized(expectedScaleRandom);
+        expectedScaleBigRandom = Normalized(expectedScaleBigRandom);
+        expectedRandom = Normalized(expectedRandom);
+
+        //We're using the distance to compare the results as directly comparing floating point numbers is unreliable
+        //So if the distance from the given normal and the expected one is low enough, it's the same point
+        assert(Distance(unitCylinder.GetNormalAt(randomPoint), expectedRandom) <= Math::EPSILON);
+        assert(Distance(scaledCylinder.GetNormalAt(scaleRandomPoint * scale), expectedScaleRandom) <= Math::EPSILON);
+        assert(Distance(scaledBigCylinder.GetNormalAt(scaleRandomPoint * scaleBig), expectedScaleRandom) <= Math::EPSILON);
+        assert(Distance(translatedUnitCylinder.GetNormalAt(randomPoint + translate), expectedRandom) <= Math::EPSILON);
+        assert(Distance(translatedScaledCylinder.GetNormalAt(scaleRandomPoint * scale + translate), expectedScaleRandom) <= Math::EPSILON);
+        assert(Distance(translatedScaledBigCylinder.GetNormalAt(scaleRandomPoint * scaleBig + translate), expectedScaleRandom) <= Math::EPSILON);
+
+        //Testing for points of the top and bottom disk
+        assert(Distance(unitCylinder.GetNormalAt(randomPointTopDisk), expectedTopDisk) <= Math::EPSILON);
+        assert(Distance(unitCylinder.GetNormalAt(randomPointBottomDisk), expectedBottomDisk) <= Math::EPSILON);
+        assert(Distance(scaledCylinder.GetNormalAt(randomPointTopDisk * scale), expectedTopDisk) <= Math::EPSILON);
+        assert(Distance(scaledCylinder.GetNormalAt(randomPointBottomDisk * scale), expectedBottomDisk) <= Math::EPSILON);
+        assert(Distance(scaledBigCylinder.GetNormalAt(randomPointTopDisk * scaleBig), expectedTopDisk) <= Math::EPSILON);
+        assert(Distance(scaledBigCylinder.GetNormalAt(randomPointBottomDisk * scaleBig), expectedBottomDisk) <= Math::EPSILON);
+        assert(Distance(translatedUnitCylinder.GetNormalAt(randomPointTopDisk + translate), expectedTopDisk) <= Math::EPSILON);
+        assert(Distance(translatedUnitCylinder.GetNormalAt(randomPointBottomDisk + translate), expectedBottomDisk) <= Math::EPSILON);
+        assert(Distance(translatedScaledCylinder.GetNormalAt(randomPointTopDisk * scale + translate), expectedTopDisk) <= Math::EPSILON);
+        assert(Distance(translatedScaledCylinder.GetNormalAt(randomPointBottomDisk * scale + translate), expectedBottomDisk) <= Math::EPSILON);
+        assert(Distance(translatedScaledBigCylinder.GetNormalAt(randomPointTopDisk * scaleBig + translate), expectedTopDisk) <= Math::EPSILON);
+        assert(Distance(translatedScaledBigCylinder.GetNormalAt(randomPointBottomDisk * scaleBig + translate), expectedBottomDisk) <= Math::EPSILON);
+    }
+}
+
 void AnalyticCylinder::tests()
 {
     AnalyticCylinder::intersectionTests();
+    AnalyticCylinder::getNormalAtTests();
 }

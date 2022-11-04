@@ -21,6 +21,7 @@ public:
 
 public:
     static constexpr double EPSILON = 1.0e-5;
+    static constexpr double BIGGER_EPSILON = 1.0e-8;
 };
 
 /*!

@@ -7,7 +7,7 @@
 
 int main(int argc, char *argv[])
 {
-    AnalyticSphere::tests();
+    //AnalyticSphere::tests();
     AnalyticCylinder::tests();
 //    BVH::BVHTests();
 

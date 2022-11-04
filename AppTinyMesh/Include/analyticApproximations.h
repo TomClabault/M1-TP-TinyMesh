@@ -125,6 +125,7 @@ public:
     bool intersect(const Ray& ray, double& t) override;
 
     static void intersectionTests();
+    static void getNormalAtTests();
     static void tests();
 
 private:
@@ -138,8 +139,4 @@ private:
      * \return True if an intersection occured, false otherwise
      */
     bool intersectBasic(const Ray& ray, double& t);
-
-private:
-    double _radius;
-    double _height;
 };
