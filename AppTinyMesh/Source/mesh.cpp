@@ -259,8 +259,10 @@ Mesh::Mesh(const SimpleMesh& simpleMesh)
     for(unsigned int  i = 0; i < indicesCount; i += 3)
         AddTriangle(simpleMesh.VertexIndex(i), simpleMesh.VertexIndex(i + 1), simpleMesh.VertexIndex(i + 2), simpleMesh.NormalIndex(i));
 
-    this->analyticApproximations.push_back(simpleMesh.GetAnalyticApproximation());
-    this->analyticApproxToVertexIndex.insert(std::make_pair(simpleMesh.IndicesCount(), simpleMesh.GetAnalyticApproximation()));
+    AnalyticApproximation* meshApprox = simpleMesh.GetAnalyticApproximation();
+    if(meshApprox != nullptr)
+        this->analyticApproximations.push_back(simpleMesh.GetAnalyticApproximation());
+    this->analyticApproxToVertexIndex.insert(std::make_pair(simpleMesh.IndicesCount(), meshApprox));
 }
 
 /*!
@@ -371,7 +373,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
 
     computed = false;//TODO remove
 
-    //std::srand(2);//TODO remove
+    std::srand(2);//TODO remove
     double colorIncrement = 1.0 / samples;
 
     bool analyticIntersection = this->analyticApproximations.size() > 0;
@@ -421,32 +423,35 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             //direction of the normal otherwise we will intersect ourselves
 
             //TODO testre avec epsilon 1.0e-5
-            Ray ray(vertex + normal * Math::EPSILON, randomRayDirection);
+            Ray ray(vertex + normal * 1.0e-10, randomRayDirection);
 
-            //TODO remov whole if
-//            if(vertexNumber == 10 && sample == 5)
-//            {
-//                //ray = Ray(ray.Origin(), Vector(1, 0, 0));
-//                std::cout << "vertex index: " << vertexIndex << std::endl;
-//                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
-//                std::cout << "vertex: " << vertex << std::endl;
-//                std::cout << "normal: " << normal << std::endl;
-//                std::cout << "ray origin: " << ray.Origin() << std::endl;
-//                std::cout << "ray direction: " << ray.Direction() << std::endl;
+//            TODO remov whole if
+            if(vertexNumber == 55)
+            {
+                //ray = Ray(ray.Origin(), Vector(1, 0, 0));
+                std::cout << "vertex index: " << vertexIndex << std::endl;
+                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
+                std::cout << "vertex: " << vertex << std::endl;
+                std::cout << "normal: " << normal << std::endl;
+                std::cout << "ray origin: " << ray.Origin() << std::endl;
+                std::cout << "ray direction: " << ray.Direction() << std::endl;
 
-//                if(toMerge != nullptr)
-//                {
-//                    std::cout << sample << ": " << ray.Direction() << std::endl;
+                if(toMerge != nullptr)
+                {
+                    std::cout << sample << ": " << ray.Direction() << std::endl;
 
 //                    for(int i = 0; i < 5; i++)
 //                        toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction() * 2 * i / 5.0), 0.05)));
-//                }
-//            }
+                      toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction()), 0.05)));
+                      for(int i = 0; i < 5; i++)
+                          toMerge->push_back(Mesh(Box(Vector(ray.Origin() + normal * 1 * i / 5.0), 0.05)));
+                }
+            }
 
             double intersectionDistance;
             bool intersectionFound;
 
-            analyticIntersection = true;//TODO remove this line
+            analyticIntersection = false;//TODO remove
             if(analyticIntersection)
             {
                 double intersectionDistNonAnalytic = INFINITY;
@@ -463,20 +468,20 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             }
             else
             {
-                if(!computed)//TODO remove et compute la BVH à la construction du mesh
-                {
-                    auto start = std::chrono::high_resolution_clock::now();
-                    bvh = new BVH(*this->GetTriangles(), 16);
-                    auto stop = std::chrono::high_resolution_clock::now();
+//                if(!computed)//TODO remove et compute la BVH à la construction du mesh
+//                {
+//                    auto start = std::chrono::high_resolution_clock::now();
+//                    bvh = new BVH(*this->GetTriangles(), 16);
+//                    auto stop = std::chrono::high_resolution_clock::now();
 
-                    std::cout << "BVH Construction time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << std::endl;
-                    computed = true;
-                }
+//                    std::cout << "BVH Construction time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << std::endl;
+//                    computed = true;
+//                }
 
-                intersectionFound = bvh->intersect(ray, intersectionDistance);
+//                intersectionFound = bvh->intersect(ray, intersectionDistance);
 
                 //TODO remove cette ligne, on doit utiliser l'intersection avec la BVH à la place de l'intersection avec le mesh
-                //intersectionFound = this->intersect(ray, intersectionDistance);
+                intersectionFound = this->intersect(ray, intersectionDistance);
             }
 
             //In front of the ray and within the given occlusion radius
@@ -485,12 +490,12 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 obstructedValue += colorIncrement;
 
                 //TODO remove tout les commentaires, on dsoit juste avoir 'obstructedValue += colorIncrement;' dans le if
-//                std::cout << "vertex index: " << vertexIndex << std::endl;
-//                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
-//                std::cout << "vertex: " << vertex << std::endl;
-//                std::cout << "normal: " << normal << std::endl;
-//                std::cout << "ray origin: " << ray.Origin() << std::endl;
-//                std::cout << "ray direction: " << ray.Direction() << std::endl;
+                std::cout << "vertex index: " << vertexIndex << std::endl;
+                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
+                std::cout << "vertex: " << vertex << std::endl;
+                std::cout << "normal: " << normal << std::endl;
+                std::cout << "ray origin: " << ray.Origin() << std::endl;
+                std::cout << "ray direction: " << ray.Direction() << std::endl;
 
                 //this->intersectAnalytic(ray, intersectionDistance);
 

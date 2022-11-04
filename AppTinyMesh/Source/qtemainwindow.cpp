@@ -132,11 +132,6 @@ void MainWindow::BoxMeshExample()
 
     meshColor = MeshColor(boxMesh, cols, boxMesh.VertexIndexes());
 
-    std::cout << "indexes: ";
-    for(int color : meshColor.ColorIndexes())
-        std::cout << color << " ";
-    std::cout << std::endl;
-
     UpdateGeometry();
 }
 
@@ -160,9 +155,9 @@ void MainWindow::SphereImplicitExample()
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
-    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
-    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
-    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
+//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
+//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
+//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
 //    ray origin: Vector(1.53117,-0.946316,1e-05)
 //    ray direction: Vector(0.268032,0.365336,0.891453)
@@ -257,7 +252,6 @@ void MainWindow::CreateCapsuleMesh(double radius, double cylinderHeight, int cyl
 void MainWindow::CreateCylinderMesh(double radius, double height, int heightSubdivisions, int cylinderSubdivisions)
 {
     Mesh cylinderMesh = Mesh(Cylinder(Vector(0, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions));
-    std::cout << cylinderMesh.Vertexes() << std::endl;
     cylinderMesh.Merge(Mesh(Cylinder(Vector(2.1, 0, 0), radius, height, heightSubdivisions, cylinderSubdivisions)));
     cylinderMesh.Merge(Mesh(Cylinder(Vector(1, 0, 1.73), radius, height, heightSubdivisions, cylinderSubdivisions)));
 

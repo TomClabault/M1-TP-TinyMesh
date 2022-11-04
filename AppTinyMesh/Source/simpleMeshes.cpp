@@ -59,7 +59,7 @@ AnalyticApproximation* SimpleMesh::GetAnalyticApproximation() const
     return this->analyticApproximation;
 }
 
-void SimpleMesh::transformVertices(Vector translation, Matrix rotation, Matrix scale)
+void SimpleMesh::transformVerticesAndNormals(const Vector& translation, const Matrix& rotation, const Matrix& scale)
 {
     //Translate then rotate then scale.
     for(Vector& vertex : this->vertices)
@@ -67,6 +67,12 @@ void SimpleMesh::transformVertices(Vector translation, Matrix rotation, Matrix s
         vertex = vertex * _scale;
         vertex = vertex * _rotation;
         vertex += _translation;
+    }
+
+    for(Vector& normal : this->normals)
+    {
+        normal = normal * _scale.GetInverse().GetTranspose();
+        normal = normal * _rotation.GetInverse().GetTranspose();
     }
 }
 
@@ -129,7 +135,7 @@ Icosphere::Icosphere(const Vector& translation, const Matrix& rotation, const Ma
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
 
-    transformVertices(translation, rotation, scale);
+    transformVerticesAndNormals(translation, rotation, scale);
 
     SimpleMesh::analyticApproximation = new AnalyticSphere(translation, rotation, scale);
 }
@@ -282,7 +288,7 @@ Torus::Torus(const Vector& translation, const Matrix& rotation, const Matrix& sc
 {
     initBaseTorus(innerRadius, outerRadius, ringCount, ringSubdivisions);
 
-    transformVertices(translation, rotation, scale);
+    transformVerticesAndNormals(translation, rotation, scale);
 }
 
 void Torus::initBaseTorus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
@@ -347,7 +353,7 @@ Capsule::Capsule(const Vector& translation, const Matrix& rotation, const Matrix
 {
     initBaseCapsule(cylinderHeightSubdivisions, cylinderSubdivisions, sphereHeightSubdivions);
 
-    transformVertices(translation, rotation, scale);
+    transformVerticesAndNormals(translation, rotation, scale);
 }
 
 void Capsule::initBaseCapsule(int cylinderHeightSubdivisions, int cylinderSubdivisions, int sphereHeightSubdivisions)
@@ -488,7 +494,7 @@ Cylinder::Cylinder(const Vector& translation, const Matrix& rotation, const Matr
 
     initBaseCylinder(heightSubdivisions, cylinderSubdivisions);
 
-    transformVertices(translation, rotation, scale);
+    transformVerticesAndNormals(translation, rotation, scale);
 }
 
 void Cylinder::initBaseCylinder(int heightSubdivisions, int cylinderSubdivisions)

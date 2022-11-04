@@ -82,7 +82,7 @@ public:
      * \param rotation The rotation matrix
      * \param scale The homotethy matrix
      */
-    void transformVertices(Vector translation, Matrix rotation, Matrix scale);
+    void transformVerticesAndNormals(const Vector& translation, const Matrix& rotation, const Matrix& scale);
 
 protected:
     SimpleMesh(Vector translation, Matrix rotation, Matrix scale) : _translation(translation), _rotation(rotation), _scale(scale) {};

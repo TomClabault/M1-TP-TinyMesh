@@ -8,8 +8,8 @@
 int main(int argc, char *argv[])
 {
     //AnalyticSphere::tests();
-    AnalyticCylinder::tests();
-//    BVH::BVHTests();
+    //AnalyticCylinder::tests();
+    //BVH::BVHTests();
 
     //return 0;
 

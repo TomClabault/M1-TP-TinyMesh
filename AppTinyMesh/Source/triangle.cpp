@@ -2,6 +2,8 @@
 
 #include "mesh.h"
 
+double Triangle::epsilon = 1.0e-7;
+
 /*!
 \class Triangle triangle.h
 \brief Base minimum storage triangle class.
@@ -70,7 +72,7 @@ bool Triangle::Intersect(const Ray& ray, double& t, double& u, double& v) const
   // Determinant, if determinant is near zero, ray lies in plane of triangle
   double det = e[0] * pvec;
 
-  if ((det > -Math::EPSILON) && (det < Math::EPSILON))
+  if ((det > -Triangle::epsilon) && (det < Triangle::epsilon))
     return false;
   det = 1.0 / det;
 
@@ -107,7 +109,7 @@ bool Triangle::IntersectFromPoints(const Vector& a, const Vector& b, const Vecto
     // Determinant, if determinant is near zero, ray lies in plane of triangle
     double det = e[0] * pvec;
 
-    if ((det > -Math::EPSILON) && (det < Math::EPSILON))
+    if ((det > -Triangle::epsilon) && (det < Triangle::epsilon))
         return false;
     det = 1.0 / det;
 
