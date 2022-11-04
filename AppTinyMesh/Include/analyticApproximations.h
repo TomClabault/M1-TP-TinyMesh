@@ -140,3 +140,36 @@ private:
      */
     bool intersectBasic(const Ray& ray, double& t);
 };
+
+class AnalyticTorus : public AnalyticApproximation
+{
+public:
+    AnalyticTorus(const Vector& translation, const Matrix& rotation, const Matrix& scale, double innerRadius, double outerRadius) : AnalyticApproximation(translation, rotation, scale),
+        _innerRadius(innerRadius), _outerRadius(outerRadius) {};
+
+    AnalyticTorus(double innerRadius, double outerRadius) : AnalyticTorus(Vector(0, 0, 0), Matrix::RotationX(0), Matrix::Homothety(1, 1, 1), innerRadius, outerRadius) {}
+
+    virtual Vector GetNormalAt(const Vector& vertex);
+
+    virtual bool intersect(const Ray& ray, double& t);
+
+    static void intersectionTests();
+    static void tests();
+
+private:
+    /*!
+     * \brief Intersects a "standard" torus that is at the origin
+     * and that has not be scaled. This method is mainly used after
+     * having inverse transformed the ray with the transformations
+     * applied to the actual torus. The intersected torus has an
+     * inner and outer radius as given to the constructor of this
+     * instance
+     * \param ray The inverse transformed ray
+     * \param t The intersection distance to the torus
+     * \return True if an intersection occured, false otherwise
+     */
+    bool intersectBasic(const Ray& ray, double& t);
+
+private:
+    double _innerRadius, _outerRadius;
+};

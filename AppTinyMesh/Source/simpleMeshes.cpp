@@ -280,6 +280,8 @@ Torus::Torus(double innerRadius, double outerRadius, int ringCount, int ringsSub
 
 Torus::Torus(const Vector& translation, const Matrix& rotation, const Matrix& scale, double innerRadius, double outerRadius, int ringCount, int ringSubdivisions) : SimpleMesh(translation, rotation, scale)
 {
+    analyticApproximation = new AnalyticTorus(translation, rotation, scale, innerRadius, outerRadius);
+
     initBaseTorus(innerRadius, outerRadius, ringCount, ringSubdivisions);
 
     transformVertices(translation, rotation, scale);

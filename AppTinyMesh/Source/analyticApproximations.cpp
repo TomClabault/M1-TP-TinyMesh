@@ -64,6 +64,100 @@ bool solveQuadratic(double& x1, double& x2, const double a, const double b, cons
     }
 }
 
+void depressedQuartic(const double a, const double b, const double c, const double d, const double e, double& p, double& q, double& r)
+{
+    p = (8 * c * a * - 3 * (b * b)) / (8 * a * a);
+    q = (b*b*b - 4*a*b*c + 8*a*a*d) / (8*a*a*a);
+    r = (-3*(b*b*b*b) + 256*e*a*a*a - 64*a*a*b*d + 16*a*b*b*c) / (256 * a * a * a * a);
+}
+
+void depressedCubic(const double a, const double b, const double c, const double d, double& p, double& q)
+{
+    p = (3*a*c - b*b) / (3*a*a);
+    q = (2*b*b*b - 9*a*b*c +27*a*a*d) / (27*a*a*a);
+}
+
+/*!
+ * \brief Computes one root of the given depressed cubic equation
+ * using Cardano's formula
+ * \param x [out] One root of the equation
+ * \param p The p coefficient of the depressed cubic equation
+ * \param q The q coefficient of the depressed cubic equation
+ */
+void solveDepressedCubicOne(double& x, const double p, const double q)
+{
+    //TODO retourner une racine qui est toujours positive ?
+
+    double delta = -(4*p*p*p + 27*q*q);
+
+    if(delta == 0)
+    {
+        if(p == 0)//Means that q == 0 too since delta == 0
+            x = 0;
+        else
+            x = (3*q)/p;
+    }
+    else if(delta > 0)
+    {
+        x = std::cbrt(-q/2 + std::sqrt(delta)) + std::cbrt(-q/2 - std::sqrt(delta));
+    }
+    else if(delta < 0)
+    {
+        double C =  std::cbrt(-q/2 + std::sqrt(q*q/4 + p*p*p/27));
+        x = C - p/(3*C);
+    }
+}
+
+/**
+ * Ferrari's solution from Wikipedia
+ * https://en.wikipedia.org/wiki/Quartic_function
+ */
+bool solveQuartic(double& x1, double& x2, double& x3, double& x4, const double a, const double b, const double c, const double d, const double e)
+{
+    //Depressed coefficients
+    double p, q, r;
+
+    depressedQuartic(a, b, c, d, e, p, q, r);
+
+    //Coefficients of the resolvent cubic
+    double a3 = 8;
+    double b3 = 8*p;
+    double c3 = 2*p*p - 8*r;
+    double d3 = -(q*q);
+
+    //Coefficient of the depressed cubic to find m
+    double p3, q3;
+    depressedCubic(a3, b3, c3, d3, p3, q3);
+
+    //m coefficient as in Ferrari's solution
+    double m;
+    solveDepressedCubicOne(m, p3, q3);
+    if(m < 0)
+        return false;
+
+    double xs[4];
+    int index = 0;
+    //Alternating between + and - to found the roots
+    for(int plusMinus1 = -1; plusMinus1 <= 1; plusMinus1 += 2)
+    {
+        for(int plusMinus2 = -1; plusMinus2 <= 1; plusMinus2+= 2)
+        {
+            double belowSqrt = -(2*p + 2*m + plusMinus1 * (std::sqrt(2) * q) / std::sqrt(m));
+            if(belowSqrt < 0)
+                xs[index++] = -INFINITY;
+            else
+                xs[index++] = -b/(4*a) + (plusMinus1 * std::sqrt(2*m) + plusMinus2 * std::sqrt(belowSqrt)) / 2;
+        }
+    }
+
+    x1 = xs[0];
+    x2 = xs[1];
+    x3 = xs[2];
+    x4 = xs[3];
+
+    return x1 > 0 || x2 > 0 || x3 > 0 || x4;
+}
+
 #include <iostream>
 
 bool intersectWithDisk(const Ray& ray, const double diskRadius, const Vector& diskCenter, const Vector& diskNormal, double& t)
@@ -257,6 +351,107 @@ bool AnalyticCylinder::intersectBasic(const Ray& ray, double& t)
         t = closestT;
 
     return intersectionFound;
+}
+
+Vector AnalyticTorus::GetNormalAt(const Vector& vertex)
+{
+    return Vector(0, 0, 0);
+}
+
+bool AnalyticTorus::intersect(const Ray& ray, double& t)
+{
+    Vector invTransformedOrigin = ray.Origin();
+    invTransformedOrigin -= _translation;
+    invTransformedOrigin = invTransformedOrigin * _invRotation;
+    invTransformedOrigin = invTransformedOrigin * _invScale;
+
+    Vector invTransformedDirection = ray.Direction();
+    invTransformedDirection = invTransformedDirection * _invRotation;
+    invTransformedDirection = invTransformedDirection * _invScale;
+
+    Ray transformedRay(invTransformedOrigin, Normalized(invTransformedDirection));
+
+    double transformedT;
+    if(intersectBasic(transformedRay, transformedT))
+    {
+        Vector intersectionPoint = transformedRay(transformedT);
+
+        Vector pointWorldCoords = intersectionPoint * _rotation * _scale;
+        pointWorldCoords += _translation;
+
+        //Computing the distance to the ray's origin in world coords
+        ray.T(pointWorldCoords, t);
+
+        return true;
+    }
+    else
+        return false;
+}
+
+bool AnalyticTorus::intersectBasic(const Ray& ray, double& t)
+{
+    //From the center of the empty at the middle of the torus to the center
+    //of the ring of the torus
+    double R = _outerRadius + _innerRadius / 2;
+    double R2 = R * R;
+    double innerRadius2 = _innerRadius * _innerRadius;
+
+    //Ray direction components
+    double dx = ray.Direction()[0];
+    double dy = ray.Direction()[1];
+    double dz = ray.Direction()[2];
+
+    //Ray origin components
+    double ox = ray.Origin()[0];
+    double oy = ray.Origin()[1];
+    double oz = ray.Origin()[2];
+
+    //precomputed squared
+    double dx2 = dx * dx;
+    double dy2 = dy * dy;
+    double dz2 = dz * dz;
+    double ox2 = ox * ox;
+    double oy2 = oy * oy;
+    double oz2 = oz * oz;
+
+    //precomputed dot prod
+    double oxdx_oydy_ozdz = (ox * dx + oy * dy + oz * dz);
+    double oxdx_oydy_ozdz2 = oxdx_oydy_ozdz * oxdx_oydy_ozdz;
+
+    double ox2_oy2_oz2_inn2_R2 = (ox2 + oy2 + oz2 - (innerRadius2 + R2));
+
+    double a = (dx2 + dy2 + dz2) * (dx2 + dy2 + dz2);
+    double b = 4 * (dx2 + dy2 + dz2) * oxdx_oydy_ozdz;
+    double c = 2 * (dx2 + dy2 + dz2) * ox2_oy2_oz2_inn2_R2 + 4 * oxdx_oydy_ozdz2 + 4 * R2 * dy2;
+    double d = 4 * ox2_oy2_oz2_inn2_R2 * oxdx_oydy_ozdz + 8 * R2 * oy * dy;
+    double e = ox2_oy2_oz2_inn2_R2 * ox2_oy2_oz2_inn2_R2 - 4 * R2 * (innerRadius2 - oy2);
+
+    double x1, x2, x3, x4;
+    double tempT = INFINITY;
+    if(solveQuartic(x1, x2, x3, x4, a, b, c, d, e))
+    {
+        //Getting the minimum positive intersection distance out of the 4
+        //possible solutions
+        if(x1 > 0)
+            tempT = std::min(tempT, x1);
+        if(x2 > 0)
+            tempT = std::min(tempT, x2);
+        if(x3 > 0)
+            tempT = std::min(tempT, x3);
+        if(x4 > 0)
+            tempT = std::min(tempT, x4);
+
+        if(tempT == INFINITY)//All the solutions were negative
+            return false;
+        else
+        {
+            t = tempT;
+
+            return true;
+        }
+    }
+    else
+        return false;
 }
 
 #include <cassert>
@@ -580,4 +775,18 @@ void AnalyticCylinder::tests()
 {
     AnalyticCylinder::intersectionTests();
     AnalyticCylinder::getNormalAtTests();
+}
+
+void AnalyticTorus::intersectionTests()
+{
+    AnalyticTorus unitTorus(1, 1);
+
+    double t;
+    assert(unitTorus.intersect(Ray(Vector(-4, 0, 0), Vector(1, 0, 0)), t));
+    assert(t == 1.0);
+}
+
+void AnalyticTorus::tests()
+{
+    AnalyticTorus::intersectionTests();
 }
