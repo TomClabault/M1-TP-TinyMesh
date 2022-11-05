@@ -155,9 +155,9 @@ void MainWindow::SphereImplicitExample()
 void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 {
     Mesh icosphereMesh = Mesh(Icosphere(radius, subdivisions));
-//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
-//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
-//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
+    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
+    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
+    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());
@@ -367,7 +367,7 @@ void MainWindow::DisplayObjMesh()
     std::string signalSender = this->sender()->objectName().toStdString();
 
     if(signalSender == "lotusFlowerButton")
-        LoadObjMesh("LotusFlowerDecimate.obj");
+        LoadObjMesh("LotusFlower.obj");
     else if(signalSender == "lowpolyTreeButton")
         LoadObjMesh("Lowpoly_tree.obj");
 
@@ -414,7 +414,13 @@ void MainWindow::UpdateAO()
         GetAOParameters(AORadius, AOSamples, AOStrength);
 
         if(AORadius != -1 && AOSamples != -1 && AOStrength != -1)
+        {
+            auto start = std::chrono::high_resolution_clock::now();
             meshColor.computeAccessibility(AORadius, AOSamples, AOStrength);
+            auto stop = std::chrono::high_resolution_clock::now();
+
+            std::cout << "AO time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << "ms" << std::endl;
+        }
     }
 
     UpdateGeometry();

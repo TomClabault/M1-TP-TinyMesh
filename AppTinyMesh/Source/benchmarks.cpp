@@ -229,10 +229,10 @@ void Benchmarks::BenchmarkAOAnalyticVsMesh(unsigned int iterationsNonAnalytic, u
 void Benchmarks::BenchmarkBVHIntersectionCount()
 {
     double radius = 1;
-    int subdivisions = 3;
+    int subdivisions = 1;
 
     Mesh icosphereMesh(Icosphere(radius, subdivisions));
-//    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
+    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius * 2, 0, 0), radius, subdivisions)));
 //    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
 //    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 

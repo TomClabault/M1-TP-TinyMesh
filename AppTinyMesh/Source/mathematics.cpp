@@ -1,6 +1,8 @@
 #include "mathematics.h"
 
-static unsigned long xorshift96_x=123456789, xorshift96_y=362436069, xorshift_96z=521288629;
+unsigned long Math::xorshift96_x=123456789;
+unsigned long Math::xorshift96_y=362436069;
+unsigned long Math::xorshift_96z=521288629;
 unsigned int Math::xorshift96(void)
 {
     unsigned long t;

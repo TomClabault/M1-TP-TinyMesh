@@ -50,6 +50,7 @@ Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<int>& indices)
 Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<Vector>& normals, const std::vector<int>& vIndices, const std::vector<int>& nIndices) :vertices(vertices), normals(normals), vertexIndices(vIndices), normalIndices(nIndices)
 {
     this->analyticApproxToVertexIndex.insert(std::make_pair(vIndices.size(), nullptr));
+    this->_bvh = BVH(*this->GetTriangles());
 }
 
 /*!
@@ -232,6 +233,7 @@ Mesh::Mesh(const Box& box)
 
     //Analytic approximation for the boxes not implemented
     this->analyticApproxToVertexIndex.insert(std::make_pair(vertexIndices.size(), nullptr));
+    this->_bvh = BVH(*this->GetTriangles());
 }
 
 /*!
@@ -264,6 +266,7 @@ Mesh::Mesh(const SimpleMesh& simpleMesh)
     if(meshApprox != nullptr)
         this->analyticApproximations.push_back(simpleMesh.GetAnalyticApproximation());
     this->analyticApproxToVertexIndex.insert(std::make_pair(simpleMesh.IndicesCount(), meshApprox));
+    this->_bvh = BVH(*this->GetTriangles(), 10);
 }
 
 /*!
@@ -471,14 +474,19 @@ bool Mesh::intersect(const Ray& ray, double& outT)
         {
             if(t > 0 && t < closestT)//Intersection in front of the ray
             {
-                closestT = t;
-                outT = t;
+                if(t < closestT)
+                {
+                    closestT = t;
+                    outT = t;
+                }
 
-                _triangleEffectiveInter++;
                 found = true;
             }
         }
     }
+
+    if(found)
+        _triangleEffectiveInter++;
 
     return found;
 }
@@ -639,6 +647,7 @@ void Mesh::Load(const QString& filename)
     data.close();
 
     this->analyticApproxToVertexIndex.insert(std::make_pair(vertexIndices.size(), nullptr));
+    this->_bvh = BVH(*this->GetTriangles(), 10, 15);
 }
 
 /*!

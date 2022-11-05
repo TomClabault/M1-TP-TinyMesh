@@ -49,5 +49,5 @@ void MeshColor::Merge(const MeshColor& secondMesh)
 
 void MeshColor::computeAccessibility(double radius, int samples, double occlusionStrength)
 {
-    Mesh::accessibility(this->colors, radius, samples, occlusionStrength);
+    Mesh::accessibility(this->colors, radius, samples, occlusionStrength, false, false);
 }

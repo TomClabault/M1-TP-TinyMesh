@@ -1,4 +1,6 @@
 #include "BVH.h"
+#include "mesh.h"
+#include "simpleMeshes.h"
 
 #include <queue>
 
@@ -178,12 +180,14 @@ const Plane BoundingVolume::planes[7] = {Plane(Vector(1, 0, 0), 0),
 
 OctreeNode::OctreeNode() {}
 
-OctreeNode::OctreeNode(const Vector min, const Vector max, int depth)
+OctreeNode::OctreeNode(int centroidNumber, const Vector min, const Vector max, int depth)
 {
     _depth = depth;
     _min = min;
     _max = max;
     _center = (min + max) / 2;
+
+    _centroidNumber = centroidNumber;
 
     _isLeaf = true;
 };
@@ -225,7 +229,10 @@ BoundingVolume& OctreeNode::computeVolume()
     return _boundingVolume;
 }
 
-void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth)
+#include <fstream>//TODO remove
+unsigned int octantsCount[8] = {0, 0, 0, 0, 0, 0, 0, 0};//TODO remove
+
+void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth, int triangleNumber)
 {
     if(_isLeaf)
     {
@@ -253,14 +260,21 @@ void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int m
                |     |    | /
                +----------+/
             */
-            _childrenNodes[0] = OctreeNode(Vector(_min[0], halfHeight, _min[2]), _center + Vector(0, halfHeight, 0) , _depth + 1);
-            _childrenNodes[1] = OctreeNode(Vector(halfWidth, halfHeight, _min[2]), _center + Vector(halfWidth, halfHeight, 0), _depth + 1);
-            _childrenNodes[2] = OctreeNode(_min, _center, _depth + 1);
-            _childrenNodes[3] = OctreeNode(Vector(halfWidth, _min[1], _min[2]), _center + Vector(halfWidth, 0, 0), _depth + 1);
-            _childrenNodes[4] = OctreeNode(_center - Vector(halfWidth, 0, 0), _center + Vector(0, halfHeight, halfDepth), _depth + 1);
-            _childrenNodes[5] = OctreeNode(_center, _max, _depth + 1);
-            _childrenNodes[6] = OctreeNode(_center - Vector(halfWidth, halfHeight, 0), _center + Vector(0, 0, halfDepth), _depth + 1);
-            _childrenNodes[7] = OctreeNode(_center - Vector(0, halfHeight, 0), _max - Vector(0, halfHeight, 0), _depth + 1);
+
+            std::cout << "Dividing [" << _centroidNumber << "] at depth " << _depth << " to insert [" << triangleNumber << "]: " << *triangle << std::endl;
+            _childrenNodes[0] = OctreeNode(0, _center - Vector(halfWidth, 0, halfDepth),  _center + Vector(0, halfHeight, 0) , _depth + 1);
+            _childrenNodes[1] = OctreeNode(1, _center - Vector(0, 0, halfDepth),          _center + Vector(halfWidth, halfHeight, 0), _depth + 1);
+            _childrenNodes[2] = OctreeNode(2, _min,                                       _center, _depth + 1);
+            _childrenNodes[3] = OctreeNode(3, _center - Vector(0, halfHeight, halfDepth), _center + Vector(halfWidth, 0, 0), _depth + 1);
+            _childrenNodes[4] = OctreeNode(4, _center - Vector(halfWidth, 0, 0),          _center + Vector(0, halfHeight, halfDepth), _depth + 1);
+            _childrenNodes[5] = OctreeNode(5, _center,                                    _max, _depth + 1);
+            _childrenNodes[6] = OctreeNode(6, _center - Vector(halfWidth, halfHeight, 0), _center + Vector(0, 0, halfDepth), _depth + 1);
+            _childrenNodes[7] = OctreeNode(7, _center - Vector(0, halfHeight, 0),         _center + Vector(halfWidth, 0, halfDepth), _depth + 1);
+            for(int centro = 0; centro < 8; centro++)
+                std::cout << "\tCentro " << centro << "=" << _childrenNodes[centro]._min << " --> " << _childrenNodes[centro]._max << std::endl;
+
+            std::cout << std::endl;
+            std::cout << std::endl;
 
             //Now that the node is subdivided and not a leaf anymore, we can reinsert the volumes in the node which will actually insert the volumes in the subnodes
             for(const Triangle* triangle : _triangles)
@@ -277,6 +291,7 @@ void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int m
     }
     else
     {
+
         //We're going to place the triangle into the octant which contains its centroid
         Vector nodeCentroid = _center;
         Vector triangleCentroid = triangle->Centroid();
@@ -287,14 +302,35 @@ void OctreeNode::insertTriangle(const Triangle* triangle, int maxChildren, int m
         if(triangleCentroid[1] > nodeCentroid[1]) octant += 2;
         if(triangleCentroid[0] > nodeCentroid[0]) octant += 1;
 
+        octantsCount[octant]++;
+
+//        //TODO remove
+//        std::ofstream* outputFile = new std::ofstream("outputOctants.txt");
+//        //TODO remove
+//        for(int i = 0; i < 8; i++)
+//            *outputFile << octantsCount[i] << " " << std::endl;
+
+//        outputFile->close();//TODO remove
+
+        //std::cout << "[not leaf] inserting in octant " << octant << " at depth " << _depth << ". Triangle centroid: " << triangleCentroid << " | node centro: " << nodeCentroid << std::endl;//TODO remove
         _childrenNodes[octant].insertTriangle(triangle, maxChildren, maxDepth);
     }
 }
 
 void OctreeNode::insertTriangles(const std::vector<Triangle*>& triangles, int maxChildren, int maxDepth)
 {
-    for(const Triangle* triangle : triangles)
-        this->insertTriangle(triangle, maxChildren, maxDepth);
+    //TODO remove all et utiliser la boucle foreahc ocommentéeé en bas
+
+    for(int i = 0; i < triangles.size(); i++)
+    {
+        std::cout << "------------------ NEW TRIANGLE ------------------ [" << i << "]: " << *(triangles.at(i)) << std::endl;
+        this->insertTriangle(triangles.at(i), maxChildren, maxDepth, i);
+    }
+
+
+
+//    for(const Triangle* triangle : triangles)
+//        this->insertTriangle(triangle, maxChildren, maxDepth);
 }
 
 //TODO remove
@@ -333,7 +369,8 @@ OctreeNode* Octree::Root() const
 
 void Octree::construct(const std::vector<Triangle*>& triangles, int maxChildren, int maxDepth)
 {
-    _root = new OctreeNode(_min, _max, 0);
+    std::cout << " start center [min, max]: " << (_min + _max) / 2 << "[" << _min << ", " << _max << "]" << std::endl;//TODO remove;
+    _root = new OctreeNode(-1, _min, _max, 0);
     _root->insertTriangles(triangles, maxChildren, maxDepth);
 }
 
@@ -377,19 +414,23 @@ bool Octree::intersect(const Ray& ray, double& t) const
 
             if(node->IsLeaf())
             {
+                bool found = false;//TODO remove
                 for(const Triangle* triangle : node->Triangles())
                 {
                     double triangleInterDist = INFINITY;
                     double u, v;
 
                     _triangleInterTests++;
-                    if(triangle->Intersect(ray, triangleInterDist, u, v) && triangleInterDist > 0)
+                    if(triangle->Intersect(ray, triangleInterDist, u, v) && triangleInterDist >= 0)
                     {
-                        _triangleEffectiveInter++;
                         closestIntersection = std::min(closestIntersection, triangleInterDist);
                         intersectionFound = true;
+                        found = true;
                     }
                 }
+
+                if(found)
+                    _triangleEffectiveInter++;
             }
             else
             {
@@ -503,21 +544,24 @@ BVH::BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDe
         _boundingVolumes.push_back(boundingVolume);
     }
 
-    _octree = Octree(min, max);
+    _octree = new Octree(min, max);
     //Inserts all the triangles in the octree
-    _octree.construct(triangles, maxLeafChildren, maxDepth);
+    _octree->construct(triangles, maxLeafChildren, maxDepth);
     //Computes the volumes of all the nodes of the octree
-    _octree.computeVolumes();
+    _octree->computeVolumes();
 }
 
-Octree BVH::GetOctree() const
+Octree* BVH::GetOctree() const
 {
     return _octree;
 }
 
 bool BVH::intersect(const Ray& ray, double& t) const
 {
-    bool returned = _octree.intersect(ray, t);
+    if(_octree == nullptr)
+        throw std::runtime_error("Uninitialized BVH");
+
+    bool returned = _octree->intersect(ray, t);
 
     return returned;
 }
@@ -526,43 +570,42 @@ bool BVH::intersect(const Ray& ray, double& t) const
 
 void BVH::BVHTests()
 {
-    //TODO decomment les tests
-//    //Test on a simple triangle
-//    Triangle triangle(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0.5, 0.5, 0));
+    //Test on a simple triangle
+    Triangle triangle(Vector(0, 0, 0), Vector(1, 0, 0), Vector(0.5, 0.5, 0));
 
-//    std::vector<Triangle*> triangles;
-//    triangles.push_back(&triangle);
+    std::vector<Triangle*> triangles;
+    triangles.push_back(&triangle);
 
-//    BVH bvh(triangles, 8, 2);
+    BVH bvh(triangles, 8, 2);
 
-//    double t;
-//    //Ray pointing towards the center of the triangle
-//    assert(bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(0, 0, -1)), t));
-//    assert(t == 1.0);
+    double t;
+    //Ray pointing towards the center of the triangle
+    assert(bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(0, 0, -1)), t));
+    assert(t == 1.0);
 
-//    //One ray to each vertex of the triangle
-//    //Also one ray to each vertex of the triangle while being inside the volume, directly on the vertex (auto-intersection)
-//    //Skipping the last one as the ray/triangle intersection is the problem for this one
-//    for(int i = 0; i < 2; i++)
-//    {
-//        Vector vertex = triangle[i];
+    //One ray to each vertex of the triangle
+    //Also one ray to each vertex of the triangle while being inside the volume, directly on the vertex (auto-intersection)
+    //Skipping the last one as the ray/triangle intersection is the problem for this one
+    for(int i = 0; i < 2; i++)
+    {
+        Vector vertex = triangle[i];
 
-//        assert(bvh.intersect(Ray(vertex - Vector(0, 0, 5), Vector(0, 0, 1)), t));
-//        assert(t == 5.0);
+        assert(bvh.intersect(Ray(vertex - Vector(0, 0, 5), Vector(0, 0, 1)), t));
+        assert(t == 5.0);
 
-//        assert(bvh.intersect(Ray(vertex, Vector(0, 0, -1)), t));
-//        assert(t == 0.0);
-//    }
+        assert(bvh.intersect(Ray(vertex, Vector(0, 0, -1)), t));
+        assert(t == 0.0);
+    }
 
-//    //Ray pointing away from the triangle
-//    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(0, 0, 1)), t));
-//    //Ray parallel to the triangle
-//    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(1, 0, 0)), t));
-//    //Ray that intersects the bounding volume of the triangle but not the triangle itself
-//    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 0.001), Vector(1, 0, 0)), t));
+    //Ray pointing away from the triangle
+    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(0, 0, 1)), t));
+    //Ray parallel to the triangle
+    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 1), Vector(1, 0, 0)), t));
+    //Ray that intersects the bounding volume of the triangle but not the triangle itself
+    assert(!bvh.intersect(Ray(Vector(0.5, 0.5/3, 0.001), Vector(1, 0, 0)), t));
 
-//    BVH bvhSphere(*Mesh(Icosphere(1, 2)).GetTriangles(), 8, 1000);
-//    assert(bvhSphere.intersect(Ray(Vector(0, 0, -1), Vector(0, 0, 1)), t));
+    BVH bvhSphere(*Mesh(Icosphere(1, 2)).GetTriangles(), 8, 1000);
+    assert(bvhSphere.intersect(Ray(Vector(0, 0, -1), Vector(0, 0, 1)), t));
 
     //Testing the repartition of the triangles in the octants of the octree
     std::vector<Triangle*> trianglesRepartition;
@@ -594,8 +637,8 @@ void BVH::BVHTests()
     BVH bvhRepartition(trianglesRepartition, 1, 10);
 
     //We're now going to make sure that the triangles have correctly been inserted in the octants
-    Octree repartitionOctree = bvhRepartition.GetOctree();
-    OctreeNode* octants = repartitionOctree.Root()->ChildrenNodes();
+    Octree* repartitionOctree = bvhRepartition.GetOctree();
+    OctreeNode* octants = repartitionOctree->Root()->ChildrenNodes();
     for(int octant = 0; octant < 8; octant++)
     {
         OctreeNode octreeNode = octants[octant];
@@ -628,6 +671,35 @@ void BVH::BVHTests()
             assert(triangleFound);
         }
     }
+
+    Mesh mesh(Mesh(Box(Vector(0, 0, 0), 1)));
+    mesh.Merge(Mesh(Box(Vector(0, 0, 2), 1)));
+
+    std::vector<Color> colors;
+    colors.resize(mesh.Triangles());
+
+    //Initializing the xorshift96 state
+    Math::xorshift96_x=123456789;
+    Math::xorshift96_y=362436069;
+    Math::xorshift_96z=521288629;
+    mesh.accessibility(colors, 1, 100, 1, false, true);
+
+    unsigned long long int trash, triangleInters, triangleIntersNoBVH;
+    BVH::GetInterStats(trash, trash, triangleInters);
+
+    //Initializing the xorshift96 state with the same
+    //values as before to make sure we generate the
+    //same ambient occlusion rays
+    Math::xorshift96_x=123456789;
+    Math::xorshift96_y=362436069;
+    Math::xorshift_96z=521288629;
+    mesh.accessibility(colors, 1, 100, 1, false, false);//Doesn't use the BVH
+    mesh.GetInterStats(trash, triangleIntersNoBVH),
+
+    //Making sure that using the BVH doesn't change the number of triangle
+    //that the rays intersect
+    assert(triangleInters == triangleIntersNoBVH);
+    std::cout << triangleInters << " | " << triangleIntersNoBVH << std::endl;
 }
 
 void BVH::GetInterStats(unsigned long long int& boundingVolumesTests, unsigned long long int& triangleInterTests, unsigned long long int& triangleEffectiveInters)

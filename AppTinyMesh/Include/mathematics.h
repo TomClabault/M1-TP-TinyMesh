@@ -22,6 +22,10 @@ public:
 public:
     static constexpr double EPSILON = 1.0e-5;
     static constexpr double BIGGER_EPSILON = 1.0e-8;
+
+    static unsigned long xorshift96_x;
+    static unsigned long xorshift96_y;
+    static unsigned long xorshift_96z;
 };
 
 /*!

@@ -143,7 +143,7 @@ public:
      * \param max The upper point of the AABB of the node
      * \param depth The current depth of the node
      */
-    OctreeNode(Vector min, Vector max, int depth);
+    OctreeNode(int centroidNumber, Vector min, Vector max, int depth);//TODO remove centroid number
 
     /*!
      * \brief Returns the nodes children of this node
@@ -181,7 +181,8 @@ public:
     /*!
      * \brief Analog to insertTriangles but only inserts one triangle
      */
-    void insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth);
+    //void insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth);
+    void insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth, int triangleNumber = -1);//TODO remove triangleNumber
 
     /*!
      * \brief Inserts the given triangles in the node. If the
@@ -211,6 +212,8 @@ public:
 
 private:
     bool _isLeaf;
+
+    int _centroidNumber;//TODO remove
 
     int _depth;//Current depth of the node in the tree
 
@@ -302,7 +305,7 @@ public:
     * \brief Returns the underlying octree
     * \return The octree used by the BVH
     */
-   Octree GetOctree() const;
+   Octree* GetOctree() const;
 
     /*!
      * \brief Computes the intersection of a ray and the BVH
@@ -322,7 +325,7 @@ private:
     //TODO remove if not used
     std::vector<BoundingVolume> _boundingVolumes;
 
-    Octree _octree;
+    Octree* _octree = nullptr;
 };
 
 #endif // BVH_H
