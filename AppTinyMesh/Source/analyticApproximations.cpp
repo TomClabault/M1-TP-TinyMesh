@@ -207,7 +207,6 @@ bool AnalyticCylinder::intersectBasic(const Ray& ray, double& t)
     double rayDirX = ray.Direction()[0];
     double rayDirZ = ray.Direction()[2];
 
-    //TODO refaire les équations sur papier pour voir ce que ça donne
     double a = rayDirX * rayDirX + rayDirZ * rayDirZ;
     double b = 2 * (rayDirX * rayOrigX + rayDirZ * rayOrigZ);
     double c = rayOrigX * rayOrigX + rayOrigZ * rayOrigZ - 1;

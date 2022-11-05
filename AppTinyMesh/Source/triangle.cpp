@@ -1,6 +1,6 @@
 // Triangle
 
-#include "mesh.h"
+#include "triangle.h"
 
 double Triangle::epsilon = 1.0e-7;
 

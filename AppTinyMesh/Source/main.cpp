@@ -11,15 +11,8 @@ int main(int argc, char *argv[])
     //AnalyticCylinder::tests();
     //BVH::BVHTests();
 
-    //return 0;
-
-    //Benchmarks benchmarks;
-
-    //benchmarks.BenchmarkIcosphere(30, 11);
-    //benchmarks.BenchmarkTorus(2000, 600, 20, 20, false);
-    //benchmarks.BenchmarkTorus(1200, 600, 20, 20, true);
-    //benchmarks.BenchmarkCapsule(5000, 300);
-    //benchmarks.BenchmarkCylinder(5000, 750);
+    Benchmarks::BenchmarkBVHIntersectionCount();
+    return 0;
 
     //return 0;
 #ifdef VISUAL_STUDIO_EDITOR

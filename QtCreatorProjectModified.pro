@@ -49,6 +49,7 @@ HEADERS += \
     AppTinyMesh/Include/simpleMeshes.h \
     AppTinyMesh/Include/shader-api.h \
     AppTinyMesh/Include/sphere.h \
+    AppTinyMesh/Include/triangle.h
 
 FORMS += \
     AppTinyMesh/UI/icosphereToolbox.ui \

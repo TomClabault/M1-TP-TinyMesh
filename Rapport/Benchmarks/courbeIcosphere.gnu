@@ -6,7 +6,7 @@ set output 'courbeIcosphere.png'
 
 # Définition des titres de la figure
 set title 'Temps de génération \& Nb triangles / Nombre subdivisions' # titre
-set xlabel 'Nombre de subdivisions'     # nom de l'axe des abscisses
+set xlabel 'Nombre de subdivisions (icosphère de subdivisions)'     # nom de l'axe des abscisses
 set ylabel 'Temps de génération (ms)'   # nom de l'axe des ordonnées
 set y2label 'Nombre de triangle (*10^3)'   # nom de l'axe des ordonnées
 set y2tics nomirror

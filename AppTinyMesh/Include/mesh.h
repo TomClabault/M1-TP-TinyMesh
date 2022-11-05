@@ -2,97 +2,16 @@
 
 #include "analyticApproximations.h"
 #include "box.h"
+#include "BVH.h"
 #include "color.h"
 #include "simpleMeshes.h"
 #include "ray.h"
 #include "mathematics.h"
 #include "matrix.h"
 #include "sphere.h"
+#include "triangle.h"
 
 #include <map>
-
-// Triangle
-class Triangle
-{
-protected:
-  Vector p[3] = {Vector(0.0,0.0,0.0),Vector(1.0,0.0,0.0), Vector(0.0,1.0,0.0), }; //!< Array of vertices.
-public:
-  //! Empty.
-  Triangle() {}
-  explicit Triangle(const Vector&, const Vector&, const Vector&);
-
-  Triangle(const Triangle& triangle) : p {triangle.p[0], triangle.p[1], triangle.p[2]} {};
-
-  //! Empty.
-  ~Triangle() {}
-
-  Vector operator[] (int) const;
-
-  // Point in triangle
-  Vector Vertex(double, double) const;
-
-  // Intersection
-  bool Intersect(const Ray&, double&, double&, double&) const;
-
-  /*!
-  * \brief This function allows the computation of the intersection between a ray and a triangle without having to instantiate a triangle
-  */
-  static bool IntersectFromPoints(const Vector& a, const Vector& b, const Vector& c, const Ray&, double&, double&, double&);
-
-  void Translate(const Vector&);
-
-  // Geometry
-  Vector Normal() const;
-  Vector AreaNormal() const;
-  Vector Center() const;
-
-  double Area() const;
-  double Aspect() const;
-  Box GetBox() const;
-
-  Vector Centroid() const;
-
-  // Stream
-  friend std::ostream& operator<<(std::ostream&, const Triangle&);
-
-  double InscribedRadius() const;
-  double CircumscribedRadius() const;
-protected:
-  static double epsilon; //!< Internal epsilon constant.
-};
-
-/*!
-\brief Return the i-th vertex.
-\param i Index.
-*/
-inline Vector Triangle::operator[] (int i) const
-{
-  return p[i];
-}
-
-//! Compute the barycenter of the triangle.
-inline Vector Triangle::Center() const
-{
-  return (p[0] + p[1] + p[2]) / 3.0;
-}
-
-//! Compute the area of the triangle.
-inline double Triangle::Area() const
-{
-  return 0.5 * Norm((p[0] - p[1]) / (p[2] - p[0]));
-}
-
-/*!
-\brief Create a triangle.
-\param a,b,c Vertices of the triangle.
-*/
-inline Triangle::Triangle(const Vector& a, const Vector& b, const Vector& c)
-{
-  p[0] = a;
-  p[1] = b;
-  p[2] = c;
-}
-
 
 class QString;
 
@@ -118,6 +37,12 @@ protected:
   //!< to the map. The key of this entry is 40 since the first 20 vertices
   //!< are taken up by the first mesh.
   std::map<int, AnalyticApproximation*> analyticApproxToVertexIndex;
+
+  //!< The Bounding Volume Hierarchy used to optimize mesh intersections
+  BVH _bvh;
+
+  unsigned long long int _triangleInterTests = 0;
+  unsigned long long int _triangleEffectiveInter = 0;
 
 public:
   explicit Mesh();
@@ -216,8 +141,26 @@ public:
    * \param occlusionStrength A multiplier on the strength
    * of the occlusion. The higher this parameter, the
    * darker the occlusion
+   * \param enableAnalyticIntersection Whether or not to allow
+   * for the intersection with the analytic approximations
+   * of the mesh or not. This parameter has no practical usecases
+   * besides benchmarking
+   * \param useBVH Whether or not to use the BVH to intersect
+   * the mesh. Setting this to false has no practical usecases
+   * besides benchmarking
    */
-  void accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength = 1, std::vector<Mesh>* toMerge = nullptr);
+  void accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength = 1, bool enableAnalyticIntersection = true, bool useBVH = true);
+
+  /*!
+   * \brief Gets the intersection statistics of the mesh.
+   * The statistics for this mesh are initialized at 0 at the
+   * construction of the mesh and are never reset to 0
+   * \param triangleInterTests [out] The number of intersection
+   * tests that have been performed between a ray and a triangle
+   * \param triangleEffectiveInters The number of triangles that
+   * have effectively been intersected by a ray
+   */
+  void GetInterStats(unsigned long long int& triangleInterTests, unsigned long long int& triangleEffectiveInters) const;
 
   /*!
    * \brief Computes the intersection between a ray
@@ -230,7 +173,7 @@ public:
    *
    * \return True if an intersection was found, false otherwise
    */
-  bool intersect(const Ray& ray, double& outT) const;
+  bool intersect(const Ray& ray, double& outT);
 
   /*!
    * \brief Computes the intersection of a ray and all the

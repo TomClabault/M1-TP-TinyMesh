@@ -37,6 +37,7 @@ Mesh::Mesh(const std::vector<Vector>& vertices, const std::vector<int>& indices)
     //We're adding the analytic approximation that corresponds to the vertices we just added to the mesh.
     //Because we added arbitrary vertices, there is no corresponding approximation so we're adding nullptr
     this->analyticApproxToVertexIndex.insert(std::make_pair(indices.size(), nullptr));
+    this->_bvh = BVH(*this->GetTriangles());
 }
 
 /*!
@@ -359,24 +360,16 @@ void Mesh::SphereWarp(Sphere sphere)
     }
 }
 
-BVH* bvh = nullptr;
-bool computed = false;
-
-//TODO remove toMerge aergument
-void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength, std::vector<Mesh>* toMerge)
+//TODO rajouter un texte dans l'interface qui dit combien de temps ça a pris pour calculer l'AO
+//TODO Ajouter une checkbox dans l'interface pour activer/Désactiver la BVH
+void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength, bool enableAnalyticIntersection, bool useBVH)
 {
-    auto startAO = std::chrono::high_resolution_clock::now();//TODO remove
-
     std::unordered_set<int> alreadyComputedVertices;//Holds the index of the vertices
     //whose accessibility we already have computed. Useful not to compute
     //several time the accessibility of the same vertex
 
-    computed = false;//TODO remove
-
-    std::srand(2);//TODO remove
     double colorIncrement = 1.0 / samples;
-
-    bool analyticIntersection = this->analyticApproximations.size() > 0;
+    bool analyticIntersection = this->analyticApproximations.size() > 0 && enableAnalyticIntersection;
 
     size_t vertexIndexCount = this->VertexIndexes().size();
     for(size_t vertexIndex = 0; vertexIndex < vertexIndexCount; vertexIndex++)
@@ -408,50 +401,20 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
 
             //Using xorshift96 to generate random numbers is faster than std::rand by 2 orders of magnitude
-//            Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
-            //TODO remove
-            Vector randomRayDirection = Normalized(Vector((std::rand() / (double)RAND_MAX) * 2 - 1,
-                                                 (std::rand() / (double)RAND_MAX) * 2 - 1,
-                                                 (std::rand() / (double)RAND_MAX) * 2 - 1));
+            Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
+                                                          (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
 
             if(randomRayDirection * normal < 0)//If the random point we draw is below the surface
                 randomRayDirection *= -1;//Flipping the random point for it to be above the surface
 
             //We're slightly shifting the origin of the ray in the
             //direction of the normal otherwise we will intersect ourselves
-
-            //TODO testre avec epsilon 1.0e-5
-            Ray ray(vertex + normal * 1.0e-10, randomRayDirection);
-
-//            TODO remov whole if
-            if(vertexNumber == 55)
-            {
-                //ray = Ray(ray.Origin(), Vector(1, 0, 0));
-                std::cout << "vertex index: " << vertexIndex << std::endl;
-                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
-                std::cout << "vertex: " << vertex << std::endl;
-                std::cout << "normal: " << normal << std::endl;
-                std::cout << "ray origin: " << ray.Origin() << std::endl;
-                std::cout << "ray direction: " << ray.Direction() << std::endl;
-
-                if(toMerge != nullptr)
-                {
-                    std::cout << sample << ": " << ray.Direction() << std::endl;
-
-//                    for(int i = 0; i < 5; i++)
-//                        toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction() * 2 * i / 5.0), 0.05)));
-                      toMerge->push_back(Mesh(Box(Vector(ray.Origin() + ray.Direction()), 0.05)));
-                      for(int i = 0; i < 5; i++)
-                          toMerge->push_back(Mesh(Box(Vector(ray.Origin() + normal * 1 * i / 5.0), 0.05)));
-                }
-            }
+            Ray ray(vertex + normal * Math::EPSILON, randomRayDirection);
 
             double intersectionDistance;
             bool intersectionFound;
 
-            analyticIntersection = false;//TODO remove
             if(analyticIntersection)
             {
                 double intersectionDistNonAnalytic = INFINITY;
@@ -468,66 +431,28 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
             }
             else
             {
-//                if(!computed)//TODO remove et compute la BVH à la construction du mesh
-//                {
-//                    auto start = std::chrono::high_resolution_clock::now();
-//                    bvh = new BVH(*this->GetTriangles(), 16);
-//                    auto stop = std::chrono::high_resolution_clock::now();
-
-//                    std::cout << "BVH Construction time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stop - start).count() << std::endl;
-//                    computed = true;
-//                }
-
-//                intersectionFound = bvh->intersect(ray, intersectionDistance);
-
-                //TODO remove cette ligne, on doit utiliser l'intersection avec la BVH à la place de l'intersection avec le mesh
-                intersectionFound = this->intersect(ray, intersectionDistance);
+                if(useBVH)
+                    intersectionFound = _bvh.intersect(ray, intersectionDistance);
+                else
+                    intersectionFound = this->intersect(ray, intersectionDistance);
             }
 
             //In front of the ray and within the given occlusion radius
             if(intersectionFound && intersectionDistance <= radius)
-            {
                 obstructedValue += colorIncrement;
-
-                //TODO remove tout les commentaires, on dsoit juste avoir 'obstructedValue += colorIncrement;' dans le if
-                std::cout << "vertex index: " << vertexIndex << std::endl;
-                std::cout << "vertex number: " << this->vertexIndices.at(vertexIndex) << std::endl;
-                std::cout << "vertex: " << vertex << std::endl;
-                std::cout << "normal: " << normal << std::endl;
-                std::cout << "ray origin: " << ray.Origin() << std::endl;
-                std::cout << "ray direction: " << ray.Direction() << std::endl;
-
-                //this->intersectAnalytic(ray, intersectionDistance);
-
-                //std::cout << normal * randomVec << " | " << normal * ((intersectionDistance * randomVec + ray.Origin()) - vertex) << " | " << normal * ((static_cast<AnalyticSphere*>(this->analyticApproximations.at(0))->Center() - (intersectionDistance * randomVec + ray.Origin()))) << std::endl;
-                //std::cout << "Inter[" << intersectionDistance << "] ------ Vertex: " << vertex << " | Random vec: " << randomVec << " | Normal:" << normal << std::endl;
-
-                //                MeshColor* thisColor = static_cast<MeshColor*>(this);
-
-                //                Mesh boxMesh = Mesh(Box(Vector(ray.Origin() + intersectionDistance * randomVec), 0.025));
-
-                //                std::vector<Color> cols;
-                //                cols.resize(boxMesh.Vertexes());
-                //                for(int c = 0; c < boxMesh.Vertexes(); c++)
-                //                    cols.at(c) = Color(0.0, 1.0, 0.0);
-
-                //                MeshColor boxColor(boxMesh, cols, boxMesh.VertexIndexes());
-                //                thisColor->Merge(boxColor);
-            }
         }
 
         accessibilityColors.at(vertexNumber) = Color(1 - obstructedValue * occlusionStrength);
     }
-
-    auto stopAO = std::chrono::high_resolution_clock::now();
-
-    std::cout << "AO time: " << std::chrono::duration_cast<std::chrono::milliseconds>(stopAO - startAO).count() << "ms" << std::endl;
-
-    std::cout << std::endl;
-    std::cout << std::endl;
 }
 
-bool Mesh::intersect(const Ray& ray, double& outT) const
+void Mesh::GetInterStats(unsigned long long int& triangleInterTests, unsigned long long int& triangleEffectiveInters) const
+{
+    triangleInterTests = _triangleInterTests;
+    triangleEffectiveInters = _triangleEffectiveInter;
+}
+
+bool Mesh::intersect(const Ray& ray, double& outT)
 {
     bool found = false;
     double closestT = INFINITY;//Used to keep track of the closest
@@ -541,6 +466,7 @@ bool Mesh::intersect(const Ray& ray, double& outT) const
 
         double t, u, v;
 
+        _triangleInterTests++;
         if(Triangle::IntersectFromPoints(this->vertices.at(index1), this->vertices.at(index2), this->vertices.at(index3), ray, t, u, v))
         {
             if(t > 0 && t < closestT)//Intersection in front of the ray
@@ -548,6 +474,7 @@ bool Mesh::intersect(const Ray& ray, double& outT) const
                 closestT = t;
                 outT = t;
 
+                _triangleEffectiveInter++;
                 found = true;
             }
         }

@@ -76,13 +76,11 @@ public:
     AnalyticApproximation* GetAnalyticApproximation() const;
 
     /*!
-     * \brief Transforms the vertices of the mesh. The vertices are first
-     * translated, then rotated then scaled
-     * \param translation The translation
-     * \param rotation The rotation matrix
-     * \param scale The homotethy matrix
+     * \brief Transforms the vertices of the mesh using the class
+     * attributes for translation, rotation and scaling. The
+     * vertices are first translated, then rotated then scaled
      */
-    void transformVerticesAndNormals(const Vector& translation, const Matrix& rotation, const Matrix& scale);
+    void transformVerticesAndNormals();
 
 protected:
     SimpleMesh(Vector translation, Matrix rotation, Matrix scale) : _translation(translation), _rotation(rotation), _scale(scale) {};

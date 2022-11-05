@@ -59,7 +59,7 @@ AnalyticApproximation* SimpleMesh::GetAnalyticApproximation() const
     return this->analyticApproximation;
 }
 
-void SimpleMesh::transformVerticesAndNormals(const Vector& translation, const Matrix& rotation, const Matrix& scale)
+void SimpleMesh::transformVerticesAndNormals()
 {
     //Translate then rotate then scale.
     for(Vector& vertex : this->vertices)
@@ -135,7 +135,7 @@ Icosphere::Icosphere(const Vector& translation, const Matrix& rotation, const Ma
     for(int i = 0; i < subdivisions; i++)
         this->subdivide();
 
-    transformVerticesAndNormals(translation, rotation, scale);
+    transformVerticesAndNormals();
 
     SimpleMesh::analyticApproximation = new AnalyticSphere(translation, rotation, scale);
 }
@@ -288,7 +288,7 @@ Torus::Torus(const Vector& translation, const Matrix& rotation, const Matrix& sc
 {
     initBaseTorus(innerRadius, outerRadius, ringCount, ringSubdivisions);
 
-    transformVerticesAndNormals(translation, rotation, scale);
+    transformVerticesAndNormals();
 }
 
 void Torus::initBaseTorus(double innerRadius, double outerRadius, int ringCount, int ringsSubdivisions)
@@ -353,7 +353,7 @@ Capsule::Capsule(const Vector& translation, const Matrix& rotation, const Matrix
 {
     initBaseCapsule(cylinderHeightSubdivisions, cylinderSubdivisions, sphereHeightSubdivions);
 
-    transformVerticesAndNormals(translation, rotation, scale);
+    transformVerticesAndNormals();
 }
 
 void Capsule::initBaseCapsule(int cylinderHeightSubdivisions, int cylinderSubdivisions, int sphereHeightSubdivisions)
@@ -436,8 +436,6 @@ void Capsule::initBaseCapsule(int cylinderHeightSubdivisions, int cylinderSubdiv
     for(int ringIndex = 0; ringIndex < sphereHeightSubdivisions; ringIndex++)
     {
         double localRadius = std::cos(M_PI / 2 * ringIndex * ringIncrement);
-
-        //TODO si on est au ring tout en bas, il ne suffit de placer que un seul point vu qu'ils sont tous confondus
         double y = std::sin(M_PI / 2 * ringIndex * ringIncrement) + deltaY;
 
         for(int ringSubdiv = 0; ringSubdiv < cylinderSubdivisions; ringSubdiv++)
@@ -494,7 +492,7 @@ Cylinder::Cylinder(const Vector& translation, const Matrix& rotation, const Matr
 
     initBaseCylinder(heightSubdivisions, cylinderSubdivisions);
 
-    transformVerticesAndNormals(translation, rotation, scale);
+    transformVerticesAndNormals();
 }
 
 void Cylinder::initBaseCylinder(int heightSubdivisions, int cylinderSubdivisions)

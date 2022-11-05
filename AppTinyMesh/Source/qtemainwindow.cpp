@@ -159,46 +159,9 @@ void MainWindow::CreateIcosphereMesh(double radius, int subdivisions)
 //    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, 0, std::sqrt(3) * radius), radius, subdivisions)));
 //    icosphereMesh.Merge(Mesh(Icosphere(Vector(radius, (2 * std::sqrt(6) / 3) * radius, std::sqrt(3) / 3 * radius), radius, subdivisions)));
 
-//    ray origin: Vector(1.53117,-0.946316,1e-05)
-//    ray direction: Vector(0.268032,0.365336,0.891453)
-
-//    icosphereMesh.Merge(Mesh(Box(Vector(3.4026,-2.10292,1e-05), 0.05)));
-//    icosphereMesh.Merge(Mesh(Box(Vector(3.4026,-2.10292,1), 0.05)));
-//    icosphereMesh.Merge(Mesh(Box(Vector(0.850651,-0.525731,0.0001) + Vector(1/2.0,0, 0), 0.025)));
-//    ray origin: Vector(0.850651,-0.525731,0.0001)
-//    ray direction: Vector(0.268032,0.365336,0.891453)
-
-    //TODO debug inter volumique sphere scale
-    //TODO tester inter volumique plusieurs cylindre
-    //TODO debug la lenteur de la BVH
-    //TODO inter volumique tore
-    //TODO comparaison perf inter volumique sphere et non volumique + partie dans le rapport
-
-    //TODO remove
-//    for(int i = 0; i < 5; i++)
-//    {
-//        Mesh boxMesh = Mesh(Box(Vector(3.07167,-0.778475,-1.27495) + (i / 5.0) * Vector(0,0,1) * 4, 0.025));
-//        icosphereMesh.Merge(boxMesh);
-//    }
-
     std::vector<Color> cols;
     cols.resize(icosphereMesh.Vertexes());
-    HandleAO(icosphereMesh, cols);//TODO decomment
-
-//    std::vector<Mesh> toMerge;
-//    //TODO remove
-//    {
-//        double AORadius = 3;
-//        int AOSamples = 6;
-//        double AOStrength = 1;
-
-//        icosphereMesh.accessibility(cols, AORadius, AOSamples, AOStrength, &toMerge);
-//        for(int i = 0; i < toMerge.size(); i++)
-//            icosphereMesh.Merge(toMerge.at(i));
-
-//        for(int i = 0; i < toMerge.size() * 8; i++)
-//            cols.push_back(Color(1.0));
-//    }
+    HandleAO(icosphereMesh, cols);
 
     meshColor = MeshColor(icosphereMesh, cols, icosphereMesh.VertexIndexes());
 }
@@ -451,21 +414,7 @@ void MainWindow::UpdateAO()
         GetAOParameters(AORadius, AOSamples, AOStrength);
 
         if(AORadius != -1 && AOSamples != -1 && AOStrength != -1)
-        {
-//            Mesh icospherMesh = Mesh(Icosphere(1, 1));
-//            std::vector<Color> cols;
-//            cols.resize(icospherMesh.Vertexes());
-//            for(Color& color : cols)
-//                color = Color(1.0, 0.0, 0.0);
-
-//            meshColor = MeshColor(icospherMesh, cols, icospherMesh.VertexIndexes());
-
             meshColor.computeAccessibility(AORadius, AOSamples, AOStrength);
-
-//            //TODO remove
-//            MeshColor meshColor2 = MeshColor(meshColor, meshColor.GetColors(), meshColor.VertexIndexes());//TODO remove
-//            meshColor = meshColor2;//TODO remove
-        }
     }
 
     UpdateGeometry();

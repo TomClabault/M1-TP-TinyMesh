@@ -2,7 +2,10 @@
 #define BVH_H
 
 #include "mathematics.h"
-#include "mesh.h"
+#include "ray.h"
+#include "triangle.h"
+
+#include <vector>
 
 class Plane
 {
@@ -282,13 +285,18 @@ class BVH
 public:
 
     /*!
+     * \brief Empty BVH
+     */
+    BVH();
+
+    /*!
      * \brief Constructs a BVH from a list of triangles
      * \param mesh The triangles
      * \param maxLeafChildren The maximum number of triangles that is
      * allowed to sit in a volume of the BVH
      * \param The maximum allowed depth of the nodes of the hierarchy
      */
-    BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDepth = 15);
+    BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren = 10, int maxDepth = 15);
 
     /*!
     * \brief Returns the underlying octree
@@ -308,6 +316,7 @@ public:
     bool intersect(const Ray& ray, double& t) const;
 
     void static BVHTests();
+    void static GetInterStats(unsigned long long int& boundingVolumesTests, unsigned long long int& triangleInterTests, unsigned long long int& triangleEffectiveInters);
 
 private:
     //TODO remove if not used

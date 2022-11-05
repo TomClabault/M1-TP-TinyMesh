@@ -2,10 +2,9 @@
 
 #include <queue>
 
-//TODO remove stat counters
-int boundingVolumeTest = 0;
-int triangleIntersectionTest = 0;
-int triangleIntersection = 0;
+unsigned long long int _boundingVolumesInterTests;//<! How many bounding volumes were tested against a ray for intersection
+unsigned long long int _triangleInterTests;//<! How many triangles were tested against a ray for intersection
+unsigned long long int _triangleEffectiveInter;//<! How many triangles were actually intersected
 
 BoundingVolume::BoundingVolume()
 {
@@ -351,7 +350,7 @@ bool Octree::intersect(const Ray& ray, double& t) const
     double closestIntersection = INFINITY;//Keeps the closest intersection of the ray with a triangle of the octree
     bool intersectionFound = false;
 
-    boundingVolumeTest++;
+    _boundingVolumesInterTests++;
     if(!_root->GetBoundingVolume().intersect(ray, trash, closestIntersection))
     {
         //If we're not even intersecting the bounding volumes
@@ -383,10 +382,10 @@ bool Octree::intersect(const Ray& ray, double& t) const
                     double triangleInterDist = INFINITY;
                     double u, v;
 
-                    triangleIntersectionTest++;
+                    _triangleInterTests++;
                     if(triangle->Intersect(ray, triangleInterDist, u, v) && triangleInterDist > 0)
                     {
-                        triangleIntersection++;
+                        _triangleEffectiveInter++;
                         closestIntersection = std::min(closestIntersection, triangleInterDist);
                         intersectionFound = true;
                     }
@@ -400,7 +399,8 @@ bool Octree::intersect(const Ray& ray, double& t) const
                     double nodeIntersectionNear;
                     double nodeIntersectionFar;
                     OctreeNode* node = &childrenNodes[i];
-                    boundingVolumeTest++;
+
+                    _boundingVolumesInterTests++;
                     if(node->GetBoundingVolume().intersect(ray, nodeIntersectionNear, nodeIntersectionFar))
                     {
                         double nodeInterT;
@@ -428,7 +428,14 @@ bool Octree::intersect(const Ray& ray, double& t) const
         return false;
 }
 
-BVH::BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDepth)
+BVH::BVH()
+{
+    _boundingVolumesInterTests = 0;
+    _triangleInterTests = 0;
+    _triangleEffectiveInter = 0;
+};
+
+BVH::BVH(const std::vector<Triangle*>& triangles, int maxLeafChildren, int maxDepth) : BVH()
 {
     //The minimum and maximum point of the AABB of the
     //root volume, i.e., the points constituting the AABB that can
@@ -510,15 +517,7 @@ Octree BVH::GetOctree() const
 
 bool BVH::intersect(const Ray& ray, double& t) const
 {
-    boundingVolumeTest = 0;
-    triangleIntersectionTest = 0;
-    triangleIntersection = 0;
-
     bool returned = _octree.intersect(ray, t);
-
-    std::cout << "Volume intersection test: " << boundingVolumeTest << std::endl;
-    std::cout << "Triangle intersection test: " << triangleIntersectionTest << std::endl;
-    std::cout << "Triangle effective intersection: " << triangleIntersection << std::endl;
 
     return returned;
 }
@@ -629,4 +628,11 @@ void BVH::BVHTests()
             assert(triangleFound);
         }
     }
+}
+
+void BVH::GetInterStats(unsigned long long int& boundingVolumesTests, unsigned long long int& triangleInterTests, unsigned long long int& triangleEffectiveInters)
+{
+    boundingVolumesTests = _boundingVolumesInterTests;
+    triangleInterTests = _triangleInterTests;
+    triangleEffectiveInters = _triangleEffectiveInter;
 }
