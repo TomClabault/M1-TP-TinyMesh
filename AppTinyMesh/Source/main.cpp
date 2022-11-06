@@ -7,14 +7,12 @@
 
 int main(int argc, char *argv[])
 {
-    //AnalyticSphere::tests();
-    //AnalyticCylinder::tests();
+//    AnalyticSphere::tests();
+//    AnalyticCylinder::tests();
 //    BVH::BVHTests();
 //    return 0;
 
     //Benchmarks::BenchmarkBVHIntersectionCount();
-    //return 0;
-
     //return 0;
 #ifdef VISUAL_STUDIO_EDITOR
 	//Opening a console so that we can get cout output
@@ -23,7 +21,6 @@ int main(int argc, char *argv[])
 	freopen("CONOUT$", "w", stderr);
 #endif
 
-    //TODO fix lotus flower crash
 	QApplication app(argc, argv);
 
 	MainWindow mainWin;

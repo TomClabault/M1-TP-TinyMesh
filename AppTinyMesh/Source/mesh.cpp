@@ -363,8 +363,6 @@ void Mesh::SphereWarp(Sphere sphere)
     }
 }
 
-//TODO rajouter un texte dans l'interface qui dit combien de temps ça a pris pour calculer l'AO
-//TODO Ajouter une checkbox dans l'interface pour activer/Désactiver la BVH
 void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius, int samples, double occlusionStrength, bool enableAnalyticIntersection, bool useBVH)
 {
     std::unordered_set<int> alreadyComputedVertices;//Holds the index of the vertices
@@ -426,7 +424,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                 intersectionFound = this->intersectAnalytic(ray, intersectionDistance);
                 //If our mesh is composed of analytic approximations and of other pieces that cannot
                 //be approximated, we're going to have to intersect those as well
-                intersectionFound  |= this->intersectNonAnalytic(ray, intersectionDistNonAnalytic);
+                intersectionFound |= this->intersectNonAnalytic(ray, intersectionDistNonAnalytic);
 
                 //We'll keep the smallest intersection distance that we've found between the intersection
                 //with the analytic shapes and with the non-analytic shapes
@@ -440,7 +438,7 @@ void Mesh::accessibility(std::vector<Color>& accessibilityColors, double radius,
                     intersectionFound = this->intersect(ray, intersectionDistance);
             }
 
-            //In front of the ray and within the given occlusion radius
+            //Intersection found within the given occlusion radius
             if(intersectionFound && intersectionDistance <= radius)
                 obstructedValue += colorIncrement;
         }

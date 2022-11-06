@@ -68,38 +68,20 @@ public:
      * direction from the ray's origin with the volume
      * \param tFar [out] The furthest intersection distance in the ray's
      * direction from the ray's origin with the volume
+     * \param PrecomputedND Precomputed dot product between the normal of each planes
+     * of the bounding volume and the ray direction
+     * \param PrecomputedNO Precomputed dot product between the normal of each planes
+     * of the bounding volume and the ray's origin
      * \return True if an intersection was found
      * in front of the ray, false otherwise
      */
-    bool intersect(const Ray& ray, double& tNear, double& tFar) const;
+    bool intersect(const Ray& ray, double& tNear, double& tFar, const double* const PrecomputedND, const double* const PrecomputedNO) const;
 
     /*!
      * \brief Returns the centroid of this volume
      * \return The centroid of this volume
      */
     Vector Centroid() const;
-
-    //TODO remove if not used
-//    /*!
-//     * \brief Computes the minimum and the maximum point of the AABB of
-//     * this volume
-//     * \param min [out] The minimum point
-//     * \param max [out] The maximum point
-//     */
-//    void GetMinMax(Vector& min, Vector& max) const;
-
-    //TODO remove
-//    /*!
-//     * \brief Returns the point representing the lower left vertex of the AABB surrounding all the objects of this volume
-//     * \return The minimum point of the AABB of this volume
-//     */
-//    Vector Min() const;
-
-//    /*!
-//     * \brief Returns the point representing the upper right vertex of the AABB surrounding all the objects of this volume
-//     * \return The maximum point of the AABB of this volume
-//     */
-//    Vector Max() const;
 
 private:
     /*!
@@ -126,9 +108,6 @@ private:
     //7 planes (see BoundingVolume::planes) of
     //this bounding volumes
     double _dFars[7];//The fars 'd'
-
-    //TODO remove
-    //Vector _min, _max;
 };
 
 class OctreeNode
@@ -143,7 +122,7 @@ public:
      * \param max The upper point of the AABB of the node
      * \param depth The current depth of the node
      */
-    OctreeNode(int centroidNumber, Vector min, Vector max, int depth);//TODO remove centroid number
+    OctreeNode(Vector min, Vector max, int depth);
 
     /*!
      * \brief Returns the nodes children of this node
@@ -181,8 +160,7 @@ public:
     /*!
      * \brief Analog to insertTriangles but only inserts one triangle
      */
-    //void insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth);
-    void insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth, int triangleNumber = -1);//TODO remove triangleNumber
+    void insertTriangle(const Triangle* triangle, int maxChildren, int maxDepth);
 
     /*!
      * \brief Inserts the given triangles in the node. If the
@@ -198,22 +176,8 @@ public:
      */
     void insertTriangles(const std::vector<Triangle*>& triangles, int maxChildren, int maxDepth);
 
-    //TODO remove if unused
-//    /*!
-//     * \brief Computes the intersection between a ray and this octree node
-//     * \param ray The ray
-//     * \param t The distance to the closest intersection with an object
-//     * of the node. Garbage value that shouldn't be considered if no
-//     * intersection is found.
-//     * \return True if an intersection was found in front of the ray,
-//     * false otherwise
-//     */
-//    bool intersect(const Ray& ray, double& t) const;
-
 private:
     bool _isLeaf;
-
-    int _centroidNumber;//TODO remove
 
     int _depth;//Current depth of the node in the tree
 
@@ -322,9 +286,6 @@ public:
     void static GetInterStats(unsigned long long int& boundingVolumesTests, unsigned long long int& triangleInterTests, unsigned long long int& triangleEffectiveInters);
 
 private:
-    //TODO remove if not used
-    std::vector<BoundingVolume> _boundingVolumes;
-
     Octree* _octree = nullptr;
 };
 

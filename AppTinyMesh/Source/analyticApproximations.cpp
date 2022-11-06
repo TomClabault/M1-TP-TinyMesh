@@ -461,49 +461,6 @@ void AnalyticCylinder::intersectionTests()
     //Ray's origin at the border of the cylinder, between the top disk and the body. Auto intersection
     assert(cylinderRad1Height2.intersect(Ray(Vector(1, 2, 0), Vector(0.295226, 0.181165, -0.938094)), t));
     assert(t == 0.0);
-
-    //Generating 100 random rays direction and ray's origin around the body of the cylinder. They should all auto-intersect.
-    //Also testing for the same ray / ray direction but with the ray origin offset off the cylinder which should prevent
-    //auto intersection
-    //TODO Not working
-//    unsigned int max_unsigned_int = std::numeric_limits<unsigned int>::max();
-//    Vector dump = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                    (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                    (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
-//            Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
-//            Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                              (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
-//    for(int i = 0; i < 100; i++)
-//    {
-//        double randomAngle = (Math::xorshift96() / (double)max_unsigned_int) * 2 * M_PI;
-//        double randomHeight = (Math::xorshift96() / (double)max_unsigned_int) * 2;
-
-//        double x = std::cos(randomAngle);
-//        double y = randomHeight;
-//        double z = std::sin(randomAngle);
-
-//        Vector rayOrigin(x, y, z);
-//        Vector normalAtRayOrigin = rayOrigin - Vector(0, randomHeight, 0);
-//        Vector randomRayDirection = Normalized(Vector((Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                      (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1,
-//                                                      (Math::xorshift96() / (double)max_unsigned_int) * 2 - 1));
-//        if(randomRayDirection * normalAtRayOrigin < 0)
-//            randomRayDirection *= -1;
-
-//        std::cout << normalAtRayOrigin << std::endl;
-//        std::cout << rayOrigin << std::endl;
-//        std::cout << randomRayDirection << std::endl;
-
-//        //Auto intersection
-//        assert(cylinderRad1Height2.intersect(Ray(rayOrigin, randomRayDirection), t));
-//        assert(t == 0.0);
-
-//        //Origin + Offset : shouldn't auto intersect
-//        assert(!cylinderRad1Height2.intersect(Ray(rayOrigin + 1.0e-5 * normalAtRayOrigin, randomRayDirection), t));
-//    }
 }
 
 void AnalyticCylinder::getNormalAtTests()
